@@ -47,7 +47,7 @@ function [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H,f,A,B,Aeq,Beq,x0,solver,
 %
 % see also MPT_SOLVELP, MPT_MPQP
 
-% $Id: mpt_solveQP.m,v 1.2 2005/03/01 11:20:07 kvasnica Exp $
+% $Id: mpt_solveQP.m,v 1.3 2005/04/15 19:02:21 kvasnica Exp $
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch
@@ -432,7 +432,7 @@ elseif solver==8
         exitflag = -1;
     end
 
-    objqp = 0.5*xopt'*H*xopt * f'*xopt;
+    objqp = 0.5*xopt'*H*xopt + f'*xopt;
 
     if exitflag ~= 1 & rescue,
         % solution is not optimal, try another solver
@@ -475,7 +475,7 @@ options.solver = solver;
 
 solution = solvesdp(F, 0.5*x'*H*x + f'*x, options);
 xopt = double(x);
-objqp = 0.5*xopt'*H*xopt * f'*xopt;
+objqp = 0.5*xopt'*H*xopt + f'*xopt;
 lambda = [A;Aeq]*xopt - [B; Beq];
 
 if solution.problem==0,
