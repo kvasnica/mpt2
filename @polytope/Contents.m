@@ -1,5 +1,5 @@
 % Multi-Parametric Toolbox Polytope library
-% Version 2.0 (R14SP1) 13-Apr-2005
+% Version 2.0 (R14SP2) 13-Apr-2005
 %
 %
 % Constructor and data accessing methods
