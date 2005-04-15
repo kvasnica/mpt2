@@ -1,5 +1,5 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0PR (R14SP1) 24-Feb-2004
+% Version 2.0 13-Apr-2004
 %
 % http://control.ee.ethz.ch/~mpt/
 %
@@ -12,7 +12,9 @@ MPT Toolbox installation notes
 Section 1
 =========
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Note: Remove any previous copies of MPT before installing this version!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The MPT toolbox consists of the following directories
 
