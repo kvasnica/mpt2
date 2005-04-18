@@ -60,7 +60,7 @@ function [ctrlStruct,feasibleN,loopCtr] = mpt_oneStepCtrl(sysStruct,probStruct,O
 % see also MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_oneStepCtrl.m,v 1.2 2005/02/27 19:01:24 kvasnica Exp $
+% $Id: mpt_oneStepCtrl.m,v 1.3 2005/04/18 18:28:38 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -238,8 +238,12 @@ while notconverged
     end
     %notconverged = ~eq(Pfinal,PfinalOld,Options);
     %plot(PfinalOld,Pfinal);
-    
-    PfinalOld = Pfinal*Options.scaling;
+
+    if Options.scaling<1,
+        PfinalOld = Pfinal*Options.scaling;
+    else
+        PfinalOld = Pfinal;
+    end
     if loopCtr > Options.maxCtr,
         disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
     end
