@@ -16,7 +16,7 @@ function [out,err]=mpt_solverInfo(sclass, stype)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_solverInfo.m,v 1.3 2005/03/13 16:50:41 kvasnica Exp $
+% $Id: mpt_solverInfo.m,v 1.4 2005/04/21 20:26:58 kvasnica Exp $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -102,6 +102,8 @@ switch solver,
     case 11, out = 'MOSEK';
     case 12, out = 'OOQP';
     case 13, out = 'CLP';
+    case 14, out = 'BPMPD';
+    case 15, out = 'CPLEXMEX';
     otherwise, out = 'unknown'; err=1;
 end
 
@@ -121,6 +123,8 @@ switch solver,
     case 6, out = 'MOSEK';
     case 7, out = 'OOQP';
     case 8, out = 'CLP';
+    case 9, out = 'BPMPD';
+    case 10, out = 'CPLEXMEX';
     otherwise, out = 'unknown'; err=1;        
 end
 
@@ -137,6 +141,7 @@ switch solver,
     case 4, out = 'MOSEK';
     case 5, out = 'bintprog';
     case 6, out = 'CPLEX8';
+    case 7, out = 'CPLEXMEX';
     otherwise, out = 'unknown'; err=1;        
 end
 
@@ -151,6 +156,7 @@ switch solver,
     case 2, out = 'XPRESS';
     case 3, out = 'MOSEK';        
     case 4, out = 'CPLEX8';
+    case 5, out = 'CPLEXMEX';
     otherwise, out = 'unknown'; err=1;        
 end
 
@@ -202,6 +208,10 @@ elseif strcmpi(solver,'ooqp'),
     out = 12;
 elseif strcmpi(solver,'clp'),
     out = 13;
+elseif strcmpi(solver,'bpmpd'),
+    out = 14;
+elseif strcmpi(solver,'cplexmex'),
+    out = 15;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else
@@ -232,6 +242,10 @@ elseif strcmpi(solver,'ooqp'),
     out = 7;
 elseif strcmpi(solver,'clp'),
     out = 8;
+elseif strcmpi(solver,'bpmpd'),
+    out = 9;
+elseif strcmpi(solver,'cplexmex'),
+    out = 10;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else
@@ -276,6 +290,8 @@ elseif strcmpi(solver,'bintprog'),
     out = 5;
 elseif strcmpi(solver,'cplex8'),
     out = 6;
+elseif strcmpi(solver,'cplexmex'),
+    out = 7;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else
@@ -298,6 +314,8 @@ elseif strcmpi(solver,'mosek'),
     out = 3;
 elseif strcmpi(solver,'cplex8'),
     out = 4;
+elseif strcmpi(solver,'cplexmex'),
+    out = 5;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else

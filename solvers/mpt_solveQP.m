@@ -31,6 +31,8 @@ function [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H,f,A,B,Aeq,Beq,x0,solver,
 %              solver=6:  uses MOSEK
 %              solver=7:  uses OOQP
 %              solver=8:  uses CLP (mexclp)
+%              solver=9:  uses BPMPD
+%              solver=10: uses CPLEX (cplexmex)
 %
 % options  - options set by 'optimset' function (only for quadprog)
 %
@@ -47,10 +49,10 @@ function [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H,f,A,B,Aeq,Beq,x0,solver,
 %
 % see also MPT_SOLVELP, MPT_MPQP
 
-% $Id: mpt_solveQP.m,v 1.3 2005/04/15 19:02:21 kvasnica Exp $
+% $Id: mpt_solveQP.m,v 1.4 2005/04/21 20:26:44 kvasnica Exp $
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%         kvasnica@control.ee.ethz.ch
+%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%              kvasnica@control.ee.ethz.ch
 %(C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %         baotic@control.ee.ethz.ch
 
@@ -420,7 +422,7 @@ elseif solver==7,
 elseif solver==8
     % CLP
     [xopt, lambda, status] = clp(H, f, A, B, Aeq, Beq);
-    
+
     if status==0,
         how = 'ok';
         exitflag = 1;
@@ -449,6 +451,102 @@ elseif solver==8
         end
     end
 
+    
+elseif solver==9
+    % BPMPD
+    
+    nA = size(A, 1);
+    nAeq = size(Aeq, 1);
+    An = sparse([A; Aeq]);
+    Bn = [B; Beq];
+    ind = [repmat(-1, nA, 1); repmat(0, nAeq, 1)];
+    
+    [xopt,y,s,w,howout] = bp(H, An, full(Bn), full(f(:)), ind);
+    lambda = -y;
+
+    objqp = 0.5*xopt'*H*xopt + f'*xopt;
+    
+    switch howout,
+        case 'optimal solution'
+            exitflag = 1;
+        otherwise
+            exitflag = -1;
+    end
+    
+    if exitflag==1,
+        how = 'ok';
+        return
+    else
+        how = 'infeasible';
+    end
+
+    if exitflag ~= 1 & rescue,
+        % solution is not optimal, try another solver
+        qpsolvers = mptOptions.solvers.qp;
+        
+        % get position of curent solver
+        curpos = find(qpsolvers==solver);
+        
+        if curpos < length(qpsolvers)
+            % if this is not the last solver in the list, try other solver
+            nextsolver = qpsolvers(curpos+1);
+            [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H_orig, f_orig, A_orig, B_orig,...
+                Aeq_orig, Beq_orig, x0_orig, nextsolver, [], 1);
+        end
+    end
+
+    
+elseif solver==10
+    % CPLEX interfaced with CPLEXMEX (by Nicolo Giorgetti)
+    
+    SENSE = 1; % minimize
+    F = f(:);  % linear objective must be a column vector
+
+    [nc, nx] = size(A);
+    A = [A; Aeq];
+    B = [B; Beq];
+    
+    % type of constraints
+    % 'L' - less than or equal (<=)
+    % 'E' - equality constraint (=)
+    CTYPE = [repmat('L', nc, 1); repmat('E', size(Aeq, 1), 1)];
+    
+    % all variables are continuous
+    VARTYPE = repmat('C', nx, 1);
+    
+    % lower an upper bounds on optimization variables
+    LB = [];
+    UB = [];
+
+    PARAM.errmsg = 0;
+
+    [xopt,objqp,exitflag,DETAILS] = cplexmex(SENSE,H,F,A,B,CTYPE,LB,UB,VARTYPE,x0,PARAM);
+
+    lambda = -DETAILS.lambda;
+    
+    if exitflag==1,
+        how = 'ok';
+        return
+    else
+        exitflag = -1;
+        how = 'infeasible';
+    end
+
+    if exitflag ~= 1 & rescue,
+        % solution is not optimal, try another solver
+        qpsolvers = mptOptions.solvers.qp;
+        
+        % get position of curent solver
+        curpos = find(qpsolvers==solver);
+        
+        if curpos < length(qpsolvers)
+            % if this is not the last solver in the list, try other solver
+            nextsolver = qpsolvers(curpos+1);
+            [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H_orig, f_orig, A_orig, B_orig,...
+                Aeq_orig, Beq_orig, x0_orig, nextsolver, [], 1);
+        end
+    end
+    
 else
     error('mpt_solveQP: unknown value for parameter "solver"!');
 end

@@ -62,6 +62,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMILP(f,A,B,Aeq,Beq,lb,ub,vartype,para
 %              4 - MOSEK
 %              5 - bintprog
 %              6 - CPLEX 8 (cplexmex)
+%              7 - CPLEXMEX (by Nicolo Giorgetti)
 %
 % Note: if 'solver' is not specified, mptOptions.milpsolver will be used instead
 %       (see help mpt_init)
@@ -77,10 +78,10 @@ function [xmin,fmin,how,exitflag]=mpt_solveMILP(f,A,B,Aeq,Beq,lb,ub,vartype,para
 %
 % see also MPT_SOLVELP, MPT_SOLVEMIQP
 
-% $Id: mpt_solveMILP.m,v 1.5 2005/03/13 16:50:52 kvasnica Exp $
+% $Id: mpt_solveMILP.m,v 1.6 2005/04/21 20:26:44 kvasnica Exp $
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%         kvasnica@control.ee.ethz.ch
+%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%              kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -222,6 +223,10 @@ elseif solver==5
 elseif solver==6,
     % YALMIP / CPLEX8 (cplexmex)
     [xmin,fmin,how,exitflag]=yalmipMILP(f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'cplex-milp-cplexint');
+
+elseif solver==7,
+    % CPLEX interfaced with CPLEXMEX (by Nicolo Giorgetti)
+    [xmin,fmin,how,exitflag]=yalmipMILP(f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'cplex-cplexmex');
     
 elseif solver==-1,
     % no solver available

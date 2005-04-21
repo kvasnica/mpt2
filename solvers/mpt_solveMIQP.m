@@ -61,7 +61,8 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %              1 - YALMIP Branch & Bound
 %              2 - XPRESS
 %              3 - MOSEK
-%              4 - CPLEX 8 (cplexmex)
+%              4 - CPLEX 8 (mexcplex)
+%              5 - CPLEXMEX (by Nicolo Giorgetti)
 %
 % Note: if 'solver' is not specified, mptOptions.miqpsolver will be used instead
 %       (see help mpt_init)
@@ -77,10 +78,10 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.4 2005/03/13 16:50:52 kvasnica Exp $
+% $Id: mpt_solveMIQP.m,v 1.5 2005/04/21 20:26:44 kvasnica Exp $
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%         kvasnica@control.ee.ethz.ch
+%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%              kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -180,6 +181,10 @@ elseif solver==3
 elseif solver==4
     % use YALMIP / CPLEX8 (cplexmex)
     [xmin,fmin,how,exitflag]=yalmipMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'cplex-miqp-cplexint');
+
+elseif solver==5,
+    % CPLEX interfaced with CPLEXMEX (by Nicolo Giorgetti)
+    [xmin,fmin,how,exitflag]=yalmipMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'cplex-cplexmex');
 
 elseif solver==-1,
     % no solver available
