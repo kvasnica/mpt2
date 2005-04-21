@@ -29,7 +29,7 @@ function R=mtimes(P,Q,Options)
 % R     - resulting polytope
 %
 
-% $Id: mtimes.m,v 1.3 2005/03/10 12:33:06 kvasnica Exp $
+% $Id: mtimes.m,v 1.4 2005/04/21 10:52:10 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -80,6 +80,12 @@ if isa(P,'double') & isa(Q,'polytope'),
     if all(size(P)==[1 1]),
         % scaling with a scalar
         
+        if P==1,
+            % special case - scaling with 1 = no scaling [issue112]
+            R = Q;
+            return
+        end
+        
         % handle polyarrays:
         if length(Q.Array)>0,
             R = polytope;
@@ -116,7 +122,13 @@ end
 if isa(Q,'double') & isa(P,'polytope'),
     if all(size(Q)==[1 1]),
         % scaling with a scalar
-        
+
+        if Q==1,
+            % special case - scaling with 1 = no scaling [issue112]
+            R = P;
+            return
+        end
+
         % handle polyarrays:
         if length(P.Array)>0,
             R = polytope;
