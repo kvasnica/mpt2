@@ -28,7 +28,7 @@ function [Xn, V] = mpt_reachXU(X0, U0, A, B, f, Options)
 % see also POLYTOPE/RANGE, MPT_REACHSETS
 %
 
-% $Id: mpt_reachXU.m,v 1.4 2005/03/10 17:57:04 kvasnica Exp $
+% $Id: mpt_reachXU.m,v 1.5 2005/04/21 10:53:30 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -72,9 +72,7 @@ if ~isa(X0, 'polytope') | ~isa(U0, 'polytope')
     error('First two input arguments must be polytope objects!');
 end
 
-if size(A, 1) ~= size(A, 2),
-    error('A matrix must be square!');
-elseif size(A, 1) ~= dimension(X0),
+if size(A, 2) ~= dimension(X0),
     error('A matrix must be of the same dimension as polytope X0!');
 end
 
@@ -98,6 +96,9 @@ end
 XU = X0 * U0;
 
 if Options.userange,
+    if size(A, 1) ~= size(A, 2),
+        error('A matrix must be square!');
+    end
     nu = size(B, 2);
     nx = size(A, 1);
     Acl = [A B; zeros(nu, nx) eye(nu)];
