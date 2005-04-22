@@ -58,7 +58,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %
 % see also MPT_SOLVELP
 
-% $Id: mpt_solveLPi.m,v 1.4 2005/04/22 08:52:21 kvasnica Exp $
+% $Id: mpt_solveLPi.m,v 1.5 2005/04/22 09:15:43 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -127,10 +127,7 @@ if lpsolver==3, %f_cddcc,
     
     Hlin = sA1 + sA2times2 + (1:size(Aeq,1));     % prepare indices of equality constraints in H.A
     
-    H.A = HA; 
-    H.B = HB; 
-    H.lin = Hlin; 
-    H.obj=f;
+    H.A = HA; H.B = HB; H.lin = Hlin; H.obj=f;
 
     Q=cddmex('solve_lp',H);
     xopt=Q.xopt;
@@ -141,7 +138,7 @@ if lpsolver==3, %f_cddcc,
         how = 'undecided';
     elseif exitflag == 1
         how = 'ok';
-        %return
+        return
     elseif exitflag<=5,
         % 3 = dual-inconsistent solution, solve the problem using linprog
         how = 'infeasible';
@@ -154,7 +151,7 @@ if lpsolver==3, %f_cddcc,
     % since we exit if optimal solution was found, we reach this code only if
     % the problem is infeasible or unbounded. in this case we try another
     % solver.
-    if nargin==8 & exitflag~=1,
+    if nargin==8,
         % solution is not optimal, try another solver
         global mptOptions
         lpsolvers = mptOptions.solvers.lp;
