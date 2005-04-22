@@ -58,7 +58,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %
 % see also MPT_SOLVELP
 
-% $Id: mpt_solveLPi.m,v 1.5 2005/04/22 09:15:43 kvasnica Exp $
+% $Id: mpt_solveLPi.m,v 1.6 2005/04/22 12:19:21 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -829,6 +829,7 @@ elseif lpsolver==15,
     UB = [];
 
     PARAM.errmsg = 0;
+    PARAM.niter = 1e4; % release CPLEX license after 10000 runs of the LP algorithm
 
     [xopt,fval,exitflag,DETAILS] = cplexmex(SENSE,H,F,A,B,CTYPE,LB,UB,VARTYPE,x0,PARAM);
 
