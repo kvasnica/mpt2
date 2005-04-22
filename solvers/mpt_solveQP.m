@@ -49,7 +49,7 @@ function [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H,f,A,B,Aeq,Beq,x0,solver,
 %
 % see also MPT_SOLVELP, MPT_MPQP
 
-% $Id: mpt_solveQP.m,v 1.4 2005/04/21 20:26:44 kvasnica Exp $
+% $Id: mpt_solveQP.m,v 1.5 2005/04/22 12:21:24 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -461,7 +461,7 @@ elseif solver==9
     Bn = [B; Beq];
     ind = [repmat(-1, nA, 1); repmat(0, nAeq, 1)];
     
-    [xopt,y,s,w,howout] = bp(H, An, full(Bn), full(f(:)), ind);
+    [xopt,y,s,w,howout] = bp(H, An, full(Bn), full(f(:)), ind, [], [], [], []);
     lambda = -y;
 
     objqp = 0.5*xopt'*H*xopt + f'*xopt;
@@ -519,6 +519,7 @@ elseif solver==10
     UB = [];
 
     PARAM.errmsg = 0;
+    PARAM.niter = 1e3; % release CPLEX license after 1000 runs of the QP algorithm
 
     [xopt,objqp,exitflag,DETAILS] = cplexmex(SENSE,H,F,A,B,CTYPE,LB,UB,VARTYPE,x0,PARAM);
 
