@@ -30,6 +30,8 @@ function out=mpt_init(varargin)
 %                    'mosek'     - MOSEK
 %                    'ooqp'      - OOQP
 %                    'clp'       - CLP
+%                    'bpmpd'     - BPMPD
+%                    'cplexmex'  - CPLEX (interfaced with CPLEXMEX)
 %
 % qpsolver       - variable which sets the default QP solver
 %                  allowed values:
@@ -41,6 +43,8 @@ function out=mpt_init(varargin)
 %                    'mosek'     - MOSEK
 %                    'ooqp'      - OOQP
 %                    'clp'       - CLP
+%                    'bpmpd'     - BPMPD
+%                    'cplexmex'  - CPLEX (interfaced with CPLEXMEX)
 %
 % milpsolver     - variable which sets the default MILP solver. 
 %                  allowed values:
@@ -50,6 +54,7 @@ function out=mpt_init(varargin)
 %                    'xpress'    - XPRESS
 %                    'mosek'     - MOSEK
 %                    'bintprog'  - bintprog.m
+%                    'cplexmex'  - CPLEX (interfaced with CPLEXMEX)
 %
 % miqpsolver     - variable which sets the default MIQP solver. 
 %                  allowed values:
@@ -57,6 +62,7 @@ function out=mpt_init(varargin)
 %                    'yalmip'    - YALMIP Branch & Bound algorithm
 %                    'xpress'    - XPRESS
 %                    'mosek'     - MOSEK
+%                    'cplexmex'  - CPLEX (interfaced with CPLEXMEX)
 %
 % extreme_solver - method to use for extreme points and convex hull enumeration
 %                  allowed values:
@@ -95,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.45 2005/04/05 20:18:34 kvasnica Exp $
+% $Id: mpt_init.m,v 1.46 2005/04/22 07:40:32 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -728,6 +734,8 @@ switch solver
     case 11, fname = 'mosekopt';
     case 12, fname = 'ooqp.m';
     case 13, fname = 'mexclp';
+    case 14, fname = 'bp';
+    case 15, fname = 'cplexmex';
     otherwise, fname = '';
 end
 
@@ -772,6 +780,8 @@ switch solver
     case 6, fname = 'mosekopt';
     case 7, fname = 'ooqp.m';
     case 8, fname = 'mexclp';
+    case 9, fname = 'bp';
+    case 10, fname = 'cplexmex';
     otherwise, fname = '';
 end
 
@@ -814,6 +824,7 @@ switch solver
     case 4, fname = 'mosekopt';
     case 5, fname = 'bintprog';
     case 6, fname = 'milp_cplex';
+    case 7, fname = 'cplexmex';
     otherwise, fname = '';
 end
 
@@ -854,6 +865,7 @@ switch solver
     case 2, fname = 'mexpress';
     case 3, fname = 'mosekopt';
     case 4, fname = 'miqp_cplex';
+    case 5, fname = 'cplexmex';
     otherwise, fname = '';
 end
 
