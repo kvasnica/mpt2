@@ -25,10 +25,10 @@ function P = horzcat(varargin)
 % see also VERTCAT, SUBSREF, SUBSASGN
 %
 
-% $Id: horzcat.m,v 1.2 2005/03/10 12:32:11 kvasnica Exp $
+% $Id: horzcat.m,v 1.3 2005/04/23 15:24:34 kvasnica Exp $
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
@@ -56,10 +56,9 @@ function P = horzcat(varargin)
 nargs=nargin;
 
 for ii=1:nargs
-    %if isa(varargin{ii},'double') & isempty(varargin{ii}),
     argii = varargin{ii};
-    if isempty(argii),
-        if isa(argii,'double')
+    if isa(argii,'double')
+        if isempty(argii),
             emptypoly = polytope;
             varargin{ii} = emptypoly;
             argii = emptypoly;
