@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.46 2005/04/22 07:40:32 kvasnica Exp $
+% $Id: mpt_init.m,v 1.47 2005/04/23 14:16:28 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -411,35 +411,35 @@ if executesolver,
 end
 
 solvers.lp = [];
-allLPsolvers = setdiff(0:13, 6); % do not check SeDuMi - leads to a crash with Matlab 6.5
+allLPsolvers = setdiff(0:sub_maxsolvers('lp'), 6); % do not check SeDuMi - leads to a crash with Matlab 6.5
 for solver = allLPsolvers
     if test_lp(solver, executesolver),
-        solvers.lp = [solvers.lp; solver];
+        solvers.lp = [solvers.lp solver];
     end
 end
 
 solvers.qp = [];
-allQPsolvers = setdiff(0:8, 3); % do not check SeDuMi - leads to a crash with Matlab 6.5
+allQPsolvers = setdiff(0:sub_maxsolvers('qp'), 3); % do not check SeDuMi - leads to a crash with Matlab 6.5
 for solver = allQPsolvers
     % do not check SeDuMi - leads to a crash with Matlab 6.5
     if test_qp(solver, executesolver),
-        solvers.qp = [solvers.qp; solver];
+        solvers.qp = [solvers.qp solver];
     end
 end
 
 solvers.milp = [];
-allMILPsolvers = 0:6;
+allMILPsolvers = 0:sub_maxsolvers('milp');
 for solver = allMILPsolvers,
     if test_milp(solver, executesolver),
-        solvers.milp = [solvers.milp; solver];
+        solvers.milp = [solvers.milp solver];
     end
 end
 
 solvers.miqp = [];
-allMIQPsolvers = 0:4;
+allMIQPsolvers = 0:sub_maxsolvers('miqp');
 for solver = allMIQPsolvers,
     if test_miqp(solver, executesolver),
-        solvers.miqp = [solvers.miqp; solver];
+        solvers.miqp = [solvers.miqp solver];
     end
 end
 
@@ -465,11 +465,12 @@ if isempty(solvers.miqp),
 end
 
 
-% set preferred solvers
-lp_pref = [0 9 3 2 8 7 1 13 5 10 11 12];
-qp_pref = [0 1 2 8 4 5 6 7];
-milp_pref = [0 6 3 2 4 5 1];
-miqp_pref = [0 4 2 3 1];
+% set prefered solvers, list organized according to solver's speed on a given
+% problem
+lp_pref = [0 9 3 15 2 8 14 7 1 13 5 10 11 12];
+qp_pref = [0 1 9 2 8 4 5 6 7 10];
+milp_pref = [0 7 6 3 2 4 5 1];
+miqp_pref = [0 5 4 2 3 1];
 extreme_pref = [3 0 1];
 
 solvers.lp = choosepreferred(solvers.lp, lp_pref);
@@ -942,3 +943,19 @@ if ~isempty(solvers.extreme),
     solvers.extreme(find(solvers.extreme==mptOptions.extreme_solver)) = [];
 end
 solvers.extreme = [mptOptions.extreme_solver solvers.extreme];
+
+
+%------------------------------------------------------------------------
+function maxs = sub_maxsolvers(solverclass)
+% checks how many solvers of a given class are interfaced with MPT
+
+MAX_SOLVERS = 20;  % check this many solvers
+
+maxs = MAX_SOLVERS;
+for index = 1:MAX_SOLVERS,
+    solvername = mpt_solverInfo(solverclass, index);
+    if strcmpi(solvername, 'unknown'),
+        maxs = index-1;
+        return
+    end
+end
