@@ -89,7 +89,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver5(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.4 $ $Date: 2005/04/04 20:39:59 $
+% $Revision: 1.5 $ $Date: 2005/04/23 09:06:09 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -226,7 +226,7 @@ asOptions = struct('lpSolver',Options.lpsolver, ...
     'zeroTol', ZERO_TOL);
 %----------------------------------------------------
 %
-ALPHA         = max(Options.step_size,1e-6);
+ALPHA         = min(Options.step_size,1e-6);
 DEBUG         = (Options.debug_level==2); % DEBUG is true if
 % debug_level==2
 ALPHAmax      = Options.step_size;        % maximum step
