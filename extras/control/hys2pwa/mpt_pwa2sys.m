@@ -17,7 +17,7 @@ function sysStruct = mpt_pwa2sys(PWA, MLD)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_pwa2sys.m,v 1.7 2005/03/13 16:57:27 kvasnica Exp $
+% $Id: mpt_pwa2sys.m,v 1.8 2005/04/27 21:40:21 kvasnica Exp $
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch
@@ -215,7 +215,7 @@ if isfield(MLD, 'nxb')
 end
 
 if isfield(MLD, 'uu') & isfield(MLD, 'ul'),
-    if all(~isinf(MLD.uu)) & all(~isinf(MLD.ul)) & nu>0,
+    if all(~isinf(MLD.uu)) & all(~isinf(MLD.ul)) & MLD.nu>0,
         sysStruct.umax = MLD.uu;
         sysStruct.umin = MLD.ul;
     end
