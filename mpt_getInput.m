@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich]=mpt_getInput(ctrl,x0,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.5 2005/03/22 14:25:32 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.6 2005/04/27 22:03:40 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -190,7 +190,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         
         feasible = strcmp(Eflag.solverflag, 'ok');
         cost = Eflag.fopt;
-        U = Eflag.u;
+        U = Eflag.u';
     else
         % LTI system
         Matrices = ctrl.details.Matrices;
