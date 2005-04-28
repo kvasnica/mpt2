@@ -80,7 +80,7 @@ function ctrlStruct=mpt_optInfControl(sysStruct,probStruct,Options)
 %
 % see also MPT_CONTROL, MPT_OPTCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 
-% $Id: mpt_optInfControl.m,v 1.2 2005/02/27 19:01:24 kvasnica Exp $
+% $Id: mpt_optInfControl.m,v 1.3 2005/04/28 07:40:25 kvasnica Exp $
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -253,7 +253,7 @@ Pn = polytope;
 %   ATTENTION: G,W must be previously computed using horizon 1 !!
 %1)
 %get LQR feedback law
-[Fi{nR},PLQR] = dlqr(A,B,Q,R);
+[Fi{nR},PLQR] = mpt_dlqr(A,B,Q,R);
 Fi{nR}=-Fi{nR};
 Gi{nR}=zeros(length(umax),1);
 %2)

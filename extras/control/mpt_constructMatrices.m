@@ -108,7 +108,7 @@ function [G,W,E,H,F,Y,Cf,Cx,Cc,symmetric,bndA,bndb,Pinvset]=mpt_constructMatrice
 %	     (no. Inputs * prediction Horzion) elemenst correspond to the input
 %            
 
-% $Id: mpt_constructMatrices.m,v 1.2 2005/02/27 19:01:24 kvasnica Exp $
+% $Id: mpt_constructMatrices.m,v 1.3 2005/04/28 07:40:25 kvasnica Exp $
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -310,7 +310,7 @@ if Options.includeLQRset & (~isfulldim(probStruct.Tset) & probStruct.Tconstraint
     else
         RR = probStruct.R;
     end
-    [FLQR,PLQR] = dlqr(sysStruct.A,sysStruct.B,QQ,RR);
+    [FLQR,PLQR] = mpt_dlqr(sysStruct.A,sysStruct.B,QQ,RR);
     FLQR=-FLQR;
     GLQR=zeros(length(sysStruct.umax),1);
     
@@ -438,14 +438,14 @@ elseif probStruct.norm==2 & (probStruct.tracking==0 | isfield(probStruct,'xref')
     if ycost,
         P=Q;
     else
-        [KLQ,P]=dlqr(A,B,Q,R); % Solution of Riccati equation
+        [KLQ,P]=mpt_dlqr(A,B,Q,R); % Solution of Riccati equation
     end
 elseif probStruct.norm==2 & probStruct.tracking>0 & ~isfield(probStruct,'xref') & ~ycost,
     if ycost,
         nyd = sysStruct.dims.ny;
         nx = sysStruct.dims.nx;
         nu = sysStruct.dims.nu;
-        [KLQ,P]=dlqr(A(1:nx,1:nx),B(1:nx,1:nu),Q(1:nx,1:nx),R); % Solution of Riccati equation
+        [KLQ,P]=mpt_dlqr(A(1:nx,1:nx),B(1:nx,1:nu),Q(1:nx,1:nx),R); % Solution of Riccati equation
         P = Q(1:nx,1:nx);
         %P= [P zeros(nx,nu) -P;zeros(nu,nx) R zeros(nu,nx); zeros(nyd,2*nx+nu)]; %terminal cost
         %KLQ=[-KLQ zeros(nu,nx+nu)];
@@ -461,7 +461,7 @@ elseif probStruct.norm==2 & probStruct.tracking>0 & ~isfield(probStruct,'xref') 
         % if you get an error on this line, most probably you already augmented
         % system and problem matrices to deal with tracking. In that case, use
         % Options.autoTracking = 0 to switch off automatic tracking augmentation.
-        [KLQ,P]=dlqr(A(1:nx,1:nx),B(1:nx,1:nu),Q(1:nx,1:nx),R); % Solution of Riccati equation
+        [KLQ,P]=mpt_dlqr(A(1:nx,1:nx),B(1:nx,1:nu),Q(1:nx,1:nx),R); % Solution of Riccati equation
         if probStruct.tracking==1,
             P= [P zeros(nx,nu) -P;zeros(nu,nx) R zeros(nu,nx); -P zeros(nx,nu) P]; %terminal cost
         else
@@ -528,8 +528,8 @@ if(isfield(probStruct,'feedback') & probStruct.feedback==1)
         %A=A+B*FB;
     else
         % if feedback gain matrix is not give, use LQR
-        [FB,S,E] = dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
-        [FB,S,E] = dlqr(A,B,Q,R);
+        [FB,S,E] = mpt_dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
+        [FB,S,E] = mpt_dlqr(A,B,Q,R);
         FB=-FB;
     end
     A=A+B*FB; %update dynamics

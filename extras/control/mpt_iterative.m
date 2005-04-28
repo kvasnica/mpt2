@@ -55,7 +55,7 @@ function ctrlStruct = mpt_iterative(sysStruct,probStruct,Options)
 % see also MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_iterative.m,v 1.3 2005/03/13 18:53:57 kvasnica Exp $
+% $Id: mpt_iterative.m,v 1.4 2005/04/28 07:40:25 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -194,9 +194,9 @@ if ~isfulldim(probStruct.Tset) & probStruct.tracking==0
             % otherwise use unity weights
             RR = eye(size(B,2));
         end
-        [Fi{nR},PLQR] = dlqr(A,B,QQ,RR);
+        [Fi{nR},PLQR] = mpt_dlqr(A,B,QQ,RR);
     else
-        [Fi{nR},PLQR] = dlqr(A,B,Q,R);
+        [Fi{nR},PLQR] = mpt_dlqr(A,B,Q,R);
     end
     Fi{nR}=-Fi{nR};
     Gi{nR}=zeros(length(umax),1);
