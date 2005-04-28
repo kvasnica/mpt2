@@ -1,10 +1,32 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0 13-Apr-2005
+% Version 2.0.1 28-Apr-2005
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
+
+Version 2.0.1 (28-Apr-2005)
+-------------------------------
+
+[new] included latest release of YALMIP which fixes some issues with MILP/MIQP and
+sum-of-squares computation
+
+[new] added support for CPLEXMEX and BPMPDMEX solvers
+
+[new] added an alternative method to compute LQR gain for linear systems. from this
+point on it is no longer necessary to have the Control Toolbox installed in order
+to solve 2-norm problems
+
+[fix] fixed stupid error which caused "mpt_sys()" to break when processing 
+HYSDEL models which contain only continuous inputs
+
+[fix] fixed computation of value of the objective function for certain QP solvers
+
+[fix] the reachability computation function "mpt_reachXU()" now allows to specify
+non-square matrix "A".
+
+
 
 Version 2.0 final (13-Apr-2005)
 -------------------------------
