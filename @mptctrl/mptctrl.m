@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.4 2005/03/14 12:30:50 kvasnica Exp $
+% $Id: mptctrl.m,v 1.5 2005/04/28 07:38:29 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -241,7 +241,7 @@ elseif nargin==2 | nargin==3
         end
         if ~isfield(probStruct,'FBgain')
             % compute the pre-stabilization feedback for LTI system if it is not given
-            [FB,S,E] = dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
+            [FB,S,E] = mpt_dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
             probStruct.FBgain = -FB;
         end
     end

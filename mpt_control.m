@@ -51,7 +51,7 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_control.m,v 1.16 2005/04/11 09:09:04 kvasnica Exp $
+% $Id: mpt_control.m,v 1.17 2005/04/28 07:38:39 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -161,7 +161,7 @@ if probStruct.feedback
     end
     if ~isfield(probStruct,'FBgain')
         % compute the pre-stabilization feedback for LTI system if it is not given
-        [FB,S,E] = dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
+        [FB,S,E] = mpt_dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
         probStruct.FBgain = -FB;
     end
 end

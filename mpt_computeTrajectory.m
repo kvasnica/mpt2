@@ -50,7 +50,7 @@ function [X,U,Y,D,cost,trajectory,feasible,dyns,reason,details]=mpt_computeTraje
 %
 % see also MPT_GETINPUT, MPT_PLOTTRAJECTORY, MPT_PLOTTIMETRAJECTORY
 
-% $Id: mpt_computeTrajectory.m,v 1.13 2005/03/01 14:15:51 kvasnica Exp $
+% $Id: mpt_computeTrajectory.m,v 1.14 2005/04/28 07:38:39 kvasnica Exp $
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch
@@ -483,7 +483,7 @@ if Options.openloop & ~isfield(ctrlStruct.details,'Horizon')
     if isfield(probStruct,'P_N'),
         PLQR = probStruct.P_N;
     elseif(probStruct.norm==2 & ~ycost)
-        [KLQ,PLQR,E] = dlqr(A,B,Q,R);
+        [KLQ,PLQR,E] = mpt_dlqr(A,B,Q,R);
     elseif(ycost)
         PLQR=Qy;
     else
@@ -624,7 +624,7 @@ if Options.openloop & isfield(ctrlStruct.details,'Horizon')
     if isfield(probStruct,'P_N'),
         PLQR = probStruct.P_N;
     elseif(probStruct.norm==2)
-        [KLQ,PLQR,E] = dlqr(A,B,Q,R);
+        [KLQ,PLQR,E] = mpt_dlqr(A,B,Q,R);
     else
         PLQR=Q;
     end
