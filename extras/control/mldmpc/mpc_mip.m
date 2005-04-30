@@ -315,7 +315,7 @@ if isstruct(r) % r has been recognized to be a structure
     end
 else
    y1 = r;
-   x1 = xt; 
+   x1 = zeros(nx,1); 
    u1 = zeros(nu,1);
    d1 = zeros(nd,1);
    z1 = zeros(nz,1);
