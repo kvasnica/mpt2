@@ -701,11 +701,19 @@ elseif Options.norm==2
         % x(k)'*WEI.Qx*x(k) - 2*x_e(k)'*WEI.Qx*x(k) + x_e(k)'*WEI.Qx*x_e(k)
         %------------------------------------------------------------------------------------
         % after a lot of checking...
+
+        aux = fx{kk} - XX1((kk-1)*nx+1:kk*nx);
+        
         S1 = S1 + 2 * Bx{kk}' * WEI.Qx * Bx{kk};
-        S2 = S2 + 2 * fx{kk}' * WEI.Qx * Bx{kk};
+        
+        % small hack, without it (x-x_e) is not being penalized!
+        % before it was:
+        % S2 = S2 + 2 * fx{kk}' * WEI.Qx * Bx{kk};
+        S2 = S2 + 2 * aux' * WEI.Qx * Bx{kk};
+        
         S3 = S3 + 2 * Ax{kk}' * WEI.Qx * Bx{kk};
         
-        aux = fx{kk} - XX1((kk-1)*nx+1:kk*nx);
+
         c1 = c1 + 2 * Ax{kk}' * WEI.Qx * Ax{kk};
         c2 = c2 + 2 * aux' * WEI.Qx * Ax{kk};
         c3 = c3 + aux' * WEI.Qx * aux;
@@ -713,11 +721,18 @@ elseif Options.norm==2
         % y(k)'*WEI.Qy*y(k) - 2*y_e(k)'*WEI.Qy*y(k) + y_e(k)'*WEI.Qy*y_e(k)
         %------------------------------------------------------------------------------------
         % after a lot of checking...
-        S1 = S1 + 2 * By{kk}' * WEI.Qy * By{kk};
-        S2 = S2 + 2 * fy{kk}' * WEI.Qy * By{kk};
-        S3 = S3 + 2 * Ay{kk}' * WEI.Qy * By{kk};
         
         aux = fy{kk} - YY1((kk-1)*ny+1:kk*ny);
+        
+        S1 = S1 + 2 * By{kk}' * WEI.Qy * By{kk};
+        
+        % small hack, without it (y-y_e) is not being penalized!
+        % before:
+        % S2 = S2 + 2 * fy{kk}' * WEI.Qy * By{kk};
+        S2 = S2 + 2 * aux' * WEI.Qy * By{kk};
+        
+        S3 = S3 + 2 * Ay{kk}' * WEI.Qy * By{kk};
+        
         c1 = c1 + 2 * Ay{kk}' * WEI.Qy * Ay{kk};
         c2 = c2 + 2 * aux' * WEI.Qy * Ay{kk};
         c3 = c3 + aux' * WEI.Qy * aux;
