@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.5 2005/04/28 07:38:29 kvasnica Exp $
+% $Id: mptctrl.m,v 1.6 2005/04/30 16:04:06 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -252,6 +252,12 @@ elseif nargin==2 | nargin==3
     
         % =========================================================================
         % we have a PWA system, check if MLD model is available in sysStruct
+        
+        if isfield(probStruct, 'Tset') & probStruct.Tconstraint == 2,
+            if isfulldim(probStruct, 'Tset'),
+                error('User-defined terminal sets not yet supported for on-line controllers!');
+            end
+        end
         
         haveMLD = 0;
         if isfield(sysStruct, 'data')
