@@ -314,11 +314,15 @@ if isstruct(r) % r has been recognized to be a structure
         z1 = zeros(nz,1);
     end
 else
-   y1 = r;
-   x1 = zeros(nx,1); 
-   u1 = zeros(nu,1);
-   d1 = zeros(nd,1);
-   z1 = zeros(nz,1);
+    % do not use terminal state constraint if reference on outputs is provided.
+    % otherwise there is a contradiction - we want to reach certain reference
+    % but we enforce x_N = 0 by default in mpc_buildmatFAST
+    Options.TerminalConstraint = 0;
+    y1 = r;
+    x1 = zeros(nx,1); 
+    u1 = zeros(nu,1);
+    d1 = zeros(nd,1);
+    z1 = zeros(nz,1);
 end
 
 
