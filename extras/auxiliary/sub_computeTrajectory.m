@@ -1,7 +1,7 @@
 function [X,U,Y,D,cost,trajectory,feasible,dyns,details] = sub_computeTrajectory(ctrl, x0, N, Options)
 %computeTrajectory(ctrl, x0, N, Options)
 
-% $Id: sub_computeTrajectory.m,v 1.6 2005/04/04 20:40:16 kvasnica Exp $
+% $Id: sub_computeTrajectory.m,v 1.7 2005/05/03 13:08:13 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -146,7 +146,7 @@ if Options.openloop,
     else
         [Uol, feasible, cost] = mpt_getInput(ctrl, x0, Options);
     end
-    Uol = reshape(Uol, nu, length(Uol)/nu)';
+    Uol = reshape(Uol, nu, [])';
     
     
     % switch from deltaU formluation if necessary
