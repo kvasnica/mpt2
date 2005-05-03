@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.6 2005/04/30 16:04:06 kvasnica Exp $
+% $Id: mptctrl.m,v 1.7 2005/05/03 09:05:20 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -266,28 +266,21 @@ elseif nargin==2 | nargin==3
             end
         end
         if ~haveMLD
-            
             % =========================================================================
             % no MLD model available, obtain it by doing a PWA2MLD conversion
             
-            fprintf('\n');
-            disp('======================================================================');
-            disp('WARNING: No MLD model available in system structure! Trying to convert');
-            disp('         sysStruct to MLD data. This conversion can be terribly');
-            disp('         inefficient! You should always opt for HYSDEL model instead.');
-            disp('======================================================================');
-            fprintf('\n');
+            fprintf('Converting PWA system into MLD representation...\n');
             if ~isfield(sysStruct, 'xmax') | ~isfield(sysStruct, 'xmin')
                 % xmax and xmin must be defined for pwa2mld translation
-                error('"sysStruct.xmin" and "sysStruct.xmax" must be defined for this kind of translation!');
+                error('State constraints must be defined!');
             end
             
-            fname = tempname;
-            mpt_ss2mld(sysStruct, fname);
-            newSysStruct = mpt_sys(fname, struct('verbose', 0, 'dohys2pwa', 0));
-            sysStruct.data = newSysStruct.data;
-            ctrl.sysStruct = sysStruct;
+            % do the conversion...
+            S = mpt_pwa2mld(sysStruct);
             
+            % store MLD matrices to sysStruct...
+            sysStruct.data.MLD = S;
+            ctrl.sysStruct.data.MLD = S;
         end
         % =========================================================================
         % add state and output constraints as defined in
