@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt]=mpt_getInput(ctrl,x0,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.8 2005/05/03 12:04:05 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.9 2005/05/03 13:06:23 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -201,7 +201,8 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         
         feasible = strcmp(Eflag.solverflag, 'ok');
         cost = Eflag.fopt;
-        U = Eflag.u';
+        U = Eflag.u(:);
+        fullopt = Eflag.full_xopt;
     else
         % LTI system
         Matrices = ctrl.details.Matrices;
@@ -214,7 +215,6 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         U = U(1:nu);
     end
 
-    fullopt = Eflag.full_xopt;
     region = [];
     return
     
