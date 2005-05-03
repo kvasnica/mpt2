@@ -27,7 +27,7 @@ function [X,U,Y,mode]=mpt_simSys(sysStruct,x0,inU,Options)
 %
 % see also MPT_COMPUTETRAJECTORY
 
-% $Id: mpt_simSys.m,v 1.4 2005/03/13 16:52:41 kvasnica Exp $
+% $Id: mpt_simSys.m,v 1.5 2005/05/03 13:07:46 kvasnica Exp $
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch
@@ -68,7 +68,7 @@ if nargin<4
 end
 
 if ~isfield(Options, 'abs_tol')
-    Options.abs_tol = mptOptions.abs_tol;
+    Options.rel_tol = mptOptions.rel_tol;
 end
 if ~isfield(Options, 'dynamics')
     Options.dynamics = 0;
@@ -96,7 +96,7 @@ else
     nu = size(sysStruct.B,2);
 end
 
-if size(inU,1)==nu,
+if size(inU,1)==nu & size(inU,1)~=size(inU,2),
     inU = inU';
 end
 
@@ -120,7 +120,7 @@ for ii=1:size(inU,1),
         dyn = Options.dynamics;
         if dyn==0
             for jj=1:nPWA,
-                if all(sysStruct.guardX{jj}*x0 + sysStruct.guardU{jj}*U - sysStruct.guardC{jj} < Options.abs_tol),
+                if all(sysStruct.guardX{jj}*x0 + sysStruct.guardU{jj}*U - sysStruct.guardC{jj} <= Options.rel_tol),
                     dyn = jj;
                     break
                 end
