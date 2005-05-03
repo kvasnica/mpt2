@@ -1,7 +1,7 @@
 function [X,U,Y,D,cost,trajectory,feasible,dyns,details] = sub_computeTrajectory(ctrl, x0, N, Options)
 %computeTrajectory(ctrl, x0, N, Options)
 
-% $Id: sub_computeTrajectory.m,v 1.7 2005/05/03 13:08:13 kvasnica Exp $
+% $Id: sub_computeTrajectory.m,v 1.8 2005/05/03 15:13:20 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -82,6 +82,11 @@ if ~isfield(Options,'randdist') % if random disturbances should be added to the 
 end
 if ~isfield(Options, 'verbose')
     Options.verbose = mptOptions.verbose;
+end
+if ~isfield(Options, 'usexinit')
+    % if set to true, uses feasible solution from previous step as an initial
+    % guess for the MILP/MIQP program to speed it up
+    Options.usexinit = 1;
 end
 
 % this flag is need for a different call to getInput for explicit controllers
@@ -302,7 +307,10 @@ else
         
         %-----------------------------------------------------------------------
         % obtain control input
-        [Ucl, feasible, region, costCL, inwhich] = mpt_getInput(ctrl, x0, Options);
+        [Ucl, feasible, region, costCL, inwhich, fullopt] = mpt_getInput(ctrl, x0, Options);
+        if Options.usexinit,
+            Options.usex0 = fullopt;
+        end
         if isEXPctrl
             trajectory = [trajectory region];
             if givedetails,
