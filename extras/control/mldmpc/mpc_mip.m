@@ -497,14 +497,21 @@ if isfield(Options, 'dumax')
     end
 end
 
-if Options.norm==2,
-    [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), [], [], ...
-        bl, bu, vartype, [], []);
-else
-    [xopt, fopt, Eflagm, flag] = mpt_solveMILP(CC, AA, B+epsil*ones(nlin,1), [], [], ...
-        bl, bu, vartype, [], []);
+MIoptions = [];
+% use initial guess of xmin if provided
+if isfield(Options, 'usex0'),
+    MIoptions.usex0 = Options.usex0;
 end
 
+if Options.norm==2,
+    [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), [], [], ...
+        bl, bu, vartype, [], MIoptions);
+else
+    [xopt, fopt, Eflagm, flag] = mpt_solveMILP(CC, AA, B+epsil*ones(nlin,1), [], [], ...
+        bl, bu, vartype, [], MIoptions);
+end
+
+full_xopt = xopt;
 if ~flagihard
     %error('this part of the code needs to be rewritten')
     slkeps = xopt(nvar+1:nvar+nEPS1);   % slack variable for soft-constraints
@@ -573,3 +580,4 @@ Eflag.u          = u;
 Eflag.d          = d;
 Eflag.z          = z;
 Eflag.OL         = Ext.OL;
+Eflag.full_xopt  = full_xopt;
