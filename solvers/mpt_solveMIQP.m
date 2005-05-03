@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.5 2005/04/21 20:26:44 kvasnica Exp $
+% $Id: mpt_solveMIQP.m,v 1.6 2005/05/03 12:06:18 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -150,6 +150,15 @@ end
 
 if solver==0
     % use cplex 9
+    
+    % use initial guess for xmin if provided.
+    % note that CPLEXINT uses a special syntax - x0 must be a 2 column matrix
+    % where the first column represents indices of elements for which an
+    % appropriate guess is provided in the second column
+    if isfield(options, 'usex0'),
+        options.x0 = [[1:length(options.usex0)]' options.usex0];
+    end
+
     indeq = [];
     if ~isempty(Aeq),
         nc = size(A,1);
@@ -223,12 +232,29 @@ end
 if ~isempty(ub)
     F = F + set(x <= ub);
 end
+
 if ~isempty(options),
-    options=sdpsettings(options,'Verbose',0,'warning',0,'solver',solver);
+    optfields = fields(options);
+    if length(optfields)==1,
+        % if only "usex0" is present in "options", we can use the global
+        % "sdpsettings" structure stored in mptOptions, just update this one
+        % field. this will greatly reduce the setup time!
+        if strcmpi(optfields{1}, 'usex0'),
+            x0 = options.usex0;
+            options = mptOptions.sdpsettings;
+            options.solver = solver;
+            options.usex0 = x0;
+        else
+            options=sdpsettings(options,'Verbose',0,'warning',0,'solver',solver);
+        end
+    else
+        options=sdpsettings(options,'Verbose',0,'warning',0,'solver',solver);
+    end
 else
     options = mptOptions.sdpsettings;
     options.solver = solver;
 end
+
 solution = solvesdp(F, 0.5*x'*H*x + f'*x, options);
 xmin = double(x);
 fmin = 0.5*xmin'*H*xmin + f'*xmin;
