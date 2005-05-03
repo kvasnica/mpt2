@@ -1,4 +1,4 @@
-function [U,feasible,region,cost,inwhich]=mpt_getInput(ctrl,x0,Options)
+function [U,feasible,region,cost,inwhich,fullopt]=mpt_getInput(ctrl,x0,Options)
 %MPT_GETINPUT For a given state, extracts the optimal output from controller structure
 %
 % [U,feasible,region,cost]=mpt_getInput(ctrlStruct,x0,Options)
@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich]=mpt_getInput(ctrl,x0,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.7 2005/04/30 16:05:09 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.8 2005/05/03 12:04:05 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -111,6 +111,7 @@ end
 
 x0=x0(:);
 inwhich = [];
+fullopt = [];
 
 if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     % solve an QP/LP/MIQP/MILP for on-line controllers
@@ -213,6 +214,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         U = U(1:nu);
     end
 
+    fullopt = Eflag.full_xopt;
     region = [];
     return
     
