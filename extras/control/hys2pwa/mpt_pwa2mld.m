@@ -71,8 +71,9 @@ C = []; D1 = []; D2 = []; D3 = [];
 nz = ndyn*nx;
 ndelta = ndyn;
 
-xumax = [sysStruct.xmin; sysStruct.umin];
-xumin = [sysStruct.xmax; sysStruct.umax];
+xumin = [sysStruct.xmin; sysStruct.umin];
+xumax = [sysStruct.xmax; sysStruct.umax];
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Si*x + Ri*u - Ti <= Mstar_i * (1 - d_i)
@@ -82,8 +83,9 @@ for idyn = 1:ndyn,
     Ti = sysStruct.guardC{idyn};
     nc = size(Si,1);
     
-    [Mstar,m] = derivebounds([Si Ri], -Ti, xumin, xumax);
-    Mstar = repmat(max(Mstar), nc, 1);
+    [mstar,m] = derivebounds([Si Ri], -Ti, xumin, xumax);
+    Mstar = repmat(max(mstar), nc, 1);
+    Mstar = repmat(0.5, nc, 1);
     
     e4 = -Si;
     e1 = -Ri;
@@ -266,8 +268,20 @@ C = []; D1 = []; D2 = []; D3 = [];
 nz = ndyn*nx;
 ndelta = ndyn;
 
-xumax = [sysStruct.xmin; sysStruct.umin];
-xumin = [sysStruct.xmax; sysStruct.umax];
+xumin = [sysStruct.xmin; sysStruct.umin];
+xumax = [sysStruct.xmax; sysStruct.umax];
+
+%%%%%%%%%%%%%%%%%%%%%%
+% estimate "M" and "m"
+Ms = [];
+ms = [];
+for idyn = 1:ndyn,
+    [M,m] = derivebounds([Ai{idyn} Bi{idyn}], fi{idyn}, xumin, xumax);
+    Ms = [Ms; max(M)];
+    ms = [ms; min(m)];
+end
+Ms = max(Ms);
+ms = min(ms);
 
 %%%%%%%%%%%%%%%%%%%
 % x(t+1) = \sum z_i
@@ -284,9 +298,8 @@ B1 = zeros(nx, nu);
 % zi <= Ai * x + Bi * u + fi - m + m * di
 % zi >= Ai * x + Bi * u + fi - M + M * di
 for idyn = 1:ndyn,
-    
-    [M,m] = derivebounds([Ai{idyn} Bi{idyn}], fi{idyn}, xumin, xumax);
-    M = repmat(max(M), size(M, 1), 1);
+    M = repmat(Ms, nx, 1);
+    m = repmat(ms, nx, 1);
     aE1 = []; aE2 = []; aE3 = []; aE4 = []; aE5 = [];
     
     % zi <= M * di
@@ -330,7 +343,7 @@ end
 return
 
 %---------------------------------------------------
-function [m,M] = derivebounds(A, b, lb, ub)
+function [M,m] = derivebounds(A, b, lb, ub)
 % derive min/max bounds on each row of
 % A*z + b
 % lb <= z <= ub
