@@ -28,7 +28,7 @@ function probStruct=mpt_verifyProbStruct(probStruct,Options)
 % see also MPT_VERIFYSYSSTRUCT, MPT_CONTROL
 %
 
-% $Id: mpt_verifyProbStruct.m,v 1.5 2005/04/11 09:04:13 kvasnica Exp $
+% $Id: mpt_verifyProbStruct.m,v 1.6 2005/05/03 17:53:21 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -301,8 +301,8 @@ if probStruct.tracking,
     %probStruct.Tconstraint = 0;
 end
 if ~isfield(probStruct,'Tconstraint')
-    if probStruct.norm==2 & Options.verbose>0,
-        disp('No user-specified terminal constraint. Using LQR terminal set...');
+    if probStruct.norm==2 & Options.verbose>1,
+        disp('No user-specified terminal constraint. Using stabilizing terminal set...');
     end
     probStruct.Tconstraint=1;
 end
