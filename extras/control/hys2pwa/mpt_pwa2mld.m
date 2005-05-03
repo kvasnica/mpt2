@@ -85,7 +85,6 @@ for idyn = 1:ndyn,
     
     [mstar,m] = derivebounds([Si Ri], -Ti, xumin, xumax);
     Mstar = repmat(max(mstar), nc, 1);
-    Mstar = repmat(0.5, nc, 1);
     
     e4 = -Si;
     e1 = -Ri;
