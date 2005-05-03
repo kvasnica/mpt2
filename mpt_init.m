@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.48 2005/04/28 08:45:41 kvasnica Exp $
+% $Id: mpt_init.m,v 1.49 2005/05/03 17:54:33 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -127,7 +127,7 @@ function out=mpt_init(varargin)
 % ---------------------------------------------------------------------------
 global mptOptions;
 
-mpt_ver = '2.0.1';
+mpt_ver = '2.0.2';
 
 
 % returns version of MPT
