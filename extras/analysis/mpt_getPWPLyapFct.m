@@ -452,14 +452,21 @@ for dyn_ctr=1:unc_loop
                             smxmon=monolist(x,floor(ndeg/2));%use symmetric structure for efficient implementation
                             smlyap=length(smxmon);    
                             
+                            temp = [];
                             for k=1:m
                                 alphadecay{transCtr,k}=sdpvar(smlyap,smlyap);
                                 alphadecayx{transCtr,k}=smxmon'*alphadecay{transCtr,k}*smxmon;
-                                sumdecay=sumdecay+alphadecayx{transCtr,k}*G(k);
                                 
-                                parametric_variables=[parametric_variables ; alphadecay{transCtr,k}(:)];
+                                % old
+                                % sumdecay=sumdecay+alphadecayx{transCtr,k}*G(k);
+                                % new
+                                temp = [temp alphadecayx{transCtr,k}];
+                                
+                                parametric_variables=[parametric_variables; alphadecay{transCtr,k}(:)];
                                 F= F + set(alphadecay{transCtr,k}>0);           
                             end;
+                            % new
+                            sumdecay = sumdecay + temp*G;
                             deltaV{transCtr}=deltaV{transCtr}  - sumdecay;
                         end;
                         
