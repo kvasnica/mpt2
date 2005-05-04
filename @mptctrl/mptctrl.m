@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.7 2005/05/03 09:05:20 kvasnica Exp $
+% $Id: mptctrl.m,v 1.8 2005/05/04 07:48:15 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -268,7 +268,12 @@ elseif nargin==2 | nargin==3
         if ~haveMLD
             % =========================================================================
             % no MLD model available, obtain it by doing a PWA2MLD conversion
-            
+            disp('======================================================================');
+            disp('WARNING: No MLD model available in system structure! Trying to convert');
+            disp('         PWA model to MLD representation. This conversion can be very');
+            disp('         inefficient! You should always opt for HYSDEL model instead.');
+            disp('======================================================================');
+            fprintf('\n'); 
             fprintf('Converting PWA system into MLD representation...\n');
             if ~isfield(sysStruct, 'xmax') | ~isfield(sysStruct, 'xmin')
                 % xmax and xmin must be defined for pwa2mld translation
