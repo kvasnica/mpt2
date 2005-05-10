@@ -53,7 +53,7 @@ function [V,R,P,adjV,adjf] = extreme(P,Options)
 % see also HULL
 %
 
-% $Id: extreme.m,v 1.10 2005/04/04 09:21:54 kvasnica Exp $
+% $Id: extreme.m,v 1.11 2005/05/10 20:22:22 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -244,7 +244,8 @@ if(Options.debug_level>0) %& ~Vstored
         [result,i]=checkextreme(P,V,nx,Options);
         
         if result==1,
-            if(Options.extreme_solver~=0)
+            if(Options.extreme_solver~=0) & 0
+                % this code does nothing, therefore we skip it...
                 Options.extreme_solver=0;
                 disp(['EXTREME: Point ' num2str(i) ' is not a vertex! Recomputing with brute force method...'])       
             else
@@ -282,6 +283,10 @@ if(Options.debug_level>1)
     end
 end
 
+% assign polytope with updated vertices in caller's workspace
+if ~isempty(inputname(1)),
+    assignin('caller',inputname(1),P);
+end
 
 
 
