@@ -41,7 +41,7 @@ function ctrlST=mpt_searchTree(ctrl,Options)
 % T. A. Johansen and A. Bemporad; Automatica, Vol. 39, No. 5, pp. 945-950
 %
 
-% $Id: mpt_searchTree.m,v 1.1 2005/02/23 12:35:39 kvasnica Exp $
+% $Id: mpt_searchTree.m,v 1.2 2005/05/10 20:18:09 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -459,6 +459,12 @@ ctrlStructST = ctrlStruct;
 ctrlStructST.details.searchTree = searchTree;
 
 ctrlST = mptctrl(ctrlStructST);
+
+% assign variable which contains the search tree in caller's workspace
+if ~isempty(inputname(1)),
+    assignin('caller',inputname(1),ctrlST);
+end
+
 return
 
 

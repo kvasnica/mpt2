@@ -43,7 +43,7 @@ function ctrl = mpt_lyapunov(ctrl, funtype, ndeg, Options)
 % see also MPT_GETQUADLYAPFCT, MPT_GETPWQLYAPFCT, MPT_GETPWALYAPFCT
 %
 
-% $Id: mpt_lyapunov.m,v 1.5 2005/04/06 09:30:48 kvasnica Exp $
+% $Id: mpt_lyapunov.m,v 1.6 2005/05/10 20:17:58 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -224,4 +224,9 @@ if lyapunov.feasible
     end
     fprintf('\n%s Lyapunov function found, closed-loop system is stable.\n', type);
     fprintf('The Lyapunov function was stored to ctrl.details.lyapunov\n\n');
+end
+
+% assign variable with new '.details.lyapunov' field in caller's workspace
+if ~isempty(inputname(1)),
+    assignin('caller',inputname(1),ctrl);
 end

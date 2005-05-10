@@ -39,7 +39,7 @@ function [simpleCtrl,details] = mpt_simplify(ctrl, how, Options)
 % see also MERGE
 %
 
-% $Id: mpt_simplify.m,v 1.7 2005/03/13 18:52:25 kvasnica Exp $
+% $Id: mpt_simplify.m,v 1.8 2005/05/10 20:17:58 kvasnica Exp $
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -329,6 +329,10 @@ end
 
 simpleCtrl = mptctrl(simpleCtrlStruct);
 
+% assign simplified controller in caller's workspace
+if ~isempty(inputname(1)),
+    assignin('caller',inputname(1),simpleCtrl);
+end
 
 %------------------------------------------------------------
 function color = sub_preparecolors(ctrlStruct)
