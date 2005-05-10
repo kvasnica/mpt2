@@ -107,7 +107,7 @@ function [P] = polytope(varargin)
 % see also POLYTOPE/DOUBLE, CHEBYBALL, ISFULLDIM, ISMINREP, ISNORMAL, EXTREME
 %
 
-% $Id: polytope.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: polytope.m,v 1.2 2005/05/10 13:03:21 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -271,6 +271,13 @@ else
             end
         end
     end
+end
+
+if issparse(P.H),
+    P.H = full(P.H);
+end
+if issparse(P.K),
+    P.K = full(P.K);
 end
 
 [nc,nx]=size(P.H);
