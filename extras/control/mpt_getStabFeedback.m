@@ -27,7 +27,7 @@ function [F,P,feasible] = mpt_getStabFeedback(A,B,Q1,R,Options)
 %
 % see also MPT_GETCOMMONLYAPFCT, MPT_GETPWQLYAPFCT
 
-% $Id: mpt_getStabFeedback.m,v 1.2 2005/03/04 08:40:25 kvasnica Exp $
+% $Id: mpt_getStabFeedback.m,v 1.3 2005/05/10 13:12:13 kvasnica Exp $
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -87,30 +87,25 @@ nu=size(B{1},2);
 
 myprog=lmi;
 Q = sdpvar(nx,nx,'symmetric'); 
-gam = sdpvar(1,1); 
-  
+gam = 1;
 for i=1:length(A)
-    Y{i} = sdpvar(nu,nx);  
-    myprog=myprog+set([Q                (A{i}*Q+B{i}*Y{i})' (Q1^0.5*Q)'     (R^0.5*Y{i})';
-                      (A{i}*Q+B{i}*Y{i})       Q             zeros(nx,nx)   zeros(nx,nu);
-                      (Q1^0.5*Q)         zeros(nx,nx)        gam*eye(nx)    zeros(nx,nu);
-                      (R^0.5*Y{i})       zeros(nu,nx)        zeros(nu,nx)   gam*eye(nu)]>0);
+    Y{i} = sdpvar(nu,nx,'full');  
+    myprog=myprog+set([Q (A{i}*Q+B{i}*Y{i})' (Q1^0.5*Q)' (R^0.5*Y{i})';
+        (A{i}*Q+B{i}*Y{i})  Q    zeros(nx,nx)  zeros(nx,nu);
+        (Q1^0.5*Q)         zeros(nx,nx)        eye(nx)  zeros(nx,nu);
+        (R^0.5*Y{i})       zeros(nu,nx)        zeros(nu,nx) eye(nu)]>0);
 end
-myprog = myprog + set('Q-1e-6*eye(nx)>0');   
-
+myprog = myprog + set(Q>0);  
 if ~isempty(mptOptions.sdpsettings)
-	options = mptOptions.sdpsettings;
+    options = mptOptions.sdpsettings;
 else
     options=sdpsettings('Verbose',0);
 end
-options.sedumi.stepdif=0;
-%solution = solvesdp(myprog,[],gam,options);                   %find solution using LMI solver
-solution = solvesdp(myprog,gam,options);                   %find solution using LMI solver
-
+solution = solvesdp(myprog,-trace(Q),options);
 dQ=double(Q);
-P=double(gam)*inv(dQ);
+P=inv(dQ);
 for i=1:length(A)
-    F{i}=double(Y{i})*inv(dQ);
+    F{i}=double(Y{i})*P;
 end
 
 if(solution.problem~=0)  
