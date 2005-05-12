@@ -502,6 +502,10 @@ MIoptions = [];
 if isfield(Options, 'usex0'),
     MIoptions.usex0 = Options.usex0;
 end
+% propagate Options.save_prob to MIoptions
+if isfield(Options, 'save_prob'),
+    MIoptions.save_prob = Options.save_prob;
+end
 
 if Options.norm==2,
     [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), [], [], ...
