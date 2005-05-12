@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt]=mpt_getInput(ctrl,x0,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.9 2005/05/03 13:06:23 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.10 2005/05/12 12:20:45 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -194,6 +194,15 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
                     ref.x = zeros(nx,1);
                 end
             end
+        end
+        
+        if isfield(probStruct, 'xN'),
+            clear ref
+            ref.x = probStruct.xN;
+            % tell mpc_mip to include terminal set constraint
+            Options.TerminalConstraint = 1;
+            % zero tolerance on satisfaction of terminal set constraint
+            Options.eps2 = 0;
         end
         
         [ut,dt,zt,Eflag] = mpc_mip(sysStruct.data.MLD, x0, ref, weights, ...
