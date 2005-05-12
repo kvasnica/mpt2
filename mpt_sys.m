@@ -326,7 +326,27 @@ elseif isa(obj, 'char')
             sysStruct.guardX{1} = eye(1, nx);
             sysStruct.guardC{1} = 1e6;
             sysStruct.data.onlymld = 1;
+        
+            % extract state/input constraints from MLD representation
+            if isfield(S, 'nxb')
+                if S.nxb~=0,
+                    sysStruct.xbool = S.nxr+1:S.nx;
+                end
+            end
+            if isfield(S, 'uu') & isfield(S, 'ul'),
+                if all(~isinf(S.uu)) & all(~isinf(S.ul)) & S.nu>0,
+                    sysStruct.umax = S.uu;
+                    sysStruct.umin = S.ul;
+                end
+            end
+            if isfield(S, 'xu') & isfield(S, 'xl'),
+                if all(~isinf(S.xu)) & all(~isinf(S.xl)) & nx>0,
+                    sysStruct.xmin = S.xl;
+                    sysStruct.xmax = S.xu;
+                end
+            end
         end
+        
         sysStruct.data.MLD = S;
     end
     
