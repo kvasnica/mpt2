@@ -33,8 +33,10 @@ function [x,R]=facetcircle(P,ind,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: facetcircle.m,v 1.2 2004/12/04 13:03:04 kvasnica Exp $
+% $Id: facetcircle.m,v 1.3 2005/05/12 09:26:34 kvasnica Exp $
 %
+% (C) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
+%          baric@control.ee.ethz.ch  
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
@@ -59,13 +61,14 @@ function [x,R]=facetcircle(P,ind,Options)
 %          Boston, MA  02111-1307  USA
 % ---------------------------------------------------------------------------
 
-% error(nargchk(2,3,nargin));
 % 
 global mptOptions;
 
-% if ~isstruct(mptOptions)
-%     mpt_error;
-% end
+error(nargchk(2,3,nargin));
+
+if ~isa(P,'polytope')
+    error('ANALYTICCENTER: First input argument must be a polytope!');
+end
 
 if nargin<3,
     Options=[];
@@ -87,15 +90,10 @@ if length(P.Array)>0,
     error('FACETCIRCLE: this function does not work for array of polytopes!');
 end
 
-
 A=P.H;
 B=P.K;
-
-% nb=size(B,1);
-% n=size(A,2);
-% if nb~=size(A,1),
-%    error('FACETCIRCLE: The H and K matrices must have the same number of rows.')
-% end
+xCheb = P.xCheb;
+rCheb = P.RCheb;
 
 [nb,n] = size(A);
 
@@ -103,36 +101,48 @@ if(isempty(A) | isempty(B))
     error('FACETCIRCLE: Constraint matrix is empty')
 end
 
-ii=[1:ind-1,ind+1:nb];
-Aeq=A(ind,:);
-Beq=B(ind);
-A=A(ii,:);
-B=B(ii);
-
-Tnorm=zeros(nb-1,1);
-aux1=Aeq*Aeq';
-for i=1:nb-1,
-   aux2=A(i,:)*Aeq';
-   Tnorm(i)=sqrt(abs(A(i,:)*A(i,:)'-aux2*aux2/aux1)); % abs because of rounding error (-zero) case
+if ( ind > nb ),
+    error('FACETCIRCLE: Specified facet index exceed the number of facets.');
 end
 
-% use 'rescue' function - resolve an LP automatically if it is infeasible
-% with default solver
-[xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,n) 1],[A,-Tnorm],B,[Aeq,0],Beq,[],lpsolver,1);
+% project Chebyshev center onto the facet
+%
+facetH    = A(ind,:);
+facetK    = B(ind,:);
+facetDist = facetK - facetH * xCheb;
+normFacet = norm(facetH);
+x0 = xCheb + facetDist * facetH'/normFacet;
 
-if ~strcmp(how,'ok')
-    % problem infeasible with default solver, re-solve it using initial values for x
-    x0 = [zeros(n,1); 1000];         % hard-coded initial conditions
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,n) 1],[A,-Tnorm],B,[Aeq,0],Beq,x0,lpsolver,1);
-end
+Hi0 = null(facetH);
+idxOther = 1:nb;
+idxOther(ind) = [];
+Afacet = A(idxOther,:);
+normFacets = sqrt(diag(Afacet * Afacet'));
+auxH = [Afacet*Hi0 normFacets];
+auxK = B(idxOther,:) - Afacet * x0;
+[xopt,fval,lambda,exitflag,how]= ...
+    mpt_solveLPi([zeros(1,n-1) -1],auxH,auxK,[],[],[], ...
+                 mptOptions.lpsolver,1);
 
-R=-xopt(n+1); % This is radius of the ball
-x=xopt(1:n);  % This is center of the ball
+x = x0 + Hi0 * xopt(1:end-1); % Chebyshev center of the facet
+R = xopt(end);                % Chebyshev radius of the facet
 
 if strcmp(how,'infeasible'),
       disp('FACETCIRCLE:   ERROR: Facet problem should be feasible (1)');
+      return;
 elseif(R<-abs_tol)
       disp('FACETCIRCLE:   ERROR: Facet problem should be feasible (2)');
+      return;
 elseif(max(A*x-B)>abs_tol)
       disp('FACETCIRCLE:   ERROR: Facet problem should be feasible (3)');
+      return;
 end
+
+% project the point to the facet, this is just to annulate all numerical
+% errors (never trust to an LP solver)
+%
+xSlack = facetK - facetH * x;
+x = x + xSlack * facetH' / normFacet;
+
+
+
