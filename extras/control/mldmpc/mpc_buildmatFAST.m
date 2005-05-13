@@ -197,7 +197,79 @@ else
     error('Unknown norm has been specified!');
 end
 
-
+if Options.norm~=2,
+    % set number of slacks to zero if all corresponding weights are zero
+    allzero = 1;
+    for ii = 1:length(WEIGHT),
+        if ~isempty(WEIGHT{ii}.Qd),
+            if any(any(WEIGHT{ii}.Qd~=0)),
+                allzero = 0;
+                break
+            end
+        end
+    end
+    if allzero,
+        ned = 0;
+    end
+    allQdzero = allzero;
+    
+    allzero = 1;
+    for ii = 1:length(WEIGHT),
+        if ~isempty(WEIGHT{ii}.Qx),
+            if any(any(WEIGHT{ii}.Qx~=0)),
+                allzero = 0;
+                break
+            end
+        end
+    end
+    if allzero,
+        nex = 0;
+    end
+    allQxzero = allzero;
+    
+    allzero = 1;
+    for ii = 1:length(WEIGHT),
+        if ~isempty(WEIGHT{ii}.Qu),
+            if any(any(WEIGHT{ii}.Qu~=0)),
+                allzero = 0;
+                break
+            end
+        end
+    end
+    if allzero,
+        neu = 0;
+    end
+    allQuzero = allzero;
+    
+    allzero = 1;
+    for ii = 1:length(WEIGHT),
+        if ~isempty(WEIGHT{ii}.Qz),
+            if any(any(WEIGHT{ii}.Qz~=0)),
+                allzero = 0;
+                break
+            end
+        end
+    end
+    if allzero,
+        nez = 0;
+    end
+    allQzzero = allzero;
+    
+    allzero = 1;
+    for ii = 1:length(WEIGHT),
+        if ~isempty(WEIGHT{ii}.Qy),
+            if any(any(WEIGHT{ii}.Qy~=0)),
+                allzero = 0;
+                break
+            end
+        end
+    end
+    if allzero,
+        ney = 0;
+    end
+    allQyzero = allzero;
+end
+    
 % Define total number of variables nV
 %------------------------------------
 % Note: we collapse optimizer to the smallest dimension needed.
@@ -486,131 +558,141 @@ for kk=1:NT    % Actual time is given as k = kk-1, so this corresponds to k = 0:
         continue;
     end
     
-    % - eu(k) <= + WEI.Qu * (u(k)-u_e(k))
-    %-------------------------------------------
-    A = repmat(ER_A,nu,1);
-    B = repmat(ER_B,nu,1);
-    B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) = B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) - WEI.Qu;
-    B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) = B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) - eye(neu);
-    f = WEI.Qu * UU1((kk-1)*nu+1:kk*nu);
+    if ~allQuzero,
+        % - eu(k) <= + WEI.Qu * (u(k)-u_e(k))
+        %-------------------------------------------
+        A = repmat(ER_A,nu,1);
+        B = repmat(ER_B,nu,1);
+        B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) = B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) - WEI.Qu;
+        B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) = B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) - eye(neu);
+        f = WEI.Qu * UU1((kk-1)*nu+1:kk*nu);
+        
+        F1(cR:cR+nu-1,:) = B;
+        F2(cR:cR+nu-1,:) = -f;
+        F3(cR:cR+nu-1,:) = -A;
+        cR = cR + nu;
+        
+        % - eu(k) <= - WEI.Qu * (u(k)-u_e(k))
+        %-------------------------------------------
+        A = repmat(ER_A,nu,1);
+        B = repmat(ER_B,nu,1);
+        B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) = B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) + WEI.Qu;
+        B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) = B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) - eye(neu);
+        f = -WEI.Qu * UU1((kk-1)*nu+1:kk*nu);
+        
+        F1(cR:cR+nu-1,:) = B;
+        F2(cR:cR+nu-1,:) = -f;
+        F3(cR:cR+nu-1,:) = -A;
+        cR = cR + nu;
+    end
+
+    if ~allQdzero,
+        % - ed(k) <= + WEI.Qd * (d(k)-d_e(k))
+        %-------------------------------------------
+        A = repmat(ER_A,nd,1);
+        B = repmat(ER_B,nd,1);
+        B(:,doff+(kk-1)*nd+1:doff+kk*nd) = B(:,doff+(kk-1)*nd+1:doff+kk*nd) - WEI.Qd;
+        B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) = B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) - eye(ned);
+        f = WEI.Qd * DD1((kk-1)*nd+1:kk*nd);
+        
+        F1(cR:cR+nd-1,:) = B;
+        F2(cR:cR+nd-1,:) = -f;
+        F3(cR:cR+nd-1,:) = -A;
+        cR = cR + nd;
     
-    F1(cR:cR+nu-1,:) = B;
-    F2(cR:cR+nu-1,:) = -f;
-    F3(cR:cR+nu-1,:) = -A;
-    cR = cR + nu;
+        % - ed(k) <= - WEI.Qd * (d(k)-d_e(k))
+        %-------------------------------------------
+        A = repmat(ER_A,nd,1);
+        B = repmat(ER_B,nd,1);
+        B(:,doff+(kk-1)*nd+1:doff+kk*nd) = B(:,doff+(kk-1)*nd+1:doff+kk*nd) + WEI.Qd;
+        B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) = B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) - eye(ned);
+        f = -WEI.Qd * DD1((kk-1)*nd+1:kk*nd);
+        
+        F1(cR:cR+nd-1,:) = B;
+        F2(cR:cR+nd-1,:) = -f;
+        F3(cR:cR+nd-1,:) = -A;
+        cR = cR + nd;
+    end
     
-    % - eu(k) <= - WEI.Qu * (u(k)-u_e(k))
-    %-------------------------------------------
-    A = repmat(ER_A,nu,1);
-    B = repmat(ER_B,nu,1);
-    B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) = B(:,uoff+(kk-1)*nu+1:uoff+kk*nu) + WEI.Qu;
-    B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) = B(:,euoff+(kk-1)*neu+1:euoff+kk*neu) - eye(neu);
-    f = -WEI.Qu * UU1((kk-1)*nu+1:kk*nu);
+    if ~allQzzero,
+        % - ez(k) <= + WEI.Qz * (z(k)-z_e(k))
+        %-------------------------------------------
+        A = repmat(ER_A,nz,1);
+        B = repmat(ER_B,nz,1);
+        B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) = B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) - WEI.Qz;
+        B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) = B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) - eye(nez);
+        f = WEI.Qz * ZZ1((kk-1)*nz+1:kk*nz);
+        
+        F1(cR:cR+nz-1,:) = B;
+        F2(cR:cR+nz-1,:) = -f;
+        F3(cR:cR+nz-1,:) = -A;
+        cR = cR + nz;
+        
+        % - ez(k) <= - WEI.Qz * (z(k)-z_e(k))
+        %-------------------------------------------
+        A = repmat(ER_A,nz,1);
+        B = repmat(ER_B,nz,1);
+        B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) = B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) + WEI.Qz;
+        B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) = B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) - eye(nez);
+        f = -WEI.Qz * ZZ1((kk-1)*nz+1:kk*nz);
+
+        F1(cR:cR+nz-1,:) = B;
+        F2(cR:cR+nz-1,:) = -f;
+        F3(cR:cR+nz-1,:) = -A;
+        cR = cR + nz;
+    end
     
-    F1(cR:cR+nu-1,:) = B;
-    F2(cR:cR+nu-1,:) = -f;
-    F3(cR:cR+nu-1,:) = -A;
-    cR = cR + nu;
+    if ~allQxzero,
+        % - ex(k) <= + WEI.Qx * (x(k)-x_e(k))
+        %-------------------------------------------
+        A = -WEI.Qx * Ax{kk};
+        B = -WEI.Qx * Bx{kk};
+        B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) = B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) - eye(nex);
+        f = -WEI.Qx * (fx{kk} - XX1((kk-1)*nx+1:kk*nx));
+        F1(cR:cR+nx-1,:) = B;
+        F2(cR:cR+nx-1,:) = -f;
+        F3(cR:cR+nx-1,:) = -A;
+        cR = cR + nx;
     
-    % - ed(k) <= + WEI.Qd * (d(k)-d_e(k))
-    %-------------------------------------------
-    A = repmat(ER_A,nd,1);
-    B = repmat(ER_B,nd,1);
-    B(:,doff+(kk-1)*nd+1:doff+kk*nd) = B(:,doff+(kk-1)*nd+1:doff+kk*nd) - WEI.Qd;
-    B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) = B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) - eye(ned);
-    f = WEI.Qd * DD1((kk-1)*nd+1:kk*nd);
+        % - ex(k) <= - WEI.Qx * (x(k)-x_e(k))
+        %-------------------------------------------
+        A = WEI.Qx * Ax{kk};
+        B = WEI.Qx * Bx{kk};
+        B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) = B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) - eye(nex);
+        f = WEI.Qx * (fx{kk} - XX1((kk-1)*nx+1:kk*nx));
     
-    F1(cR:cR+nd-1,:) = B;
-    F2(cR:cR+nd-1,:) = -f;
-    F3(cR:cR+nd-1,:) = -A;
-    cR = cR + nd;
+        F1(cR:cR+nx-1,:) = B;
+        F2(cR:cR+nx-1,:) = -f;
+        F3(cR:cR+nx-1,:) = -A;
+        cR = cR + nx;
+    end
+
+    if ~allQyzero,
+        % - ey(k) <= + WEI.Qy * (y(k)-y_e(k))
+        %-------------------------------------------
+        A = -WEI.Qy * Ay{kk};
+        B = -WEI.Qy * By{kk};
+        B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) = B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) - eye(ney);
+        f = -WEI.Qy * (fy{kk} - YY1((kk-1)*ny+1:kk*ny));
+        
+        
+        F1(cR:cR+ny-1,:) = B;
+        F2(cR:cR+ny-1,:) = -f;
+        F3(cR:cR+ny-1,:) = -A;
+        cR = cR + ny;
     
-    % - ed(k) <= - WEI.Qd * (d(k)-d_e(k))
-    %-------------------------------------------
-    A = repmat(ER_A,nd,1);
-    B = repmat(ER_B,nd,1);
-    B(:,doff+(kk-1)*nd+1:doff+kk*nd) = B(:,doff+(kk-1)*nd+1:doff+kk*nd) + WEI.Qd;
-    B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) = B(:,edoff+(kk-1)*ned+1:edoff+kk*ned) - eye(ned);
-    f = -WEI.Qd * DD1((kk-1)*nd+1:kk*nd);
-    
-    F1(cR:cR+nd-1,:) = B;
-    F2(cR:cR+nd-1,:) = -f;
-    F3(cR:cR+nd-1,:) = -A;
-    cR = cR + nd;
-    
-    % - ez(k) <= + WEI.Qz * (z(k)-z_e(k))
-    %-------------------------------------------
-    A = repmat(ER_A,nz,1);
-    B = repmat(ER_B,nz,1);
-    B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) = B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) - WEI.Qz;
-    B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) = B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) - eye(nez);
-    f = WEI.Qz * ZZ1((kk-1)*nz+1:kk*nz);
-    
-    F1(cR:cR+nz-1,:) = B;
-    F2(cR:cR+nz-1,:) = -f;
-    F3(cR:cR+nz-1,:) = -A;
-    cR = cR + nz;
-    
-    % - ez(k) <= - WEI.Qz * (z(k)-z_e(k))
-    %-------------------------------------------
-    A = repmat(ER_A,nz,1);
-    B = repmat(ER_B,nz,1);
-    B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) = B(:,zoff+(kk-1)*nz+1:zoff+kk*nz) + WEI.Qz;
-    B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) = B(:,ezoff+(kk-1)*nez+1:ezoff+kk*nez) - eye(nez);
-    f = -WEI.Qz * ZZ1((kk-1)*nz+1:kk*nz);
-    
-    F1(cR:cR+nz-1,:) = B;
-    F2(cR:cR+nz-1,:) = -f;
-    F3(cR:cR+nz-1,:) = -A;
-    cR = cR + nz;
-    
-    % - ex(k) <= + WEI.Qx * (x(k)-x_e(k))
-    %-------------------------------------------
-    A = -WEI.Qx * Ax{kk};
-    B = -WEI.Qx * Bx{kk};
-    B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) = B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) - eye(nex);
-    f = -WEI.Qx * (fx{kk} - XX1((kk-1)*nx+1:kk*nx));
-    
-    F1(cR:cR+nx-1,:) = B;
-    F2(cR:cR+nx-1,:) = -f;
-    F3(cR:cR+nx-1,:) = -A;
-    cR = cR + nx;
-    
-    % - ex(k) <= - WEI.Qx * (x(k)-x_e(k))
-    %-------------------------------------------
-    A = WEI.Qx * Ax{kk};
-    B = WEI.Qx * Bx{kk};
-    B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) = B(:,exoff+(kk-1)*nex+1:exoff+kk*nex) - eye(nex);
-    f = WEI.Qx * (fx{kk} - XX1((kk-1)*nx+1:kk*nx));
-    
-    F1(cR:cR+nx-1,:) = B;
-    F2(cR:cR+nx-1,:) = -f;
-    F3(cR:cR+nx-1,:) = -A;
-    cR = cR + nx;
-    
-    % - ey(k) <= + WEI.Qy * (y(k)-y_e(k))
-    %-------------------------------------------
-    A = -WEI.Qy * Ay{kk};
-    B = -WEI.Qy * By{kk};
-    B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) = B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) - eye(ney);
-    f = -WEI.Qy * (fy{kk} - YY1((kk-1)*ny+1:kk*ny));
-    
-    F1(cR:cR+ny-1,:) = B;
-    F2(cR:cR+ny-1,:) = -f;
-    F3(cR:cR+ny-1,:) = -A;
-    cR = cR + ny;
-    
-    % - ey(k) <= - WEI.Qy * (y(k)-y_e(k))
-    %-------------------------------------------
-    A = WEI.Qy * Ay{kk};
-    B = WEI.Qy * By{kk};
-    B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) = B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) - eye(ney);
-    f = WEI.Qy * (fy{kk} - YY1((kk-1)*ny+1:kk*ny));
-    
-    F1(cR:cR+ny-1,:) = B;
-    F2(cR:cR+ny-1,:) = -f;
-    F3(cR:cR+ny-1,:) = -A;
-    cR = cR + ny;
+        % - ey(k) <= - WEI.Qy * (y(k)-y_e(k))
+        %-------------------------------------------
+        A = WEI.Qy * Ay{kk};
+        B = WEI.Qy * By{kk};
+        B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) = B(:,eyoff+(kk-1)*ney+1:eyoff+kk*ney) - eye(ney);
+        f = WEI.Qy * (fy{kk} - YY1((kk-1)*ny+1:kk*ny));
+        
+        F1(cR:cR+ny-1,:) = B;
+        F2(cR:cR+ny-1,:) = -f;
+        F3(cR:cR+ny-1,:) = -A;
+        cR = cR + ny;
+    end
 end
 
 if Options.TerminalConstraint
