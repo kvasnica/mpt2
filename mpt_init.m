@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.49 2005/05/03 17:54:33 kvasnica Exp $
+% $Id: mpt_init.m,v 1.50 2005/05/13 07:27:34 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -457,11 +457,11 @@ if isempty(solvers.qp)
 end
 
 if isempty(solvers.milp),
-    warning('mpt_init: No supported MILP solver available on your system, cannot proceed!');
+    warning('mpt_init: No supported MILP solver available on your system.');
 end
 
 if isempty(solvers.miqp),
-    warning('mpt_init: No supported MIQP solver available on your system, cannot proceed!');
+    warning('mpt_init: No supported MIQP solver available on your system.');
 end
 
 
