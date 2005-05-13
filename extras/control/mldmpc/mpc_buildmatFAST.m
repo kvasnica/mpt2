@@ -467,7 +467,8 @@ fx{1}=repmat(ER_f,nx,1);
 
 % allocate memory space for F1, F2 and F3 to speed buildmat up
 if Options.norm==1 | Options.norm==inf
-    nR = NT*( ne + 2*(nu+nd+nz+nx+ny) );    % number of rows
+    %nR = NT*( ne + 2*(nu+nd+nz+nx+ny) );    % number of rows
+    nR = NT*( ne + 2*(neu+ned+nez+nex+ney) );    % number of rows
 elseif Options.norm==2
     nR = NT*ne;                             % number of rows
 else
