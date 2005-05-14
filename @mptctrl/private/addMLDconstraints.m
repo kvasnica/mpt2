@@ -1,7 +1,7 @@
 function S = addMLDconstraints(S, sysStruct)
 %ADDMLDCONSTRAINTS Adds state and output constraints to MLD matrices
 
-% $Id: addMLDconstraints.m,v 1.1 2005/02/23 12:29:34 kvasnica Exp $
+% $Id: addMLDconstraints.m,v 1.2 2005/05/14 20:19:04 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -32,7 +32,7 @@ function S = addMLDconstraints(S, sysStruct)
 %    y(k) = C*x(k) + D_1*u(k) + D_2*d(t) + D_3*z(t)
 %  E_2*d(t) + E_3*z(t) <= E_1*u(k) + E_4*x(k) + E_5
 
-if isfield(sysStruct, 'xmax')
+if isfield(sysStruct, 'xmax') & S.nx > 0,
     % add state constraints
     xmax = sysStruct.xmax;
     xmin = sysStruct.xmin;
@@ -46,7 +46,7 @@ if isfield(sysStruct, 'xmax')
     S.ne = S.ne + 2*nx;
 end
 
-if isfield(sysStruct, 'ymax')
+if isfield(sysStruct, 'ymax') & S.ny > 0,
     ymax = sysStruct.ymax;
     ymin = sysStruct.ymin;
     ny = length(ymax);
