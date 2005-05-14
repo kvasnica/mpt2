@@ -121,13 +121,16 @@ end
 % NT = sum of all horizons (if there are more than 1)
 NT=sum(horizon);
 if NT < 1
-    error('Are you kidding me?');
+    error('Prediction horizon must be greater 0!');
+end
+if NT ~= round(NT),
+    error('Prediction horizon must be an integer number!');
 end
 
-
-% check dimensions                             
-%[SYSTEM, WEIGHT] = check_SysWeights(SYSTEM, WEIGHT, 0);
-% we have done this already in gt_miq_mpc
+% remove redundant rows. see help of the subfunction for more details.
+for ii = 1:length(SYSTEM),
+    SYSTEM{ii} = sub_remove_redundant_ineq(SYSTEM{ii});
+end
 
 % Dimensions
 nu = size(SYSTEM{1}.B1,2);   % nu=dimension of u
@@ -840,3 +843,32 @@ Ext.OL.f = fx;
 Ext.OL.C = Ay;
 Ext.OL.D = By;
 Ext.OL.g = fy;
+
+
+%------------------------------------------------------------------------------------
+function S = sub_remove_redundant_ineq(S)
+% removes redundant rows introduced in AD section
+
+neb = S.ne;
+removerows = [];
+for ii = 1:length(S.rowinfo.ineq),
+    ineq = S.rowinfo.ineq{ii};
+    if strcmp(ineq.section, 'AD'),
+        if ineq.subindex == 2,
+            % remove rows with 'subindex=2' because they define
+            %   [delta = 1] -> [f(x) <= 0]
+            % while we only keep rows which say
+            %  [f(x) <= 0] -> [delta = 1]
+            removerows = [removerows; ii];
+        end
+    end
+end
+
+S.E1(removerows,:) = [];
+S.E2(removerows,:) = [];
+S.E3(removerows,:) = [];
+S.E4(removerows,:) = [];
+S.E5(removerows,:) = [];
+S.ne = size(S.E1, 1);
+
+%fprintf('%d rows originally, %d after reduction\n', neb, S.ne);
