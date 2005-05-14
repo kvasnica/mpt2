@@ -118,7 +118,7 @@ if ~isfield(Options,'TerminalConstraint')
     Options.TerminalConstraint=1;
 end
 if ~isfield(Options, 'reduceMLD')
-    Options.reduceMLD = 1;
+    Options.reduceMLD = 0;
 end
 if ~isfield(Options, 'useSparse')
     % if set to true, uses sparse matrices for constraints
