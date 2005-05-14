@@ -507,6 +507,7 @@ if isfield(Options, 'save_prob'),
     MIoptions.save_prob = Options.save_prob;
 end
 
+startt = clock;
 if Options.norm==2,
     [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), [], [], ...
         bl, bu, vartype, [], MIoptions);
@@ -514,6 +515,7 @@ else
     [xopt, fopt, Eflagm, flag] = mpt_solveMILP(CC, AA, B+epsil*ones(nlin,1), [], [], ...
         bl, bu, vartype, [], MIoptions);
 end
+runtime = etime(clock, startt);
 
 full_xopt = xopt;
 if ~flagihard
@@ -585,3 +587,4 @@ Eflag.d          = d;
 Eflag.z          = z;
 Eflag.OL         = Ext.OL;
 Eflag.full_xopt  = full_xopt;
+Eflag.runtime    = runtime;
