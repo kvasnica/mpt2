@@ -117,6 +117,9 @@ end
 if ~isfield(Options,'TerminalConstraint')
     Options.TerminalConstraint=1;
 end
+if ~isfield(Options, 'reduceMLD')
+    Options.reduceMLD = 1;
+end
 
 % NT = sum of all horizons (if there are more than 1)
 NT=sum(horizon);
@@ -127,9 +130,11 @@ if NT ~= round(NT),
     error('Prediction horizon must be an integer number!');
 end
 
-% remove redundant rows. see help of the subfunction for more details.
-for ii = 1:length(SYSTEM),
-    SYSTEM{ii} = sub_remove_redundant_ineq(SYSTEM{ii});
+if Options.reduceMLD,
+    % remove redundant rows. see help of the subfunction for more details.
+    for ii = 1:length(SYSTEM),
+        SYSTEM{ii} = sub_remove_redundant_ineq(SYSTEM{ii});
+    end
 end
 
 % Dimensions
