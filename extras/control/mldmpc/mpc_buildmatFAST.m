@@ -120,6 +120,11 @@ end
 if ~isfield(Options, 'reduceMLD')
     Options.reduceMLD = 1;
 end
+if ~isfield(Options, 'useSparse')
+    % if set to true, uses sparse matrices for constraints
+    % NOTE! some solvers might not support the sparse format!
+    Options.useSparse = 0;
+end
 
 % NT = sum of all horizons (if there are more than 1)
 NT=sum(horizon);
@@ -486,10 +491,15 @@ if Options.TerminalConstraint
     nR = nR + 2*nx;
 end;
 cR = 1;                                 % pointer to the current row
-F1 = NaN*ones(nR, nV);
-F2 = NaN*ones(nR, 1);
-F3 = NaN*ones(nR, nx);
-
+if Options.useSparse,
+    F1 = sparse(nR, nV);
+    F2 = sparse(nR, 1);
+    F3 = sparse(nR, nx);
+else
+    F1 = NaN*ones(nR, nV);
+    F2 = NaN*ones(nR, 1);
+    F3 = NaN*ones(nR, nx);
+end
 
 % Now let's do a more tricky part: loop through all time steps
 % Have in mind that MLD system is a time varying system....
@@ -739,9 +749,15 @@ end
 %===========================================
 % J (v,x0) = 1/2 v' S1 v + S2 v + x0' S3 v
 %===========================================
-S1=zeros(nV,nV);
-S2=zeros(1,nV);
-S3=zeros(nx,nV);
+if Options.useSparse,
+    S1 = sparse(nV, nV);
+    S2 = sparse(1, nV);
+    S3 = sparse(nx, nV);
+else
+    S1=zeros(nV,nV);
+    S2=zeros(1,nV);
+    S3=zeros(nx,nV);
+end
 
 % c1,c2,c3: parameters for the constant term of the optimization
 %           the complete constant term is obtained as: 
