@@ -118,12 +118,20 @@ if ~isfield(Options,'TerminalConstraint')
     Options.TerminalConstraint=1;
 end
 if ~isfield(Options, 'reduceMLD')
+    % if set to true, removes redundant constraints defining AD constraints from
+    % the MLD representation. 
+    % NOTE! this only works if AD items are in the form "d = f(x) >= 0" !!!
     Options.reduceMLD = 0;
 end
 if ~isfield(Options, 'useSparse')
     % if set to true, uses sparse matrices for constraints
     % NOTE! some solvers might not support the sparse format!
     Options.useSparse = 0;
+end
+if ~isfield(Options, 'reduceSlacks')
+    % if set to true, does not introduce slacks for variables which are not
+    % penalized
+    Options.reduceSlacks = 1;
 end
 
 % NT = sum of all horizons (if there are more than 1)
@@ -195,7 +203,7 @@ if Options.norm==inf
     nex = min(1,nx);
     ney = min(1,ny);
 elseif Options.norm==1
-    neu = nu;
+    neu = nu; 
     ned = nd;
     nez = nz;
     nex = nx;
@@ -210,77 +218,85 @@ else
     error('Unknown norm has been specified!');
 end
 
-if Options.norm~=2,
-    % set number of slacks to zero if all corresponding weights are zero
-    allzero = 1;
-    for ii = 1:length(WEIGHT),
-        if ~isempty(WEIGHT{ii}.Qd),
-            if any(any(WEIGHT{ii}.Qd~=0)),
-                allzero = 0;
-                break
+if Options.reduceSlacks,
+    if Options.norm~=2,
+        % set number of slacks to zero if all corresponding weights are zero
+        allzero = 1;
+        for ii = 1:length(WEIGHT),
+            if ~isempty(WEIGHT{ii}.Qd),
+                if any(any(WEIGHT{ii}.Qd~=0)),
+                    allzero = 0;
+                    break
+                end
             end
         end
-    end
-    if allzero,
-        ned = 0;
-    end
-    allQdzero = allzero;
-    
-    allzero = 1;
-    for ii = 1:length(WEIGHT),
-        if ~isempty(WEIGHT{ii}.Qx),
-            if any(any(WEIGHT{ii}.Qx~=0)),
-                allzero = 0;
-                break
+        if allzero,
+            ned = 0;
+        end
+        allQdzero = allzero;
+        
+        allzero = 1;
+        for ii = 1:length(WEIGHT),
+            if ~isempty(WEIGHT{ii}.Qx),
+                if any(any(WEIGHT{ii}.Qx~=0)),
+                    allzero = 0;
+                    break
+                end
             end
         end
-    end
-    if allzero,
-        nex = 0;
-    end
-    allQxzero = allzero;
-    
-    allzero = 1;
-    for ii = 1:length(WEIGHT),
-        if ~isempty(WEIGHT{ii}.Qu),
-            if any(any(WEIGHT{ii}.Qu~=0)),
-                allzero = 0;
-                break
+        if allzero,
+            nex = 0;
+        end
+        allQxzero = allzero;
+        
+        allzero = 1;
+        for ii = 1:length(WEIGHT),
+            if ~isempty(WEIGHT{ii}.Qu),
+                if any(any(WEIGHT{ii}.Qu~=0)),
+                    allzero = 0;
+                    break
+                end
             end
         end
-    end
-    if allzero,
-        neu = 0;
-    end
-    allQuzero = allzero;
-    
-    allzero = 1;
-    for ii = 1:length(WEIGHT),
-        if ~isempty(WEIGHT{ii}.Qz),
-            if any(any(WEIGHT{ii}.Qz~=0)),
-                allzero = 0;
-                break
+        if allzero,
+            neu = 0;
+        end
+        allQuzero = allzero;
+        
+        allzero = 1;
+        for ii = 1:length(WEIGHT),
+            if ~isempty(WEIGHT{ii}.Qz),
+                if any(any(WEIGHT{ii}.Qz~=0)),
+                    allzero = 0;
+                    break
+                end
             end
         end
-    end
-    if allzero,
-        nez = 0;
-    end
-    allQzzero = allzero;
-    
-    allzero = 1;
-    for ii = 1:length(WEIGHT),
-        if ~isempty(WEIGHT{ii}.Qy),
-            if any(any(WEIGHT{ii}.Qy~=0)),
-                allzero = 0;
-                break
+        if allzero,
+            nez = 0;
+        end
+        allQzzero = allzero;
+        
+        allzero = 1;
+        for ii = 1:length(WEIGHT),
+            if ~isempty(WEIGHT{ii}.Qy),
+                if any(any(WEIGHT{ii}.Qy~=0)),
+                    allzero = 0;
+                    break
+                end
             end
         end
+        if allzero,
+            ney = 0;
+        end
+        allQyzero = allzero;
     end
-    if allzero,
-        ney = 0;
-    end
-    allQyzero = allzero;
+else
+    allQdzero = 0;
+    allQxzero = 0;
+    allQuzero = 0;
+    allQyzero = 0;
+    allQzzero = 0;
 end
     
 % Define total number of variables nV
