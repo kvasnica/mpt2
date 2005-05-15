@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.6 2005/05/03 12:06:18 kvasnica Exp $
+% $Id: mpt_solveMIQP.m,v 1.7 2005/05/15 15:34:23 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -193,7 +193,51 @@ elseif solver==4
 
 elseif solver==5,
     % CPLEX interfaced with CPLEXMEX (by Nicolo Giorgetti)
-    [xmin,fmin,how,exitflag]=yalmipMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'cplex-cplexmex');
+    
+    % all constraints are default of the form A <= b
+    ctype = repmat('L', size(A,1), 1);
+    if ~isempty(Aeq),
+        nc = size(A,1);
+        A = [A; Aeq];
+        B = [B; Beq];
+        ctype = [ctype; repmat('E', size(Aeq, 1), 1)];
+    end
+    if isfield(options, 'usex0'),
+        x0 = options.usex0;
+    else
+        x0 = [];
+    end
+    if isfield(options, 'save_prob'),
+        % note from cplexmex help file:
+        % The file name can not be specified and defaults to "cplexpb.lp".
+        save = 1;
+    else
+        save = 0;
+    end
+
+    sense = 1; % minimization
+    [xmin,fmin,status,details]=cplexmex(sense, H, f(:), A, B, ctype, lb, ub, vartype, x0, param, save);
+    
+    switch status
+        case {1,101,102}
+            exitflag = 1;
+            how = 'ok';
+        case {3,103}
+            % infeasible
+            exitflag = -1;
+            how = 'infeasible';
+        case {2,118}
+            % unbounded
+            exitflag = -1;
+            how = 'unbounded';
+        case {4,119}
+            % infeasible or unbounded
+            exitflag = -1;
+            how = 'InfOrUnb';
+        otherwise
+            exitflag = -1;
+            how = 'other error';
+    end
 
 elseif solver==-1,
     % no solver available
