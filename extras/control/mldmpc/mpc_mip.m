@@ -506,6 +506,12 @@ end
 if isfield(Options, 'save_prob'),
     MIoptions.save_prob = Options.save_prob;
 end
+if isfield(Options, 'save_only'),
+    MIoptions.save_only = Options.save_only;
+end
+if isfield(Options, 'logfile'),
+    MIoptions.logfile = Options.logfile;
+end
 
 startt = clock;
 if Options.norm==2,
