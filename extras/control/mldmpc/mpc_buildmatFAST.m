@@ -126,7 +126,7 @@ end
 if ~isfield(Options, 'useSparse')
     % if set to true, uses sparse matrices for constraints
     % NOTE! some solvers might not support the sparse format!
-    Options.useSparse = 0;
+    Options.useSparse = 1;
 end
 if ~isfield(Options, 'reduceSlacks')
     % if set to true, does not introduce slacks for variables which are not
