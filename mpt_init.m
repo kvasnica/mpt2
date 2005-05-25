@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.50 2005/05/13 07:27:34 kvasnica Exp $
+% $Id: mpt_init.m,v 1.51 2005/05/25 18:27:23 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -385,6 +385,23 @@ mptOptions.details = 0;
 % DO NOT EDIT BEYOND THIS LINE!!!
 %-------------------------------------------------------------------------------
 
+% check if path is set properly
+p = path;
+mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
+        'control', 'geometry', 'graphics', 'gui', 'simulink', ...
+        'hys2pwa', 'mldmpc', 'optmerge', 'models', 'demos', ...
+        'ballandplate', 'reachdemo', 'turbocar', 'watertanks'};
+
+for ii = 1:length(mptpath),
+    if isempty(findstr(p, mptpath{ii})),
+        % one of the necessary directories is not included in matlab path. this
+        % can lead to missing and/or corrupted functionality. be sure to add the
+        % whole MPT directory along with all subfolders to your matlab path.
+        warning(sprintf('Path to subdirectory "%s" is not set!', mptpath{ii}));
+        fprintf('\n');
+        break
+    end
+end
 
 % check if input arguments consist of pairs PropertyName, PropertyValue
 if rem(nargin, 2)~=0,
@@ -681,23 +698,6 @@ end
 
 if announcegui,
     fprintf(' Run ''mpt_studio'' to start the GUI. Run ''mpt_setup'' to set global parameters.\n\n');
-end
-
-% check if path is set properly
-p = path;
-mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
-        'control', 'geometry', 'graphics', 'gui', 'simulink', ...
-        'hys2pwa', 'mldmpc', 'optmerge', 'models', 'demos', ...
-        'ballandplate', 'reachdemo', 'turbocar', 'watertanks'};
-
-for ii = 1:length(mptpath),
-    if isempty(findstr(p, mptpath{ii})),
-        % one of the necessary directories is not included in matlab path. this
-        % can lead to missing and/or corrupted functionality. be sure to add the
-        % whole MPT directory along with all subfolders to your matlab path.
-        warning('It appears that path to MPT is not set properly, make sure to add the whole MPT directory to your path!');
-        break
-    end
 end
 
 if exist('mpt_verifySolution', 'file'),
