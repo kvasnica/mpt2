@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.9 2005/05/25 09:43:05 kvasnica Exp $
+% $Id: mptctrl.m,v 1.10 2005/05/25 12:28:26 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -206,6 +206,7 @@ elseif nargin==2 | nargin==3
     
     ctrl.sysStruct = sysStruct;
     ctrl.probStruct = probStruct;
+    ispwa = iscell(sysStruct.A);
     
     % =========================================================================
     % check if on-line solution can be computed
@@ -221,12 +222,6 @@ elseif nargin==2 | nargin==3
         error('MPTCTRL: no on-line solution to low-complexity problems! Please set ''probStruct.subopt_lev=0''.');
     elseif isinf(probStruct.N)
         error('MPTCTRL: no on-line solution to infinite-horizon problems! Please set ''probStruct.N=finite''.');
-    elseif iscell(probStruct.Q)
-        error('MPTCTRL: no on-line solution to problems with time-varying penalty on states');
-    elseif iscell(probStruct.R)
-        error('MPTCTRL: no on-line solution to problems with time-varying penalty on inputs');
-    elseif isfield(probStruct, 'Qy') & iscell(probStruct.Qy)
-        error('MPTCTRL: no on-line solution to problems with time-varying penalty on outputs');
     end
     
     ctrl.details.origSysStruct = sysStruct;
