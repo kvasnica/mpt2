@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.8 2005/05/04 07:48:15 kvasnica Exp $
+% $Id: mptctrl.m,v 1.9 2005/05/25 09:43:05 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -326,9 +326,14 @@ elseif nargin==2 | nargin==3
         else
             Options = [];
         end
+        if ~isfield(Options, 'noConstraintReduction'),
+            Options.noConstraintReduction = 1;
+        end
         if (isfield(probStruct,'inputblocking') | isfield(probStruct,'deltablocking'))
             opt = Options;
             opt.noConstraintReduction = 1;
+            % do not reduce constraints yet, it will be done (if requested) in
+            % mpt_blockingMatrices
             ctrl.details.Matrices = mpt_constructMatrices(sysStruct, probStruct, opt);
             ctrl.details.Matrices = mpt_blockingMatrices(ctrl.details.Matrices,sysStruct,probStruct, Options);
         else
