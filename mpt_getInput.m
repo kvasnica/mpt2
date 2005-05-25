@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.12 2005/05/14 11:47:09 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.13 2005/05/25 12:28:09 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -205,9 +205,26 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             % zero tolerance on satisfaction of terminal set constraint
             Options.eps2 = Options.abs_tol;
         end
+
+        % in case of time-varying penalties, mpc_mip expects them to be in a
+        % cell array
+        %   weights{1}.Qx (.Qy, .Qu, .Qd, .Qz)
+        %   ...
+        %   weights{N}.Qx (.Qy, .Qu, .Qd, .Qz)
+        % we make the conversion in a subfunction...
+        weights = sub_fixweights(weights);
         
-        [ut,dt,zt,Eflag] = mpc_mip(sysStruct.data.MLD, x0, ref, weights, ...
-            probStruct.N, probStruct.N, Options);
+        % if time-varying penalties is used, mpc_mip wants to have one MLD
+        % model per each sampling time, so we make it happy...
+        S = {};
+        for ii = 1:probStruct.N,
+            S{ii} = sysStruct.data.MLD;
+        end
+
+        % the prediction horizon in mpc_mip is determined as sum(horizon)...
+        horizon = repmat(1, 1, probStruct.N);
+        
+        [ut,dt,zt,Eflag] = mpc_mip(S, x0, ref, weights, horizon, horizon, Options);
         
         feasible = strcmp(Eflag.solverflag, 'ok');
         cost = Eflag.fopt;
@@ -411,3 +428,57 @@ if nargout<5,
     clear inwhich
 end
 return
+
+
+%---------------------------------------------------
+function W = sub_fixweights(weights),
+
+Qx_cell = 0;
+Qy_cell = 0;
+Qu_cell = 0;
+haveQy  = 0;
+if isfield(weights, 'Qx'),
+    if iscell(weights.Qx),
+        Qx_cell = 1;
+    end
+end
+if isfield(weights, 'Qu'),
+    if iscell(weights.Qu),
+        Qu_cell = 1;
+    end
+end
+if isfield(weights, 'Qy'),
+    haveQy = 1;
+    if iscell(weights.Qy),
+        Qy_cell = 1;
+    end
+end
+if Qx_cell | Qu_cell | Qy_cell,
+    if haveQy,
+        N = max([length(weights.Qx) length(weights.Qu) length(weights.Qy)]);
+    else
+        N = max([length(weights.Qx) length(weights.Qu)]);
+    end
+    W = {};
+    for ii = 1:N,
+        if Qx_cell,
+            W{ii}.Qx = weights.Qx{ii};
+        else
+            W{ii}.Qx = weights.Qx;
+        end
+        if Qu_cell,
+            W{ii}.Qu = weights.Qu{ii};
+        else
+            W{ii}.Qu = weights.Qu;
+        end
+        if haveQy,
+            if Qy_cell,
+                W{ii}.Qy = weights.Qy{ii};
+            else
+                W{ii}.Qy = weights.Qy;
+            end
+        end
+    end
+else
+    W = weights;
+end
