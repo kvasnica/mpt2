@@ -51,7 +51,7 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_control.m,v 1.17 2005/04/28 07:38:39 kvasnica Exp $
+% $Id: mpt_control.m,v 1.18 2005/05/25 09:45:00 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -293,6 +293,9 @@ else
     end
 end
 
+if ~exist('ctrlStruct', 'var'),
+    error('mpt_control: Problem is infeasible...');
+end
 if isempty(ctrlStruct.Pn),
     error('mpt_control: Problem is infeasible...');
 end
