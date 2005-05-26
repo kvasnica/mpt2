@@ -108,7 +108,7 @@ function [G,W,E,H,F,Y,Cf,Cx,Cc,symmetric,bndA,bndb,Pinvset]=mpt_constructMatrice
 %	     (no. Inputs * prediction Horzion) elemenst correspond to the input
 %            
 
-% $Id: mpt_constructMatrices.m,v 1.3 2005/04/28 07:40:25 kvasnica Exp $
+% $Id: mpt_constructMatrices.m,v 1.4 2005/05/26 13:38:04 kvasnica Exp $
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -175,6 +175,9 @@ if ~isfield(Options,'noReduce'),
 end
 if ~isfield(Options, 'guierrors')
     Options.guierrors = 0;
+end
+if ~isfield(Options, 'infsetctr'),
+    Options.infsetctr = 100;
 end
 
 ycost=1; %assume output cost
@@ -350,7 +353,7 @@ if Options.includeLQRset & (~isfulldim(probStruct.Tset) & probStruct.Tconstraint
         end
     end
     
-    [PinvSet,tstar,fd] = mpt_infset(A_CL,X,100,sysStruct.noise,Options);
+    [PinvSet,tstar,fd] = mpt_infset(A_CL,X,Options.infsetctr,sysStruct.noise,Options);
     
     Pfinal = PinvSet & sysStruct.Pbnd;
     
