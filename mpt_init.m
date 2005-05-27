@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.51 2005/05/25 18:27:23 kvasnica Exp $
+% $Id: mpt_init.m,v 1.52 2005/05/27 13:55:31 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -385,6 +385,9 @@ mptOptions.details = 0;
 % DO NOT EDIT BEYOND THIS LINE!!!
 %-------------------------------------------------------------------------------
 
+nargs = nargin;
+vargs = varargin;
+
 % check if path is set properly
 p = path;
 mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
@@ -403,8 +406,65 @@ for ii = 1:length(mptpath),
     end
 end
 
+% try to load settings using "getpref()" and exit quickly without for checking
+% available solvers.
+% however we only do so if mpt_init was called with no input arguments
+try
+    if nargs==0 & ispref('MPT_toolbox'),
+        mptOptions = getpref('MPT_toolbox', 'mptOptions');
+        sub_printcopyright(mpt_ver);
+        
+        s_lpsolver = mpt_solverInfo('lp', mptOptions.lpsolver);
+        s_qpsolver = mpt_solverInfo('qp', mptOptions.qpsolver);
+        s_milpsolver = mpt_solverInfo('milp', mptOptions.milpsolver);
+        s_miqpsolver = mpt_solverInfo('miqp', mptOptions.miqpsolver);
+        s_exsolver = mpt_solverInfo('extreme', mptOptions.extreme_solver);
+        
+        disp(['         LP solver: ' s_lpsolver]);
+        disp(['         QP solver: ' s_qpsolver]);
+        disp(['       MILP solver: ' s_milpsolver]);
+        disp(['       MIQP solver: ' s_miqpsolver]);
+        disp(['Vertex enumeration: ', s_exsolver]);
+        fprintf('\n');
+        
+        % check the MPT web-page for updates if desired
+        % only available in Matlab 6.5 and Matlab 7
+        if mptOptions.checkupdates & exist('urlread','file'),
+            disp('Checking for updates (can be disabled by modifying mpt_init.m)...');
+            mpt_update;
+        elseif mptOptions.checkupdates
+            disp('Automatic update works only with Matlab 6.5 and newer.');
+        end
+        
+        if announcegui,
+            fprintf(' Run ''mpt_studio'' to start the GUI. Run ''mpt_setup'' to set global parameters.\n\n');
+        end
+        
+        if exist('mpt_verifySolution', 'file'),
+            % "mpt_verifySolution.m" was removed in MPT 2.0 final, if it still exists,
+            % something is wrong. before installing any version of MPT, you must first
+            % remove any previous installation from your disk.
+            warning('It appears that previous version of MPT was not removed from your computer. This can lead to serious problems! Please remove all previous versions of MPT from your disk and install latest version.');
+        end
+        
+        return
+    end
+end
+
 % check if input arguments consist of pairs PropertyName, PropertyValue
-if rem(nargin, 2)~=0,
+if nargs==1,
+    % mpt_init('rehash') can be used to re-scan available solvers and update
+    % preferences stored by setpref()
+    if isa(vargs{1}, 'char'),
+        if strcmpi(vargs{1}, 'rehash'),
+            if ispref('MPT_toolbox');
+                rmpref('MPT_toolbox');
+            end
+            nargs = 0;
+        end
+    end
+end
+if rem(nargs, 2)~=0,
     clear global mptOptions
     error(['mpt_init: Input arguments following the object name must be pairs', ...
             ' of the form PropertyName, PropertyValue']);
@@ -523,12 +583,12 @@ elseif isempty(mptOptions.miqpsolver),
 end
 
 % set the appropriate fields based on input arguments
-for ii=1:2:nargin
-    if ~isfield(mptOptions,varargin{ii})
+for ii=1:2:nargs
+    if ~isfield(mptOptions,vargs{ii})
         clear global mptOptions
-        error(['mpt_init: Non-existing property (' varargin{ii} ')']);
+        error(['mpt_init: Non-existing property (' vargs{ii} ')']);
     end
-    mptOptions=setfield(mptOptions,varargin{ii},varargin{ii+1});
+    mptOptions=setfield(mptOptions,vargs{ii},vargs{ii+1});
 end
 
 if ischar(mptOptions.lpsolver),
@@ -652,12 +712,7 @@ solvers = fixpreferred(solvers, mptOptions);
 
 mptOptions.solvers = solvers;
 
-fprintf('\n');
-disp(['MPT toolbox ' mpt_ver ' initialized...']);
-disp('Copyright (C) 2003-2005 by M. Kvasnica, P. Grieder and M. Baotic');
-fprintf('\nSend bug reports, questions or comments to mpt@control.ee.ethz.ch\n');
-disp('For news, visit the MPT web page at http://control.ee.ethz.ch/~mpt/');
-fprintf('\n');
+sub_printcopyright(mpt_ver);
 
 if mptOptions.lpsolver==1,
     disp('WARNING: you have chosen linprog as a default LP solver.');
@@ -711,6 +766,8 @@ if nargout<1,
     clear out
 end
 
+% save settings such that they can be later restored by getpref()
+setpref('MPT_toolbox', 'mptOptions', mptOptions);
 
 %------------------------------------------------------------------------
 function success=test_lp(solver, execute)
@@ -959,3 +1016,13 @@ for index = 1:MAX_SOLVERS,
         return
     end
 end
+
+
+%------------------------------------------------------------------------
+function sub_printcopyright(mpt_ver)
+% prints the copyright notice
+
+fprintf('\nMPT toolbox %s initialized...\n', mpt_ver);
+fprintf('Copyright (C) 2003-2005 by M. Kvasnica, P. Grieder and M. Baotic\n');
+fprintf('\nSend bug reports, questions or comments to mpt@control.ee.ethz.ch\n');
+fprintf('For news, visit the MPT web page at http://control.ee.ethz.ch/~mpt/\n');
