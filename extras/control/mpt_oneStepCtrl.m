@@ -60,7 +60,7 @@ function [ctrlStruct,feasibleN,loopCtr] = mpt_oneStepCtrl(sysStruct,probStruct,O
 % see also MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_oneStepCtrl.m,v 1.3 2005/04/18 18:28:38 kvasnica Exp $
+% $Id: mpt_oneStepCtrl.m,v 1.4 2005/05/27 11:03:01 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -188,79 +188,85 @@ end
 loopCtr=0;
 PfinalOld = probStruct.Tset;
 notconverged=1;
-while notconverged 
-    
-    progress = mod(loopCtr, 20) / 20;
-    if statusbar,
-        if isempty(mpt_statusbar(statbar.handle, progress, 0, 0.5)),
-            mpt_statusbar;
-            error('Break...');
-        end
-    end
-    
-    loopCtr=loopCtr+1;
-    if Options.verbose>1,
-        fprintf('Iteration %d      \r',loopCtr);
-    else
-        if mod(loopCtr,20)==0 | loopCtr==1,
-            if Options.verbose > -1,
-                fprintf('Iteration %d       \r',loopCtr);
+
+if ~isfield(Options, 'Pfinal'),
+    while notconverged 
+        
+        progress = mod(loopCtr, 20) / 20;
+        if statusbar,
+            if isempty(mpt_statusbar(statbar.handle, progress, 0, 0.5)),
+                mpt_statusbar;
+                error('Break...');
             end
         end
-    end
-    
-    % construct the problem - one step solution to previously computed target
-    % set
-    Options.includeLQRset = 0;
-    tmpProbStruct = probStruct;
-    tmpProbStruct.Tset = PfinalOld;
-    tmpProbStruct.Tconstraint = 2;
-    tmpProbStruct.subopt_lev = 0;
-    tmpProbStruct.N = 1;
-    
-    % get matrices of the problem
-    [G1,W1,E1]=mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
-    
-    % compute feasible set via projection
-    P=polytope([-E1 G1],W1);
-    Pfinal=projection(P,(1:size(E1,2)),Options);
-
-    % algorithm converges when two consequent feasible sets are equal
-    if(isfulldim(PfinalOld) & Options.scaling<1)
-        %set is being "shrunk" from the outside in; only applies for computation of Cinf
-        notconverged=~ge(Pfinal,PfinalOld,Options);       % Pfinal => PfinalOld
-    elseif(isfulldim(PfinalOld) & Options.scaling==1)
-        %no scaling, hence convergence is reached when sets are eual
-        %this option can apply to the computation of Kinf and Cinf
-        notconverged=~eq(Pfinal,PfinalOld,Options);       % Pfinal == PfinalOld
-    else
-        notconverged=1;
-    end
-    %notconverged = ~eq(Pfinal,PfinalOld,Options);
-    %plot(PfinalOld,Pfinal);
-
-    if Options.scaling<1,
-        PfinalOld = Pfinal*Options.scaling;
-    else
-        PfinalOld = Pfinal;
-    end
-    if loopCtr > Options.maxCtr,
-        disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
-    end
-    
-    [x,R]=chebyball(PfinalOld);
-    if(~isfulldim(PfinalOld) | R<=Options.set_limit)
-        disp(['The invariant set for this system (if it exists) has a chebychev radius smaller than Options.set_limit (=' num2str(Options.set_limit) ') !!'])
-        disp('Aborting iteration...')
-        if Options.feasset,
-            ctrlStruct = polytope;
-            feasibleN = [];
+        
+        loopCtr=loopCtr+1;
+        if Options.verbose>1,
+            fprintf('Iteration %d      \r',loopCtr);
         else
-            ctrlStruct = [];
-            feasibleN = 0; 
+            if mod(loopCtr,20)==0 | loopCtr==1,
+                if Options.verbose > -1,
+                    fprintf('Iteration %d       \r',loopCtr);
+                end
+            end
         end
-        return
+        
+        % construct the problem - one step solution to previously computed target
+        % set
+        Options.includeLQRset = 0;
+        tmpProbStruct = probStruct;
+        tmpProbStruct.Tset = PfinalOld;
+        tmpProbStruct.Tconstraint = 2;
+        tmpProbStruct.subopt_lev = 0;
+        tmpProbStruct.N = 1;
+        
+        % get matrices of the problem
+        [G1,W1,E1]=mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
+        
+        % compute feasible set via projection
+        P=polytope([-E1 G1],W1);
+        Pfinal=projection(P,(1:size(E1,2)),Options);
+        
+        % algorithm converges when two consequent feasible sets are equal
+        if(isfulldim(PfinalOld) & Options.scaling<1)
+            %set is being "shrunk" from the outside in; only applies for computation of Cinf
+            notconverged=~ge(Pfinal,PfinalOld,Options);       % Pfinal => PfinalOld
+        elseif(isfulldim(PfinalOld) & Options.scaling==1)
+            %no scaling, hence convergence is reached when sets are eual
+            %this option can apply to the computation of Kinf and Cinf
+            notconverged=~eq(Pfinal,PfinalOld,Options);       % Pfinal == PfinalOld
+        else
+            notconverged=1;
+        end
+        %notconverged = ~eq(Pfinal,PfinalOld,Options);
+        %plot(PfinalOld,Pfinal);
+        
+        if Options.scaling<1,
+            PfinalOld = Pfinal*Options.scaling;
+        else
+            PfinalOld = Pfinal;
+        end
+        if loopCtr > Options.maxCtr,
+            disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
+            break
+        end
+        
+        [x,R]=chebyball(PfinalOld);
+        if(~isfulldim(PfinalOld) | R<=Options.set_limit)
+            disp(['The invariant set for this system (if it exists) has a chebychev radius smaller than Options.set_limit (=' num2str(Options.set_limit) ') !!'])
+            disp('Aborting iteration...')
+            if Options.feasset,
+                ctrlStruct = polytope;
+                feasibleN = [];
+            else
+                ctrlStruct = [];
+                feasibleN = 0; 
+            end
+            return
+        end
     end
+else
+    Pfinal = Options.Pfinal;
 end
 
 if Options.feasset,
