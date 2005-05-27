@@ -52,7 +52,7 @@ function [invSet,iterations] = mpt_maxCtrlSet(sysStruct,Options)
 %
 % see also MPT_ONESTEPCTRL
 
-% $Id: mpt_maxCtrlSet.m,v 1.1 2005/02/23 12:35:39 kvasnica Exp $
+% $Id: mpt_maxCtrlSet.m,v 1.2 2005/05/27 11:02:02 kvasnica Exp $
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -111,7 +111,13 @@ probStruct.N=1;
 probStruct.Q=eye(nx);
 probStruct.R=eye(nu);
 verOpt.verbose=0;
-probStruct=mpt_verifyProbStruct(probStruct,verOpt);
+if isfield(Options, 'Q'),
+    probStruct.Q = Options.Q;
+end
+if isfield(Options, 'R'),
+    probStruct.R = Options.R;
+end
+[dummy, probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
 
 
 %USE ONLY PROJECTION TO COMPUTE SET
