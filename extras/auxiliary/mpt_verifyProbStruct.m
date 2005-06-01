@@ -28,7 +28,7 @@ function probStruct=mpt_verifyProbStruct(probStruct,Options)
 % see also MPT_VERIFYSYSSTRUCT, MPT_CONTROL
 %
 
-% $Id: mpt_verifyProbStruct.m,v 1.6 2005/05/03 17:53:21 kvasnica Exp $
+% $Id: mpt_verifyProbStruct.m,v 1.7 2005/06/01 12:36:10 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -88,9 +88,17 @@ if probStruct.N<1,
     if Options.guierrors,
         error('Prediction horizon must be greater zero!');
     else
-        error(['Prediction horizon "' psn '.N" cannot be zero!']);
+        error(['Prediction horizon "' psn '.N" must be greater zero!']);
     end
 end
+if round(probStruct.N) ~= probStruct.N,
+    if Options.guierrors,
+        error('Prediction horizon must be an integer!');
+    else
+        error(['"' psn '.N" must be an integer !']);
+    end
+end
+
 if ~isfield(probStruct,'Q')
     if Options.guierrors,
         error('Penalty on states must be specified!');
