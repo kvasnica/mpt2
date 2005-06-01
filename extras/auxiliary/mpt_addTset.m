@@ -25,7 +25,7 @@ function [Matrices, feasible] = mpt_addTset(sysStruct,Matrices,Tset,nx,nu,dyn)
 % feasible  - boolean flag (1/0) if the problem is feasible
 %
 
-% $Id: mpt_addTset.m,v 1.1 2005/02/23 14:01:26 kvasnica Exp $
+% $Id: mpt_addTset.m,v 1.2 2005/06/01 12:36:41 kvasnica Exp $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -50,6 +50,10 @@ function [Matrices, feasible] = mpt_addTset(sysStruct,Matrices,Tset,nx,nu,dyn)
 %
 % ---------------------------------------------------------------------------
 
+if ~isfulldim(Tset),
+    feasible = 1;
+    return
+end
 [Ht,Kt] = double(Tset);
 [nnc] = size(Ht,1);
 nG = size(Matrices.G,2);
