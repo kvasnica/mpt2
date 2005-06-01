@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.10 2005/05/25 12:28:26 kvasnica Exp $
+% $Id: mptctrl.m,v 1.11 2005/06/01 12:29:02 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -212,7 +212,7 @@ elseif nargin==2 | nargin==3
     % check if on-line solution can be computed
     if isfulldim(sysStruct.noise) & iscell(sysStruct.A)
         error('MPTCTRL: no on-line solution for PWA systems with additive noise!');
-    elseif probStruct.Tconstraint==2 & isfulldim(probStruct.Tset) & iscell(sysStruct.PWA)
+    elseif probStruct.Tconstraint==2 & isfulldim(probStruct.Tset) & iscell(sysStruct.A)
         error('MPTCTRL: target sets not supported for on-line solutions for PWA systems!');
     elseif isfield(sysStruct, 'Aunc') & iscell(sysStruct.A)
         error('MPTCTRL: no on-line solution for PWA systems with parametric uncertainty!');
