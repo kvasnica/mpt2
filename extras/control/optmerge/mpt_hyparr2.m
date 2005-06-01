@@ -393,13 +393,16 @@ for i = 1:size(D,2)
     % remove redundant facets
     [H, K, isempty, keptrows] = tg_polyreduce(H, K, tol.polyreduce, Opt.lpsolver, 1);
     if isempty, 
+        disp('polyhedron is empty');
+        continue
+        D = []; return;
         error('polyhedron is empty'); 
     end;
     
     % norm facets and store
     n = sqrt( sum(H.*H, 2) );           % vector of 2-norms
-    Hi{i} = H .* repmat(1./n, 1, dim);
-    Ki{i} = K ./ n;
+    Hi{end+1} = H .* repmat(1./n, 1, dim);
+    Ki{end+1} = K ./ n;
 end;
 
 % get preliminary markings
