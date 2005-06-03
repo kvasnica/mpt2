@@ -87,7 +87,7 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options)
 %
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Id: mpt_mplp.m,v 1.2 2005/04/11 09:06:19 kvasnica Exp $
+% $Id: mpt_mplp.m,v 1.3 2005/06/03 14:20:22 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %     kvasnica@control.ee.ethz.ch
@@ -131,7 +131,8 @@ if ~isfield(Options,'mplpver'),
     % 3 - mpLP solver introduced in MPT version 1.4.1 (requires QP solver)
     % 4 - improved version of the previous option (requires QP solver)
     % 5 - successor of solver 4, supports parameterized cost (requires QP solver)
-    Options.mplpver=5;
+    % 6 - latest version
+    Options.mplpver=6;
 end
 if ~isfield(Options,'qpsolver'),
     Options.qpsolver = mptOptions.qpsolver;
@@ -155,6 +156,21 @@ switch Options.mplpver
         [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp_ver4(Matrices,Options);
     case 5,
         [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp_ver5(Matrices,Options);
+    case 6,
+        % Inf always corresponds to the most recent version
+        
+        [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp_ver6(Matrices,Options);
+
+        if isfield(Options, 'nu'),
+            % mpt_mplp_ver6 does NOT remove optimizers corresponding to slack
+            % variables automatically, thus we have to do it here
+            nu = Options.nu;
+            for idxRegions = 1:length(Fi),
+                Fi{idxRegions} = Fi{idxRegions}(1:nu,:);
+                Gi{idxRegions} = Gi{idxRegions}(1:nu,:);
+            end
+        end
+        
     otherwise
         error('mpt_mplp: unknown solver in Options.mplpver!');
 end
