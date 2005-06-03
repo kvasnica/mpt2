@@ -53,7 +53,7 @@ function ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options)
 %
 % see also MPT_CONTROL, MPT_OPTINFCONTROLPWA, MPT_ITERATIVEPWA
 
-% $Id: mpt_optControlPWA.m,v 1.5 2005/03/22 14:25:12 kvasnica Exp $Date: 2005/03/22 14:25:12 $
+% $Id: mpt_optControlPWA.m,v 1.6 2005/06/03 14:14:31 kvasnica Exp $Date: 2005/06/03 14:14:31 $
 %
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch
@@ -100,7 +100,7 @@ if nargin < 3,
 end
 
 if ~isfield(Options, 'mplpver')
-    Options.mplpver = 5;
+    Options.mplpver = 6;  % choose the fastest
 end
 
 if Options.mplpver < 4,
@@ -347,6 +347,7 @@ for k = horizon:-1:1,
     old_dyn_idx = 1;
     part_idx = 0;      % number of SS partitions in step k
     idxMerged = [];
+    idxKickOut = []; % pertitions to kick out after removing overlaps
     skipRemoveOverlaps = ( Options.recedingHorizon & (k > 1) );
     
     min_progress = (horizon - k)/(horizon);
@@ -728,6 +729,19 @@ for k = horizon:-1:1,
             end
             merged{iDyn} = mpt_removeOverlaps(Step{k}.ctrlStruct(mergeRange), ...
                 roOptions);
+            
+            % chek which partitions have been kept in the solution and
+            % remove the rest
+            %
+            if ( length(merged{iDyn}.details.keptParts) < length(mergeRange) ),
+                %
+                % some partitions don't enter the solution
+                %
+                idxKept      = merged{iDyn}.details.keptParts;
+                nKickedOut   = length(mergeRange) - length(mergeRange);
+                kickOutParts = setdiff(mergeRange,mergeRange(idxKept));
+                idxKickOut   = [idxKickOut kickOutParts];
+            end
             idxMerged(end+1) = iDyn;
             old_dyn_idx = part_idx + 1;
             roEndTime = cputime;
@@ -735,6 +749,11 @@ for k = horizon:-1:1,
             Step{k}.mergedCtrlStruct.details.roRunTime = ...
                 Step{k}.mergedCtrlStruct.details.roRunTime + roTime;
         end
+    end
+    if ( length(idxKickOut) ),
+        idxValid = Step{k}.validPartitions;
+        idxValid = setdiff(idxValid,idxKickOut);
+        Step{k}.validPartitions = idxValid;
     end
     Step{k}.nPartitions = length(Step{k}.validPartitions);
 
