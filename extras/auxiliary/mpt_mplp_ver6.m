@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.1 $ $Date: 2005/06/03 14:18:18 $
+% $Revision: 1.2 $ $Date: 2005/06/03 21:24:43 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -128,7 +128,7 @@ if ~isfield(Options,'qpsolver'),
     Options.qpsolver=mptOptions.qpsolver;
 end
 if ~isfield(Options,'max_regions'),
-    Options.max_regions = 2e4;      % maximum number of regions
+    Options.max_regions = Inf;      % maximum number of regions
 end
 if ~isfield(Options,'step_size'),
     Options.step_size=mptOptions.step_size;
@@ -357,7 +357,8 @@ crOptions    = struct('zeroTol',            ZERO_TOL, ...
                       'skipDualDegenerate', Options.skipDualDegenerate, ...
                       'smoothOptimizer',    Options.smoothOptimizer, ...
                       'projection',         Options.projection, ...
-                      'verbose',            Options.verbose);
+                      'verbose',            Options.verbose, ...
+                      'emptypoly',          emptypoly);
 
 asOptions    = struct('zeroTol',   ZERO_TOL, ...
                       'rankTol',   RANK_TOL, ...
@@ -1066,10 +1067,10 @@ function cr  = getCriticalRegion (matrices, activeSet, crOptions)
 %  0        Ix   N     |x
 %
 if ( isempty(matrices.D) )
-    cr = struct('P',polytope,'Fi',[],'Gi',[],'Bi',[],'Ci',[], ...
+    cr = struct('P',crOptions.emptypoly,'Fi',[],'Gi',[],'Bi',[],'Ci',[], ...
         'type',0);
 else
-    cr = struct('P',polytope,'Fi',[],'Gi',[],'Bi',[],'Ci',[], ...
+    cr = struct('P',crOptions.emptypoly,'Fi',[],'Gi',[],'Bi',[],'Ci',[], ...
         'Ai',[],'type',0);
 end
 nu = size(matrices.G,2);
@@ -1250,7 +1251,7 @@ function cr  = getDualDegenerateCR (matrices, activeSet, crOptions)
 %
 %====================================================
 %
-cr = struct('P',polytope,'Fi',[],'Gi',[],'Bi',[],'Ci',[],'type',-1);
+cr = struct('P',crOptions.emptypoly,'Fi',[],'Gi',[],'Bi',[],'Ci',[],'type',-1);
 
 % take only the constraints satisfying the strict
 % complementarity
@@ -1365,7 +1366,7 @@ if ( ~isempty(matrices.D) ),
     R3 = R(nActive+1:nu,nActive+1:nActive+nx);
     if ( rank(R3,crOptions.rankTol) >  0 ),
         cr.type = 0;
-        cr.P = polytope;
+        cr.P = crOptions.emptypoly;
         return;
     else
         invR1 = inv(R1);
@@ -1392,8 +1393,6 @@ function P  = projectDualDegenerateCR (matrices, idxActive, Options)
 %
 %====================================================
 %
-P = polytope;
-%
 idxInactive = [1:size(matrices.G,1)];
 idxInactive(idxActive) = [];
 Ga  = matrices.G(idxActive,:);
@@ -1410,10 +1409,12 @@ P2      = null(Ga);
 HaKa    = Gna * P1 * ((Ga*P1) \ ([Sa Wa]));
 H       = [HaKa(:,1:nx)-Sna, Gna*P2];
 K       = Wna - HaKa(:,nx+1);
-XZpoly  = polytope(H,K);
+XZpoly  = polytope(H,K);  
 %
 if isfulldim(XZpoly),
     P = projection(XZpoly,[1:nx],Options);
+else
+    P = Options.emptypoly;
 end
 
 return
@@ -1430,7 +1431,7 @@ function cr  = getPrimalDegenerateCR (matrices, idxActive, idxEquality, Options)
 %
 %====================================================
 %
-cr = struct('P',polytope,'Fi',[],'Gi',[],'type',-1);
+cr = struct('P',Options.emptypoly,'Fi',[],'Gi',[],'type',-1);
 %
 % determine the critical region: the solution is
 % obtained using null-space method. Matrix P1 is chosen
