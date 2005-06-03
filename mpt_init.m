@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.52 2005/05/27 13:55:31 kvasnica Exp $
+% $Id: mpt_init.m,v 1.53 2005/06/03 14:29:48 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -582,9 +582,22 @@ elseif isempty(mptOptions.miqpsolver),
     mptOptions.miqpsolver = -1;
 end
 
+% the "dosave" flag decides if global settings will be stored using setpref()
+% function permanently. The flag will become true if mpt_init is called as:
+%
+% mpt_init('save', 1);
+%
+% actually the second argument following 'save' is arbitrary, it can also be
+% something like
+%
+% mpt_init('save', 'on');
+dosave = 0;
+
 % set the appropriate fields based on input arguments
 for ii=1:2:nargs
-    if ~isfield(mptOptions,vargs{ii})
+    if strcmpi(vargs{ii}, 'save'),
+        dosave = 1;
+    elseif ~isfield(mptOptions,vargs{ii})
         clear global mptOptions
         error(['mpt_init: Non-existing property (' vargs{ii} ')']);
     end
@@ -766,8 +779,18 @@ if nargout<1,
     clear out
 end
 
-% save settings such that they can be later restored by getpref()
-setpref('MPT_toolbox', 'mptOptions', mptOptions);
+if dosave,
+    % save settings such that they can be later restored by getpref()
+    %
+    % NOTE! once you save the options permanently, MPT will not look for
+    % available solvers at every. This will lead to a faster initialization, but
+    % will not reflect any new solvers added AFTER the settings are saved. In
+    % order to rehash the actual state, call:
+    %
+    % mpt_init('rehash')
+    %
+    setpref('MPT_toolbox', 'mptOptions', mptOptions);
+end
 
 %------------------------------------------------------------------------
 function success=test_lp(solver, execute)
