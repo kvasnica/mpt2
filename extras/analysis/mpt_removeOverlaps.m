@@ -40,7 +40,7 @@ function [newCtrlStruct]=mpt_removeOverlaps(Partition,Options)
 % see also MPT_ITERATIVEPWA, MPT_ITERATIVE, MPT_OPTCONTROLPWA, MPT_PLOTU
 %
 
-% $Id: mpt_removeOverlaps.m,v 1.2 2005/02/27 19:01:03 kvasnica Exp $
+% $Id: mpt_removeOverlaps.m,v 1.3 2005/06/03 14:15:39 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -329,9 +329,11 @@ for part=1:length(remove_regions),
     Partition{part} = onepart;
 end
 newPart = {};
+keptParts = [];
 for ii=1:npart,
     if length(Partition{ii}.Fi)>0,
         newPart{end+1} = Partition{ii};
+        keptParts(end+1) = ii;
     end
 end
 Partition= newPart;
@@ -404,6 +406,8 @@ if lowmem0
         end
     end
 end
+
+keptPartsIdx = [];
 
 for ii=1:npart
 
@@ -591,6 +595,9 @@ for ii=1:npart
                     Bi{nR} = PartitionII.Bi{jj};
                     Ci{nR} = PartitionII.Ci{jj};
                     dynamics = [dynamics PartitionII.dynamics(jj)];
+                    if ( ~any(keptPartsIdx == ii) ),
+                        keptPartsIdx(end+1) = ii;
+                    end
                 end
             end
         else
@@ -605,6 +612,9 @@ for ii=1:npart
             Bi{nR} = PartitionII.Bi{jj};
             Ci{nR} = PartitionII.Ci{jj};
             dynamics = [dynamics PartitionII.dynamics(jj)];
+            if ( ~any(keptPartsIdx == ii) ),
+                keptPartsIdx(end+1) = ii;
+            end
         end
     end % jj
 end % ii 
@@ -644,6 +654,7 @@ end
 
 %newCtrlStruct.Pfinal = reduceunion(PPfinal);
 %newCtrlStruct.Pfinal = Pn;
+details.keptParts = keptParts(keptPartsIdx);
 newCtrlStruct.Pfinal = PPfinal;
 newCtrlStruct.Pn = Pn;
 newCtrlStruct.Fi = Fi;
