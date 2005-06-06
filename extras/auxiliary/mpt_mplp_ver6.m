@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.2 $ $Date: 2005/06/03 21:24:43 $
+% $Revision: 1.3 $ $Date: 2005/06/06 15:21:06 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -185,7 +185,7 @@ CHEBY_TOL        = Options.step_size;       % tolerance for
 %-----------------------------------------------------
 
 MAXREGIONS    = Options.max_regions;
-ALPHA         = min(Options.step_size,1e-6);
+ALPHA         = min(Options.step_size,1e-5);
 ALPHAmax      = max(Options.step_size,1e-6);  % maximum step
 ALPHAit       = 50;                           % number of iterations
 ALPHAinc      = ALPHAmax/(ALPHA*ALPHAit);
