@@ -48,7 +48,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.4 2005/03/03 11:04:39 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.5 2005/06/06 14:06:46 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -366,7 +366,7 @@ for dyn=1:max(dynamics)
         % use greedy merging for higher dimensions (computation of union becomes
         % prohibitive for dimensions above 3 and more than 2 input polytopes)
         Pu = merge(Pt, mergeOpt);
-        how = 1;
+        how = length(Pu)==1;
     end
     
     if(how==1)
