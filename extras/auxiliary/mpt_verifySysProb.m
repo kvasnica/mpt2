@@ -29,7 +29,7 @@ function [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,Options)
 % see also MPT_VERIFYSYSSTRUCT, MPT_VERIFYPROBSTRUCT
 %
 
-% $Id: mpt_verifySysProb.m,v 1.3 2005/04/04 09:23:24 kvasnica Exp $
+% $Id: mpt_verifySysProb.m,v 1.4 2005/06/06 15:10:34 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -220,4 +220,8 @@ if probStruct.Tconstraint==2 & dimension(probStruct.Tset)~=nx,
     else
         error(sprintf('%s.Tset must be a polytope in %dD!', psn, nx));
     end
+end
+
+if isfield(probStruct, 'Qy') & probStruct.Tconstraint==1,
+    disp('WARNING: Closed-loop stability not guaranteed for penalties on outputs.');
 end
