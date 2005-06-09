@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.3 $ $Date: 2005/06/06 15:21:06 $
+% $Revision: 1.4 $ $Date: 2005/06/09 08:57:13 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -1038,8 +1038,7 @@ function [found,activeSet] = findActiveSet(matrices,x0,Options)
     slacks = abs(Bineq - Aineq * xoptLP);
     idxActive   = find( slacks < Options.zeroTol );
     idxCompl    = find(abs(lambda(idxActive)) > Options.zeroTol);
-    activeSet.isStrictlyCompl  = ( length(activeSet.idxCompl)== ...
-                                   length(activeSet.idxActive) );
+    activeSet.isStrictlyCompl  = ( length(idxCompl) == length(idxActive) );
 %
     found               = 1;
     activeSet.idxActive = idxActive;
