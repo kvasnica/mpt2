@@ -44,7 +44,7 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.2 2005/01/18 09:45:17 kvasnica Exp $
+% $Id: domain.m,v 1.3 2005/06/09 08:57:49 kvasnica Exp $
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -121,7 +121,7 @@ if lenP>0 | lenQ>0,
 else
     %target set is single polytope
     for i=1:horizon
-        Af=A^(i-1)*f;   %x(horizon)=A^horizon+Af
+        Af=Af + A^(i-1)*f;   %x(horizon)=A^horizon+Af
     end
     if ~isfulldim(Q)
         Q.H = [];
