@@ -43,7 +43,7 @@ function ctrl = mpt_lyapunov(ctrl, funtype, ndeg, Options)
 % see also MPT_GETQUADLYAPFCT, MPT_GETPWQLYAPFCT, MPT_GETPWALYAPFCT
 %
 
-% $Id: mpt_lyapunov.m,v 1.6 2005/05/10 20:17:58 kvasnica Exp $
+% $Id: mpt_lyapunov.m,v 1.7 2005/06/09 11:56:59 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -217,16 +217,21 @@ ctrl.details.lyapunov = lyapunov;
 %store information back to controller object
 ctrl = mptctrl(ctrl);
 
+% assign variable with new '.details.lyapunov' field in caller's workspace
+if ~isempty(inputname(1)) & nargout==0,
+    assignin('caller',inputname(1),ctrl);
+end
+
 if lyapunov.feasible
     type = upper(lyapunov.type);
     if strcmp(type, 'QUADRATIC')
         type = 'Quadratic';
     end
     fprintf('\n%s Lyapunov function found, closed-loop system is stable.\n', type);
-    fprintf('The Lyapunov function was stored to ctrl.details.lyapunov\n\n');
+    if isempty(inputname(1)) | nargout>0,
+        fprintf('The Lyapunov function was stored to ctrl.details.lyapunov\n\n');
+    else
+        fprintf('The Lyapunov function was stored to %s.details.lyapunov\n\n', inputname(1));
+    end
 end
 
-% assign variable with new '.details.lyapunov' field in caller's workspace
-if ~isempty(inputname(1)),
-    assignin('caller',inputname(1),ctrl);
-end
