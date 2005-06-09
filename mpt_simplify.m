@@ -39,7 +39,7 @@ function [simpleCtrl,details] = mpt_simplify(ctrl, how, Options)
 % see also MERGE
 %
 
-% $Id: mpt_simplify.m,v 1.8 2005/05/10 20:17:58 kvasnica Exp $
+% $Id: mpt_simplify.m,v 1.9 2005/06/09 14:32:55 kvasnica Exp $
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -330,7 +330,7 @@ end
 simpleCtrl = mptctrl(simpleCtrlStruct);
 
 % assign simplified controller in caller's workspace
-if ~isempty(inputname(1)),
+if ~isempty(inputname(1)) & nargout==0,
     assignin('caller',inputname(1),simpleCtrl);
 end
 
