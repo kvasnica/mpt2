@@ -20,7 +20,7 @@ function result = isinvariant(ctrl)
 % result - 1 if the controller is invariant, 0 otherwise
 %
 
-% $Id: isinvariant.m,v 1.2 2005/03/21 22:43:49 kvasnica Exp $
+% $Id: isinvariant.m,v 1.3 2005/06/09 13:06:41 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -53,6 +53,11 @@ end
 
 probStruct = ctrl.probStruct;
 result = 0;
+if isfield(ctrl.details, 'isinvariant')
+    % invariance guaranteed if invariant(ctrl) has been used
+    result = ctrl.details.isinvariant;
+    return
+end
 if probStruct.tracking>0,
     % no invariance guarantees for tracking problems
     return
@@ -69,9 +74,6 @@ elseif probStruct.subopt_lev>0
 elseif probStruct.subopt_lev==0 & isinf(probStruct.N)
     % invariance guaranteed for infinite-time solutions
     result = 1;
-elseif isfield(ctrl.details, 'isinvariant')
-    % invariance also guaranteed if invariant(ctrl) has been used
-    result = ctrl.details.isinvariant;
 end
 if isfield(ctrl.probStruct, 'Nc'),
     if ctrl.probStruct.Nc==ctrl.probStruct.N & result==1,
