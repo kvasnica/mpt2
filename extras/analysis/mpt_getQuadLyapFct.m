@@ -61,7 +61,7 @@ function [lyapP,decay,feasible,details]=mpt_getQuadLyapFct(ctrl,Options)
 %
 % see also MPT_GETPWQLYAPFCT, MPT_GETSTABFEEDBACK, MPT_GETCOMMONLYAPFCT
 
-% $Id: mpt_getQuadLyapFct.m,v 1.4 2005/04/06 09:19:50 kvasnica Exp $
+% $Id: mpt_getQuadLyapFct.m,v 1.5 2005/06/09 11:53:40 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -320,14 +320,16 @@ for i=1:length(Hn)
             elseif(all(Hn{i}*zeros(nx,1)<=Kn{i}) & any(noise~=0))
                 error('A PWA system containing the origin subject to noise CANNOT be asymptotically stable.')
             else
-                N{ctr} = sdpvar(m,m);
-                %%HGam = [-((A+B*F)'*P*(A+B*F)-P)-rho*eye(nx)    -(G'*B'*P*(A+B*F))'-(noise'*P*(A+B*F))' ;...
+                N{ctr} = sdpvar(m,m);                
+                N{ctr} = N{ctr}-diag(diag(N{ctr}));  % by Johan Loefberg
+                %%HGam = [-((A+B*F)'*P*(A+B*F)-P)-rho*eye(nx)     -(G'*B'*P*(A+B*F))'-(noise'*P*(A+B*F))' ;...
                 %%           -(G'*B'*P*(A+B*F))-noise'*P*(A+B*F)  -G'*B'*P*B*G-noise'*P*noise];
-	
-                HGam = [-(ABF'*P*ABF-P)-rho*eye(nx)    -(BG'*P*ABF)'-(noise'*P*ABF)' ;...
-                             -(BG'*P*ABF)-noise'*P*ABF  -BG'*P*BG-noise'*P*noise];
+                temp = -(BG'*P*ABF)'-(noise'*P*ABF)'; % by Johan Loefberg
+                HGam = [-(ABF'*P*ABF-P)-rho*eye(nx)    temp ;...
+                             temp'                     -BG'*P*BG-noise'*P*noise];
                 W = HGam - HK' * N{ctr} * HK ;
-                myprog = myprog + set('N{ctr}(:)>0');
+                indicies = find(triu(ones(m,m)-eye(m)));   % by Johan Loefberg
+                myprog = myprog + set(N{ctr}(indicies)>0); % by Johan Loefberg
             end
             myprog = myprog + set('W>0');
         end
