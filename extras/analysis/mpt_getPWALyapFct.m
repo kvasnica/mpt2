@@ -261,6 +261,11 @@ end
 %---------------------------------------------------
 % Find PWQ Lyapunov function such that the Lyapunov values decrease for each transition
 lenP=length(Pn);
+isfulldimP = zeros(1, lenP);
+for i = 1:lenP
+    isfulldimP(i) = isfulldim(Pn(i));
+end
+
 Aconstr=[];
 constr_origin=[];
 transCtr=0; %counter for the number of feasible transitions
@@ -347,7 +352,7 @@ for dyn_ctr=1:unc_loop
             end
             
             if(fullMap)
-                if(~isfulldim(Pn(j)))
+                if(~isfulldimP(j))
                     how='NOTok';
                 else
                     how='ok';

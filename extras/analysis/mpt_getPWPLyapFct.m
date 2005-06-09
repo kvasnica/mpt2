@@ -320,6 +320,11 @@ end
 
 
 lenP=length(Pn);
+isfulldimP = zeros(1, lenP);
+for i = 1:lenP
+    isfulldimP(i) = isfulldim(Pn(i));
+end
+
 disp(['Performing Reachability Analysis   0/' num2str(lenP)])
 for dyn_ctr=1:unc_loop
     if(~pwasystem)
@@ -368,7 +373,7 @@ for dyn_ctr=1:unc_loop
         
         for j=1:lenP
             if(fullMap)
-                if(~isfulldim(Pn(j)))
+                if(~isfulldimP(j))
                     how='NOTok';
                 else
                     how='ok';

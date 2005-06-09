@@ -329,8 +329,12 @@ else
     unc_loop=length(Acell);
 end
 
-
+isfulldimP = zeros(1, length(Pn));
 lenP=length(Pn);
+for i = 1:lenP
+    isfulldimP(i) = isfulldim(Pn(i));
+end
+
 if Options.verbose > -1,
     disp(['Performing Reachability Analysis   0/' num2str(lenP)])
 end
@@ -415,7 +419,7 @@ for dyn_ctr=1:unc_loop
             end
             
             if(fullMap)
-                if(~isfulldim(Pn(j)))
+                if(~isfulldimP(j))
                     how='NOTok';
                 else
                     how='ok';
