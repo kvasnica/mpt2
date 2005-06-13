@@ -25,7 +25,7 @@ function [R,fulldim] = intersect(P1,P2,Options)
 % see also AND
 %
 
-% $Id: intersect.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: intersect.m,v 1.2 2005/06/13 13:24:38 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -110,6 +110,16 @@ else
         [P2.xCheb, P2.RCheb] = chebyball_f(P2.H,P2.K, Options);
     end
     
+    havebboxes = 0;
+    if ~isempty(P1.bbox) & ~isempty(P2.bbox)
+        havebboxes = 1;
+        if all(P1.bbox(:,2) < P2.bbox(:,1)) | all(P1.bbox(:,1) > P2.bbox(:,2))
+            fulldim = 0;
+            R=mptOptions.emptypoly;
+            return
+        end
+    end
+    
     if P1.RCheb < Options.abs_tol
         P1.H=[];
         P1.K=[];
@@ -128,9 +138,18 @@ else
             disp('INTERSECT warning: empty polytope detected!');
         end
         fulldim = 0;
-        R=polytope;
+        R=mptOptions.emptypoly;
         return
     end
+    
+    if havebboxes,
+        l = max([P1.bbox(:,1) P2.bbox(:,1)]')';
+        u = min([P1.bbox(:,2) P2.bbox(:,2)]')';      
+        cand = find(~((HH>0).*HH*(u-l) - (KK-HH*l) < -mptOptions.abs_tol));
+        HH = HH(cand,:);
+        KK = KK(cand,:);
+    end
+    
     R = polytope(HH, KK, normal, reduceit);   % intersection is obtained by eliminating redundant constraints from the system of inequalities
     fulldim = (R.RCheb > Options.abs_tol);
 end
