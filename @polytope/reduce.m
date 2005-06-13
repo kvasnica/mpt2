@@ -34,7 +34,7 @@ function [P,keptrows]=reduce(P,Options,lambda)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: reduce.m,v 1.3 2005/06/13 11:26:51 kvasnica Exp $
+% $Id: reduce.m,v 1.4 2005/06/13 11:49:40 kvasnica Exp $
 %
 % (C) 2004 Raphael Suard, Automatic Control Laboratory, ETH Zurich,
 %          suardr@control.ee.ethz.ch
@@ -159,7 +159,7 @@ end
 
 xCheb = P.xCheb;
 RCheb = P.RCheb;
-if isempty(lambda) | isempty(P.xCheb),
+if isempty(xCheb),
     P.H = H;
     P.K = K;
     Opt.lpsolver = lpsolver;
