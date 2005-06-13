@@ -26,7 +26,7 @@ function P=uminus(P)
 % see also UPLUS
 %
 
-% $Id: uminus.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: uminus.m,v 1.2 2005/06/13 12:30:44 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -67,6 +67,7 @@ if ~isempty(P.Array)
         Q.H = -Q.H;
         Q.xCheb = -Q.xCheb;
         Q.vertices=-Q.vertices;
+        Q.bbox = [];
         U = [U Q];
     end
     P = U;
@@ -80,3 +81,4 @@ end
 P.H=-P.H;
 P.xCheb=-P.xCheb;
 P.vertices=-P.vertices;
+P.bbox = [];

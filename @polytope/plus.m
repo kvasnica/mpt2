@@ -38,7 +38,7 @@ function [R,P,Q]=plus(P,Q,Options)
 % see also MINUS, EXTREME, MLDIVIDE
 %
 
-% $Id: plus.m,v 1.4 2005/03/09 16:44:17 kvasnica Exp $
+% $Id: plus.m,v 1.5 2005/06/13 12:30:44 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -219,6 +219,7 @@ if size(Q,2)==1
     R.vertices = [];
     R.K=R.K+R.H*Q;
     R.xCheb=R.xCheb+Q;
+    R.bbox = [];
 else
     d=dimension(R);
     if size(Q,1)~=d

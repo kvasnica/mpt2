@@ -44,7 +44,7 @@ function [P]= projection(PA,dim,Options)
 % implementation
 
 % ---------------------------------------------------------------------------
-% $Version: 1.1 $ $Date: 2005/03/10 12:34:33 $
+% $Version: 1.1 $ $Date: 2005/06/13 12:30:44 $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -302,7 +302,7 @@ for i=dim
     % Compute new Matrix P.H and P.K
     P.H=C*P.H;
     P.K=C*P.K;
-    
+
     P.minrep=logical(0);
     if Options.noReduce,
     else
@@ -311,6 +311,7 @@ for i=dim
     %P=reduce(P); 
 end
 
+P.bbox = [];
 P.H(:,dim)=[];
 if Options.noReduce,
     P=polytope(P.H,P.K,2,2);
