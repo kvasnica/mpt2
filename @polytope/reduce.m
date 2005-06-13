@@ -34,7 +34,7 @@ function [P,keptrows]=reduce(P,Options,lambda)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: reduce.m,v 1.2 2005/03/10 12:35:00 kvasnica Exp $
+% $Id: reduce.m,v 1.3 2005/06/13 11:26:51 kvasnica Exp $
 %
 % (C) 2004 Raphael Suard, Automatic Control Laboratory, ETH Zurich,
 %          suardr@control.ee.ethz.ch
@@ -99,7 +99,7 @@ lpsolver=mptOptions.lpsolver;
 %lpsolver = Options.lpsolver;
 %end
 
-
+keptrows = [];
 lenP=length(P.Array);
 if lenP>0,
     for ii=1:lenP,
