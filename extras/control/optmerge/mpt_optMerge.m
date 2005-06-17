@@ -170,6 +170,10 @@ end
 % prepare
 % --------------------------------------------------------------------
 
+% call mpt_hyparr2 with no input arguments => it will clear it's persistent
+% variable, otherwise we get errors
+mpt_hyparr2;
+
 % check colors:
 % each polyhedron must have a color which is integer
 if length(PA) ~= length(color.Reg),
