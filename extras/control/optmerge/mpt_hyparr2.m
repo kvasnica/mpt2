@@ -100,6 +100,16 @@ if ~isstruct(mptOptions)
     mpt_error;
 end
 
+% hyperplane arrangement as persistent 
+% = local to the function hyparr yet their values are 
+%   retained in memory between calls to the function.  
+persistent HA
+
+if nargin==0,
+    clear HA
+    return
+end
+
 % complement the inputs
 if isempty(P), P.A = []; P.B = []; end;
 if ~isfield(dom, 'constr'), dom.constr=0; end;
@@ -125,10 +135,6 @@ Opt.verbose=0;
 % lpsolver=2: uses CPLEX
 
 
-% hyperplane arrangement as persistent 
-% = local to the function hyparr yet their values are 
-%   retained in memory between calls to the function.  
-persistent HA
 
 % normalize hyperplanes A*x=B
 norm = sqrt(sum(Hyp.A.*Hyp.A,2));       % using: Euclidean norm
