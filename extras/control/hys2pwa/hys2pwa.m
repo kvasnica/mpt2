@@ -131,6 +131,11 @@ if ~isstruct(mptOptions)
     mpt_error;
 end
 
+clear global pwa
+% call mpt_hyparr2 with no input arguments => it will clear it's persistent
+% variable, otherwise we get errors
+mpt_hyparr2;
+
 % choose LP solver 
 lpsolver = mptOptions.lpsolver;
 % lpsolver=0: uses E04MBF.m
