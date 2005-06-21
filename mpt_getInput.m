@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.13 2005/05/25 12:28:09 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.14 2005/06/21 21:05:23 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -146,6 +146,14 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             weights.Qy = probStruct.Qy;
         else
             weights.Qx = probStruct.Q;
+        end
+        if isfield(probStruct, 'Qz'),
+            % penalty on "z" variables
+            weights.Qz = probStruct.Qz;
+        end
+        if isfield(probStruct, 'Qd'),
+            % penalty on "d" variables
+            weights.Qd = probStruct.Qd;
         end
         weights.Qu = probStruct.R;
         
@@ -432,33 +440,63 @@ return
 
 %---------------------------------------------------
 function W = sub_fixweights(weights),
+% in case of time-varying penalties, mpc_mip expects them to be in a
+% cell array
+%   weights{1}.Qx (.Qy, .Qu, .Qd, .Qz)
+%   ...
+%   weights{N}.Qx (.Qy, .Qu, .Qd, .Qz)
+% we make the conversion here
 
 Qx_cell = 0;
 Qy_cell = 0;
 Qu_cell = 0;
+Qz_cell = 0;
+Qd_cell = 0;
 haveQy  = 0;
+haveQz  = 0;
+haveQd  = 0;
+Qx_length = 0;
+Qy_length = 0;
+Qu_length = 0;
+Qz_length = 0;
+Qd_length = 0;
+
 if isfield(weights, 'Qx'),
     if iscell(weights.Qx),
         Qx_cell = 1;
+        Qx_length = length(weights.Qx);
     end
 end
 if isfield(weights, 'Qu'),
     if iscell(weights.Qu),
         Qu_cell = 1;
+        Qu_length = length(weights.Qu);
     end
 end
 if isfield(weights, 'Qy'),
     haveQy = 1;
     if iscell(weights.Qy),
         Qy_cell = 1;
+        Qy_length = length(weights.Qy);
     end
 end
-if Qx_cell | Qu_cell | Qy_cell,
-    if haveQy,
-        N = max([length(weights.Qx) length(weights.Qu) length(weights.Qy)]);
-    else
-        N = max([length(weights.Qx) length(weights.Qu)]);
+if isfield(weights, 'Qz'),
+    haveQz = 1;
+    if iscell(weights.Qz),
+        Qz_cell = 1;
+        Qz_length = length(weights.Qz);
     end
+end
+if isfield(weights, 'Qd'),
+    haveQd = 1;
+    if iscell(weights.Qd),
+        Qd_cell = 1;
+        Qd_length = length(weights.Qd);
+    end
+end
+
+if Qx_cell | Qu_cell | Qy_cell | Qz_cell | Qd_cell,
+    N = max([Qx_length Qu_length Qy_length Qz_length Qd_length]);
     W = {};
     for ii = 1:N,
         if Qx_cell,
@@ -476,6 +514,20 @@ if Qx_cell | Qu_cell | Qy_cell,
                 W{ii}.Qy = weights.Qy{ii};
             else
                 W{ii}.Qy = weights.Qy;
+            end
+        end
+        if haveQz,
+            if Qz_cell,
+                W{ii}.Qz = weights.Qz{ii};
+            else
+                W{ii}.Qz = weights.Qz;
+            end
+        end
+        if haveQd,
+            if Qd_cell,
+                W{ii}.Qd = weights.Qd{ii};
+            else
+                W{ii}.Qd = weights.Qd;
             end
         end
     end
