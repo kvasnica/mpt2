@@ -23,7 +23,7 @@ function [sysStruct, msg] = mpt_sys(obj, varargin)
 %                                          apostrophes.
 %
 % To convert a HYSDEL model without creating an equivalent PWA representation:
-%   sysStruct = mpt_sys('hysdelsource', 'mld')
+%   sysStruct = mpt_sys('hysdelsource', 'nopwa')
 %
 % To convert from an object, call:
 %   sysStruct = mpt_sys(obj)
@@ -68,7 +68,7 @@ end
 
 if length(varargin)>0,
     if ischar(varargin{1}),
-        if strcmpi(varargin{1}, 'mld'),
+        if strcmpi(varargin{1}, 'mld') | strcmpi(varargin{1}, 'nopwa'),
             Options.dohys2pwa = 0;
             Options.dummydyns = 1;
         end
@@ -185,18 +185,27 @@ elseif isstruct(obj)
     
 elseif isa(obj, 'char')
     % string - possible hysdel source filename
-    if isempty(findstr(obj, '.hys')),
-        obj = [obj '.hys'];
+    [pathstr, namestr, extstr] = fileparts(obj);
+    if isempty(extstr),
+        extstr = '.hys';
     end
-    extpos = findstr(obj,'.hys');
-    fname = obj(1:extpos-1);
+    if strcmpi(extstr, '.mhys'),
+        matrixhysdel = 1;
+    else
+        matrixhysdel = 0;
+    end
+    if ~isempty(pathstr)
+        fname = [pathstr filesep namestr];
+    else
+        fname = namestr;
+    end
     
     outfile = tempname;
     simfile = [outfile '_sim'];
     
     %====================================================================
     % call hysdel and handle any possible errors
-    [status, msg] = callhysdel(fname, outfile, simfile);
+    [status, msg] = callhysdel(fname, outfile, simfile, matrixhysdel);
     if status~=0,
         % there was an error
         vpos = findstr(msg, 'later version.');
@@ -295,7 +304,15 @@ elseif isa(obj, 'char')
         error('MPT_SYS: corrupted HYSDEL output, see message above.');
     end
 
-    HYSCODE = readfile([fname '.hys']);
+    [pathstr, namestr, extstr] = fileparts(fname);
+    if isempty(extstr),
+        if isempty(pathstr),
+            fname = [namestr '.hys'];
+        else
+            fname = [pathstr filesep namestr '.hys'];
+        end
+    end
+    HYSCODE = readfile(fname);
     
     %====================================================================
     % remove temporary files
@@ -567,8 +584,21 @@ fclose(fid);
 
 
 %-------------------------------------------------------------------------------
-function [s,w]=callhysdel(hysfile, outfile, simfile)
+function [s,w]=callhysdel(hysfile, outfile, simfile, matrixhysdel)
 % calls hysdel binary
+
+if matrixhysdel
+    % use MATRIX HYSDEL
+    try
+        Opt.outfname = outfile;
+        w = evalc('mathys(hysfile, simfile, Opt);');
+        s = 0;
+    catch
+        s = 1;
+        w = 'Couldn''t execute MATRIX HYSDEL.';
+    end
+    return
+end
 
 global mptOptions
 
