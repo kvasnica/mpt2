@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.7 2005/05/15 15:34:23 kvasnica Exp $
+% $Id: mpt_solveMIQP.m,v 1.8 2005/06/22 09:59:04 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -287,7 +287,8 @@ if ~isempty(options),
             x0 = options.usex0;
             options = mptOptions.sdpsettings;
             options.solver = solver;
-            options.usex0 = x0;
+            options.usex0 = 1;  % tell YALMIP to use x0
+            assign(x, x0);
         else
             options=sdpsettings(options,'Verbose',0,'warning',0,'solver',solver);
         end
