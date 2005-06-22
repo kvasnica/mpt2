@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.53 2005/06/03 14:29:48 kvasnica Exp $
+% $Id: mpt_init.m,v 1.54 2005/06/22 15:11:46 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -471,7 +471,7 @@ if rem(nargs, 2)~=0,
 end
 
 try
-    mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 'off', 'cachesolvers', 1);
+    mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, 'cachesolvers', 1);
 catch
     warning('YALMIP not found, some functionality may not be accessible.');
     mptOptions.sdpsettings = [];
