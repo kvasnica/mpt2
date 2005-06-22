@@ -20,7 +20,7 @@ function out = loadobj(obj)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: loadobj.m,v 1.2 2005/03/22 13:46:29 kvasnica Exp $
+% $Id: loadobj.m,v 1.3 2005/06/22 08:42:11 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -49,16 +49,22 @@ if ~isstruct(mptOptions)
     mpt_error;
 end
 
-if ~isfield(obj,'bbox'),
+% convert the object to a structure if necessary
+if ~isstruct(obj),
+    obj = struct(obj);
+end
+if ~isfield(obj, 'bbox'),
     % versions prior to 1.3 did not store bounding box info in the polytope object
     obj.bbox = [];     
 end
-if isfield(obj,'keptrows'),
+if isfield(obj, 'keptrows'),
     % versions after 1.3.1 do not store kept rows in the polytope object
-    obj = rmfield(obj,'keptrows');
+    obj = rmfield(obj, 'keptrows');
 end
-if ~isa(obj,'polytope'),
-    out = class(obj,'polytope');
+
+% now convert the structure to an object if necessary
+if ~isa(obj, 'polytope'),
+    out = class(obj, 'polytope');
 else
     out = obj;
 end
