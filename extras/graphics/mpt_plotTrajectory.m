@@ -52,7 +52,7 @@ function [X,U,cost,trajectory]=mpt_plotTrajectory(ctrl,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_plotTrajectory.m,v 1.1 2005/02/23 12:34:19 kvasnica Exp $
+% $Id: mpt_plotTrajectory.m,v 1.2 2005/06/23 14:45:59 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -132,7 +132,7 @@ end
 
 if isa(ctrl, 'mptctrl')
     if ~isexplicit(ctrl)
-        error('This function supports only explicit controllers!');
+        error('This function supports only explicit controllers. Use mpt_plotTimeTrajectory() instead.');
     end
 end
 
