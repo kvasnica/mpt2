@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.54 2005/06/22 15:11:46 kvasnica Exp $
+% $Id: mpt_init.m,v 1.55 2005/06/23 10:14:28 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -395,6 +395,9 @@ mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
         'hys2pwa', 'mldmpc', 'optmerge', 'models', 'demos', ...
         'ballandplate', 'reachdemo', 'turbocar', 'watertanks'};
 
+% list of solvers interfaced by YALMIP
+yalmip_solver_strings = {'xpress', 'mosek', 'bintprog', 'cplex-milp-cplexint', 'bnb', 'sedumi', 'ooqp'};
+
 for ii = 1:length(mptpath),
     if isempty(findstr(p, mptpath{ii})),
         % one of the necessary directories is not included in matlab path. this
@@ -412,6 +415,20 @@ end
 try
     if nargs==0 & ispref('MPT_toolbox'),
         mptOptions = getpref('MPT_toolbox', 'mptOptions');
+        
+        try
+            % prepare dummy model for fast execution of YALMIP-interfaced solvers
+            % although this data is already save in mptOptions, we repeat the
+            % assignment to deal with cases when the user installs a newer
+            % version of YALMIP manually.
+            mptOptions.yalmipdata = sub_prepareyalmipdata(yalmip_solver_strings);
+        catch
+            % if anything fails, remove the "yalmipdata" field just to be sure
+            if isfield(mptOptions, 'yalmipdata'),
+                mptOptions = rmfield(mptOptions, 'yalmipdata');
+            end
+        end
+
         sub_printcopyright(mpt_ver);
         
         s_lpsolver = mpt_solverInfo('lp', mptOptions.lpsolver);
@@ -779,6 +796,9 @@ if nargout<1,
     clear out
 end
 
+% prepare dummy model for fast execution of YALMIP-interfaced solvers
+mptOptions.yalmipdata = sub_prepareyalmipdata(yalmip_solver_strings);
+
 if dosave,
     % save settings such that they can be later restored by getpref()
     %
@@ -791,6 +811,18 @@ if dosave,
     %
     setpref('MPT_toolbox', 'mptOptions', mptOptions);
 end
+
+%------------------------------------------------------------------------
+function yalmipdata = sub_prepareyalmipdata(yalmip_solver_strings)
+
+% we use the new object - hashtable
+yalmipdata = hashtable;
+for ii = 1:length(yalmip_solver_strings),
+    solstr = yalmip_solver_strings{ii};
+    yalmipdata(['milp:' solstr]) = sub_getyalmipdata(solstr, 'milp');
+    yalmipdata(['miqp:' solstr]) = sub_getyalmipdata(solstr, 'miqp');
+end
+
 
 %------------------------------------------------------------------------
 function success=test_lp(solver, execute)
