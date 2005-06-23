@@ -53,7 +53,7 @@ function ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options)
 %
 % see also MPT_CONTROL, MPT_OPTINFCONTROLPWA, MPT_ITERATIVEPWA
 
-% $Id: mpt_optControlPWA.m,v 1.6 2005/06/03 14:14:31 kvasnica Exp $Date: 2005/06/03 14:14:31 $
+% $Id: mpt_optControlPWA.m,v 1.7 2005/06/23 22:11:07 kvasnica Exp $Date: 2005/06/23 22:11:07 $
 %
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch
@@ -100,7 +100,7 @@ if nargin < 3,
 end
 
 if ~isfield(Options, 'mplpver')
-    Options.mplpver = 6;  % choose the fastest
+    Options.mplpver = Inf;  % choose the fastest
 end
 
 if Options.mplpver < 4,
