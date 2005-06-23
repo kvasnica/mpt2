@@ -48,7 +48,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.6 2005/06/22 09:05:15 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.7 2005/06/23 22:10:17 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -298,35 +298,33 @@ while(notConverged>0 & iter<maxIter)
                     % compute the convex union if dimension is below or equal to 3
                     [Pu,how]=union(tP,Options);
                     if how,
+                        % union is convex
                         PuPn_equal = (Pu == Pn(i));
                     end
                 else
-                    % otherwise we will just write regions as they are
-                    Pu = tP;
                     % it is also possible to simplify Pu using greedy merging
-                    Pu = merge(Pu, mergeOpt);
-                    PuPn_equal = (Pu == Pn(i));
-                    how = PuPn_equal;
+                    Pu = merge(tP, mergeOpt);
+                    how = length(Pu) < trans;
+                    if how,
+                        % the merged object consists of less polytopes than the
+                        % original, this is good for us
+                        PuPn_equal = (Pu == Pn(i));
+                    end
                 end
             end
             if(how)
-                %union is convex => overwrite old set
-                %if trans>1 & Pu==Pn(i),
+                %union is convex (or simplified using greedy merging) => overwrite old set
                 if trans>1 & PuPn_equal,
-                   notConverged=notConverged-convCtr;%union is identical to original set; reduce transition counter again
+                    notConverged=notConverged-convCtr;%union is identical to original set; reduce transition counter again
                 end
-                if(~isfulldim(transP))
-                   transP=Pu;
-                else
-                   transP=[transP Pu];
-                end
+                transP = [transP Pu];
                 for kk=1:length(Pu),
                     tdyn(end+1)=dynamics(i);
                 end
             else
                 %union is not convex
+                transP = [transP tP];
                 for kk=1:trans
-                    transP=[transP tP(kk)];    %write new polytopes
                     tdyn(end+1)=dynamics(i);             %dynamics of new polytope are same as original polytope at t-1
                 end
             end
@@ -340,7 +338,7 @@ while(notConverged>0 & iter<maxIter)
     else
         targetPn=Pn;
     end
-    
+
     iter=iter+1;
 end
 
@@ -376,12 +374,12 @@ for dyn=1:max(dynamics)
         % use greedy merging for higher dimensions (computation of union becomes
         % prohibitive for dimensions above 3 and more than 2 input polytopes)
         Pu = merge(Pt, mergeOpt);
-        how = length(Pu)==1;
+        how = length(Pu) <= length(Pt);
     end
     
     if(how==1)
         %union is convex
-        Pn(end+1)=Pu;           %add new set 
+        Pn = [Pn Pu];               %add new set 
         for kk=1:length(Pu)
             dynamics(end+1)=dyn;    %add new set
         end
