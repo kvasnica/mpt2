@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.55 2005/06/23 10:14:28 kvasnica Exp $
+% $Id: mpt_init.m,v 1.56 2005/06/23 12:45:12 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -385,6 +385,23 @@ mptOptions.details = 0;
 % DO NOT EDIT BEYOND THIS LINE!!!
 %-------------------------------------------------------------------------------
 
+% if set to 1, mpt_init will try to solve a problem with each solver to see
+% which solvers are actually available.
+% if set to 0, existence of a particular solver will be deduced upon existence
+% of the corresponding interface file.
+executesolver = 1;
+
+% the "dosave" flag decides if global settings will be stored using setpref()
+% function permanently. The flag will become true if mpt_init is called as:
+%
+%   mpt_init('save')
+%
+% or
+%
+%   mpt_init('lpsolver', 'cdd', ..., 'save')
+dosave = 0;
+
+
 nargs = nargin;
 vargs = varargin;
 
@@ -478,9 +495,31 @@ if nargs==1,
                 rmpref('MPT_toolbox');
             end
             nargs = 0;
+        elseif strcmpi(vargs{1}, 'save'),
+            dosave = 1;
+            nargs = 0;
+        end
+    end
+else
+    for ii = 1:nargs,
+        if isa(vargs{ii}, 'char'),
+            if strcmpi(vargs{ii}, 'save'),
+                % if the flag is equal to 'save', set dosave flag
+                dosave = 1;
+                
+                % remove the 'save' flag from list of input arguments
+                vargs = {vargs{setdiff(1:nargs, ii)}};
+                
+                % decrease number of input arguments by 1
+                nargs = nargs - 1;
+
+                % and exit this for-loop
+                break
+            end
         end
     end
 end
+
 if rem(nargs, 2)~=0,
     clear global mptOptions
     error(['mpt_init: Input arguments following the object name must be pairs', ...
@@ -493,12 +532,6 @@ catch
     warning('YALMIP not found, some functionality may not be accessible.');
     mptOptions.sdpsettings = [];
 end
-
-% if set to 1, mpt_init will try to solve a problem with each solver to see
-% which solvers are actually available.
-% if set to 0, existence of a particular solver will be deduced upon existence
-% of the corresponding interface file.
-executesolver = 1;
 
 if executesolver,
     fprintf('looking for available solvers...\n');
@@ -598,17 +631,6 @@ if ~isempty(solvers.miqp) & isempty(mptOptions.miqpsolver),
 elseif isempty(mptOptions.miqpsolver),
     mptOptions.miqpsolver = -1;
 end
-
-% the "dosave" flag decides if global settings will be stored using setpref()
-% function permanently. The flag will become true if mpt_init is called as:
-%
-% mpt_init('save', 1);
-%
-% actually the second argument following 'save' is arbitrary, it can also be
-% something like
-%
-% mpt_init('save', 'on');
-dosave = 0;
 
 % set the appropriate fields based on input arguments
 for ii=1:2:nargs
