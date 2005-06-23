@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.14 2005/06/21 21:05:23 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.15 2005/06/23 14:27:11 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -171,9 +171,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         if probStruct.Tconstraint==2 & isfield(probStruct, 'Tset'),
             if isfulldim(probStruct.Tset),
                 % tell mpc_mip to include terminal set constraint
-                Options.TerminalConstraint = 1;
-                % zero tolerance on satisfaction of terminal set constraint
-                Options.eps2 = Options.abs_tol;
+                Options.Tset = probStruct.Tset;
             end
         end
         

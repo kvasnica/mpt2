@@ -15,6 +15,7 @@ function [S1, S2, S3, F1, F2, F3, c1, c2, c3, IntIndex, Ext] = mpc_buildmatFAST(
 %              equivalent to the CFTOC problem of MLD system
 %                                                                        
 % Author:      (C) Mato Baotic, Zurich, March 17, 2003
+%              (C) Michal Kvasnica, Zurich, June 23, 2005
 %
 % History:     date        subject
 %              2003.11.19  first public release                 
@@ -83,6 +84,7 @@ function [S1, S2, S3, F1, F2, F3, c1, c2, c3, IntIndex, Ext] = mpc_buildmatFAST(
 %
 %              Comments and bug reports are highly appreciated                 
 %
+
 %===============================================================================
 %
 % Legal note:   This program is free software; you can redistribute it and/or
@@ -506,6 +508,13 @@ end;
 if Options.TerminalConstraint
     nR = nR + 2*nx;
 end;
+if isfield(Options, 'Tset'),
+    % increase space by number of constraints of the terminal set
+    if isa(Options.Tset, 'polytope'),
+        nR = nR + nconstr(Options.Tset);
+    end
+end
+
 cR = 1;                                 % pointer to the current row
 if Options.useSparse,
     F1 = sparse(nR, nV);
@@ -731,8 +740,8 @@ for kk=1:NT    % Actual time is given as k = kk-1, so this corresponds to k = 0:
 end
 
 if Options.TerminalConstraint
-    % Terminal set constraint
-    %========================
+    % Terminal state constraint
+    %==========================
     
     % x(NT) <= xtt + eps2
     %--------------------
@@ -757,6 +766,29 @@ if Options.TerminalConstraint
     cR = cR + nx;
 end
 
+if isfield(Options, 'Tset')
+    % Terminal set constraint
+    %==========================
+
+    if ~isa(Options.Tset, 'polytope'),
+        error('Terminal set must be a polytope object.');
+    end
+    
+    [Hfinal, Kfinal] = double(Options.Tset);
+    Tset_nr = nconstr(Options.Tset);
+    
+    % Hf * x(NT) <= Kf
+    %-----------------
+    A = Ax{NT+1};
+    B = Bx{NT+1};
+    f = fx{NT+1};
+    
+    F1(cR:cR+Tset_nr-1,:) = Hfinal * B;
+    F2(cR:cR+Tset_nr-1,:) = Kfinal - Hfinal * f;
+    F3(cR:cR+Tset_nr-1,:) = -Hfinal * A;
+    cR = cR + Tset_nr;
+end    
+    
 
 %===================================
 % Let's formulate a cost function!
