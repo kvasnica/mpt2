@@ -35,7 +35,7 @@ function status = eq(P,Q,Options)
 % see also NE, LE, GE
 %
 
-% $Id: eq.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: eq.m,v 1.2 2005/06/23 22:09:29 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -65,7 +65,6 @@ function status = eq(P,Q,Options)
 if ~isa(P, 'polytope') | ~isa(Q, 'polytope')
   error('EQ: Argument MUST be a polytope object');
 end
-
 
 global mptOptions;
 
@@ -125,6 +124,97 @@ if Options.elementwise,
 else
     % we compare if P==Q, i.e. if P is fully covered with Q and vice versa
     if lenP>0 | lenQ>0,
+        % check dimensions
+        dimP = dimension(P);
+        dimQ = dimension(Q);
+        if dimP==0 & dimQ==0,
+            % both polyarrays are 0-dimensional, thus equal
+            status = 1;
+            return
+        elseif dimP==0 | dimQ==0,
+            % only one polyarray is 0-dimensional, thus not equal
+            status = 0;
+            return
+        elseif dimP ~= dimQ,
+            error('EQ: Only polytopes of equal dimensionality can be compared');
+        end
+        
+        % try to rule out some cases based on bounding boxes
+        allPbboxes = [];
+        allQbboxes = [];
+        haveallbboxes = 1;
+        if lenP==0,
+            % P is a single polytope, extract it's bounding box
+            Pbbox = P.bbox;
+            if isempty(Pbbox),
+                % bounding box field is empty
+                haveallbboxes = 0;
+            else
+                allPbboxes = Pbbox;
+            end
+        else
+            % P is a polyarray, stack bounding box info of each polytope to one
+            % matrix
+            for ii = 1:lenP,
+                Pbbox = P.Array{ii}.bbox;
+                if isempty(Pbbox),
+                    % bounding box field is empty, no point of going on...
+                    haveallbboxes = 0;
+                    break
+                else
+                    allPbboxes = [allPbboxes Pbbox];
+                end
+            end
+        end
+        if haveallbboxes,
+            % all elements of P had the bounding box information stored inside,
+            % now test the Q polytope
+            if lenQ==0,
+                % Q is a single polytope
+                Qbbox = Q.bbox;
+                if isempty(Qbbox),
+                    % no bounding box infor stored in the object
+                    haveallbboxes = 0;
+                else
+                    allQbboxes = Qbbox;
+                end
+            else
+                % Q is a polyarray, examine each element
+                for ii = 1:lenQ,
+                    Qbbox = Q.Array{ii}.bbox;
+                    if isempty(Qbbox),
+                        % no bounding box info stored inside, abort...
+                        haveallbboxes = 0;
+                        break
+                    else
+                        allQbboxes = [allQbboxes Qbbox];
+                    end
+                end
+            end
+        end
+        if haveallbboxes,
+            % both P and Q had bounding box info stored inside, now compare
+            % minima and maxima...
+            sizeP = size(allPbboxes, 1);
+            minPbboxes = zeros(sizeP, 1);
+            minQbboxes = zeros(sizeP, 1);
+            maxPbboxes = zeros(sizeP, 1);
+            maxQbboxes = zeros(sizeP, 1);
+            for ii = 1:sizeP,
+                minPbboxes(ii) = min(allPbboxes(ii, :));
+                minQbboxes(ii) = min(allQbboxes(ii, :));
+                maxPbboxes(ii) = max(allPbboxes(ii, :));
+                maxQbboxes(ii) = max(allQbboxes(ii, :));
+            end
+            if any(abs(minPbboxes - minQbboxes) > Options.abs_tol) | any(abs(maxPbboxes - maxQbboxes) > Options.abs_tol),
+                % bounding boxes differ by more than abs_tol => polytopes cannot be equal
+                status = 0;
+                return
+            end
+            % we cannot reach any conclusion based solely on the fact that bounding
+            % boxes are identical, therefore we continue...
+        end
+        
         Options.simplecheck=1;   % to allow premature break of recursion in mldivide
         if lenP>0,
             myOnes=ones(size(P.Array{1}.H,2),1);
@@ -163,6 +253,18 @@ if nxP~=nxQ
     error('EQ: Only polytopes of equal dimensionality can be compared');
 end
 
+Pbbox = P.bbox;
+Qbbox = Q.bbox;
+if ~isempty(Pbbox) & ~isempty(Qbbox),
+    if any(abs(Pbbox(:,1) - Qbbox(:,1)) > Options.abs_tol) | any(abs(Pbbox(:,2) - Qbbox(:,2)) > Options.abs_tol),
+        % bounding boxes differ by more than abs_tol => polytopes cannot be equal
+        status = 0;
+        return
+    end
+    % we cannot reach any conclusion based solely on the fact that bounding
+    % boxes are identical, therefore we continue...
+end
+
 status=1;
 PAB=[P.H P.K];
 QAB=[Q.H Q.K];
@@ -171,7 +273,9 @@ abs_tol = Options.abs_tol;
 
 for ii=1:ncP
     %if all(sum(abs(QAB-repmat(PAB(ii,:),ncQ,1)),2)>abs_tol)
-    if all(sum(abs(QAB-PAB(ones(ncQ,1)*ii,:)),2)>abs_tol)
+    %if all(sum(abs(QAB-PAB(ones(ncQ,1)*ii,:)),2)>abs_tol)
+    Z = sum(abs(QAB-PAB(ones(ncQ,1)*ii,:)),2);
+    if all(Z>abs_tol)
         status=0;
         return;
     end
@@ -179,7 +283,9 @@ end
 
 for ii=1:ncQ
     %if all(sum(abs(PAB-repmat(QAB(ii,:),ncP,1)),2)>abs_tol)
-    if all(sum(abs(PAB-QAB(ones(ncP,1)*ii,:)),2)>abs_tol)
+    %if all(sum(abs(PAB-QAB(ones(ncP,1)*ii,:)),2)>abs_tol)
+    Z = sum(abs(PAB-QAB(ones(ncP,1)*ii,:)),2);
+    if all(Z>abs_tol)
         status=0;
         return;
     end
