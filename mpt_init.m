@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.56 2005/06/23 12:45:12 kvasnica Exp $
+% $Id: mpt_init.m,v 1.57 2005/06/23 14:45:18 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -432,6 +432,15 @@ end
 try
     if nargs==0 & ispref('MPT_toolbox'),
         mptOptions = getpref('MPT_toolbox', 'mptOptions');
+
+        try
+            % update mptOptions.sdpsettings if somebody installed a new version
+            % of YALMIP
+            mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, 'cachesolvers', 1);
+        catch
+            warning('YALMIP not found, some functionality may not be accessible.');
+            mptOptions.sdpsettings = [];
+        end
         
         try
             % prepare dummy model for fast execution of YALMIP-interfaced solvers
