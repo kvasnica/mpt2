@@ -83,7 +83,7 @@ options = mptOptions.sdpsettings;
 options.solver = solver;
 options.verbose = 0;
 options.bnb.maxiter = 5000; % maximum number of iterations in branch&bound code
-options.bnb.feastol = 1e-7;
+
 try
     % export the dummy model
     [dummy1, dummy2, dummy3, model.interfacedata] = export(F, 0.5*x'*H*x + f'*x, options);
