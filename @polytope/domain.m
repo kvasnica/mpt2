@@ -44,7 +44,7 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.4 2005/06/09 09:48:48 kvasnica Exp $
+% $Id: domain.m,v 1.5 2005/06/23 21:21:47 kvasnica Exp $
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -96,6 +96,9 @@ end
 if ~isfield(Options,'noReduce'),
     Options.noReduce = 0;
 end
+if ~isfield(Options, 'lpsolver'),
+    Options.lpsolver = mptOptions.lpsolver;
+end
 
 lenP=length(P.Array);
 lenQ=length(Q.Array);
@@ -118,35 +121,48 @@ if lenP>0 | lenQ>0,
             feasible=feasible+isfulldim(dR);
         end
     end
+    if(feasible>0)
+        feasible=1;
+    else
+        feasible=0;
+    end
+    return
 else
     %target set is single polytope
     Af = f;
     for i=2:horizon
         Af=Af + A^(i-1)*f;   %x(horizon)=A^horizon+Af
     end
-    if ~isfulldim(Q)
+    if isfulldim(Q)==0,
         Q.H = [];
         Q.K = [];
     end
-    R=polytope([P.H*A^horizon;Q.H], [P.K-P.H*Af;Q.K], 0, 2);
-    feasible = isfulldim(R);
+    
+    HH = [P.H*A^horizon; Q.H];
+    KK = [P.K-P.H*Af; Q.K];
+    
+    % compute center and radius of chebyshev's ball
+    [xc,rc] = chebyball_f(HH, KK, Options);
+    
+    % if the ball has a non-zero radius, intersection of Q with affine
+    % transformation of P exists
+    feasible = rc >= mptOptions.abs_tol;
+    
     if Options.noReduce,
+        R = polytope(HH, KK, 0, 2);
         keptrows = [];
         return
     end
     if feasible,
+        % compute the polytope
+        R = polytope(HH, KK, 0, 2);
         [R, keptrows] = reduce(R);
+        tmp=find(keptrows<=nconstr(P));
+        keptrows=ones(1,length(keptrows));
+        keptrows(tmp)=0;
     else
+        % intersection does not exists, domain is empty
+        R = mptOptions.emptypoly;
         keptrows = [];
     end
-    %%keptrows=R.keptrows;    %store non-redundant hyperplanes
-    tmp=find(keptrows<=nconstr(P));
-    keptrows=ones(1,length(keptrows));
-    keptrows(tmp)=0;
-end
-
-if(feasible>0)
-    feasible=1;
-else
-    feasible=0;
 end
