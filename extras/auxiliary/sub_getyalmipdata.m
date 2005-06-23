@@ -82,6 +82,7 @@ end
 options = mptOptions.sdpsettings;
 options.solver = solver;
 options.verbose = 0;
+options.bnb.maxiter = 5000; % maximum number of iterations in branch&bound code
 try
     % export the dummy model
     model = export(F, 0.5*x'*H*x + f'*x, options);
