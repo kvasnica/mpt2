@@ -51,7 +51,7 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_control.m,v 1.18 2005/05/25 09:45:00 kvasnica Exp $
+% $Id: mpt_control.m,v 1.19 2005/06/23 20:14:01 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -131,6 +131,9 @@ if ~isfield(Options, 'autoTracking')
 end
 if ~isfield(Options, 'statusbar'),
     Options.statusbar = 0;
+end
+if ~isfield(Options, 'qpsolver'),
+    Options.qpsolver = mptOptions.qpsolver;
 end
 
 origSysStruct = sysStruct;
@@ -239,9 +242,14 @@ else
                     if isfield(Options, 'mplpver'),
                         mplpver = Options.mplpver;
                     else
-                        mplpver = 5;
+                        % choose the fastest
+                        mplpver = Inf;
                     end
-                    if mplpver < 4 | mptOptions.qpsolver==-1,
+                    if mplpver < 4 | Options.qpsolver==-1,
+                        % solve the problem in one shot if:
+                        %  - older version of the MPLP solver is requested, or
+                        %  - no QP solver is available (in which case we cannot
+                        %    use newer version of MPLP solver)
                         ctrlStruct = mpt_optControl(sysStruct, probStruct, Options);
                         ctrlStruct.overlaps = 0;
                     else
