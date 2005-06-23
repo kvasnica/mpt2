@@ -96,4 +96,7 @@ else
     interfacedata.problemclass.objective.quadratic = struct('convex', 1, 'nonconvex', 0);
 end
 
+% according to bnb.m this should be a speed hack
+interfacedata.getsolvertime = 0;
+
 model.interfacedata = interfacedata;
