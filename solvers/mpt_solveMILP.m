@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMILP(f,A,B,Aeq,Beq,lb,ub,vartype,para
 %
 % see also MPT_SOLVELP, MPT_SOLVEMIQP
 
-% $Id: mpt_solveMILP.m,v 1.10 2005/06/23 10:16:15 kvasnica Exp $
+% $Id: mpt_solveMILP.m,v 1.11 2005/06/23 11:55:55 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -314,6 +314,11 @@ if isfield(mptOptions, 'yalmipdata'),
         % solver in mpt_init. but in case we forget to add some solver in
         % mpt_init, we compute the dummy model once more here
         model = sub_getyalmipdata(solver, 'milp');
+    end
+
+    if isempty(model),
+        % throw an error if model is still empty
+        error(sprintf('Solver "%s" not available.', solver));
     end
     
     % use initial guess of optimizer if available
