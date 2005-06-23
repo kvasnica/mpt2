@@ -12,6 +12,7 @@ function [ut, dt, zt, Eflag] = mpc_mip( S, xt, r, Q, pr, co, Options )
 %                                                                        
 % Authors:     Tobias Geyer, Domenico Mignone, Mato Baotic
 %              based on mipc1.m by Alberto Bemporad, 12/5/1998 
+%              (C) 2005 by Michal Kvasnica
 %
 % History:     date:       subject:                             author:
 %              -----       --------                             -------
