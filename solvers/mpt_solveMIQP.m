@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.8 2005/06/22 09:59:04 kvasnica Exp $
+% $Id: mpt_solveMIQP.m,v 1.9 2005/06/23 10:16:15 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -253,6 +253,55 @@ function [xmin,fmin,how,exitflag]=yalmipMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,param
 
 global mptOptions
 
+if isfield(mptOptions, 'yalmipdata'),
+    % use fast problem setup by exploiting a dummy problem structure stored in
+    % mptOptions.yalmipdata
+
+    % use hashtable indexing with a string
+    model = mptOptions.yalmipdata(['miqp:' solver]);
+    
+    if isempty(model),
+        % this should never occur, since we prepare a model structure for every
+        % solver in mpt_init. but in case we forget to add some solver in
+        % mpt_init, we compute the dummy model once more here
+        model = sub_getyalmipdata(solver, 'miqp');
+    end
+    
+    % use initial guess of optimizer if available
+    if isfield(options, 'usex0'),
+        x0 = options.usex0;
+    else
+        x0 = [];
+    end
+    
+    % update the model structure with current data
+    model = sub_setyalmipdata(model,H,f,A,B,Aeq,Beq,lb,ub,vartype,x0);
+    
+    % call an appropriate solver
+    solution = eval([model.interfacedata.solver.call '(model.interfacedata);']);
+    
+    % analyze the solution
+    if solution.problem==0,
+        % solution is optimal, obtain optimizer and compute objective value
+        how = 'ok';
+        exitflag = 1;
+        xmin = solution.Primal;
+        fmin = 0.5*xmin'*H*xmin + f'*xmin;
+    else
+        % a problem occured
+        xmin = NaN*ones(size(A, 2), 1);
+        fmin = NaN;
+        if solution.problem < 0,
+            how = 'nosolver';
+            exitflag = -3;
+        else
+            how = 'infeasible';
+            exitflag = -1;
+        end
+    end
+    return
+end
+        
 [nc,nx] = size(A);
 f = f(:);
 x = sdpvar(nx,1);

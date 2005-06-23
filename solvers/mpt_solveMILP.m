@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMILP(f,A,B,Aeq,Beq,lb,ub,vartype,para
 %
 % see also MPT_SOLVELP, MPT_SOLVEMIQP
 
-% $Id: mpt_solveMILP.m,v 1.9 2005/06/22 09:59:04 kvasnica Exp $
+% $Id: mpt_solveMILP.m,v 1.10 2005/06/23 10:16:15 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -294,6 +294,62 @@ function [xmin,fmin,how,exitflag]=yalmipMILP(f,A,B,Aeq,Beq,lb,ub,vartype,param,o
 
 global mptOptions
 
+if isfield(mptOptions, 'yalmipdata'),
+    % use fast problem setup by exploiting a dummy problem structure stored in
+    % mptOptions.yalmipdata
+
+    % use hashtable indexing with a string
+    
+    % NOTE! we observed problems with certain MILPs being solved with GLPK. It
+    % is therefore possible to switch to some other solver in branch&bound code
+    % by setting modelprefix = 'miqp:'
+    % NOTE! this change will require you to have some QP solver installed!
+    
+    modelprefix = 'milp:';
+    
+    model = mptOptions.yalmipdata([modelprefix solver]);
+    
+    if isempty(model),
+        % this should never occur, since we prepare a model structure for every
+        % solver in mpt_init. but in case we forget to add some solver in
+        % mpt_init, we compute the dummy model once more here
+        model = sub_getyalmipdata(solver, 'milp');
+    end
+    
+    % use initial guess of optimizer if available
+    if isfield(options, 'usex0'),
+        x0 = options.usex0;
+    else
+        x0 = [];
+    end
+    
+    % update the model structure with current data
+    model = sub_setyalmipdata(model,[],f,A,B,Aeq,Beq,lb,ub,vartype,x0);
+    
+    % call an appropriate solver
+    solution = eval([model.interfacedata.solver.call '(model.interfacedata);']);
+
+    xmin = solution.Primal;
+    fmin = f'*xmin;
+
+    % analyze the solution
+    if solution.problem==0,
+        % solution is optimal, obtain optimizer and compute objective value
+        how = 'ok';
+        exitflag = 1;
+    else
+        % a problem occured
+        if solution.problem < 0,
+            how = 'nosolver';
+            exitflag = -3;
+        else
+            how = 'infeasible';
+            exitflag = -1;
+        end
+    end
+    return
+end
+
 nx = size(A,2);
 
 f = f(:);
@@ -343,6 +399,7 @@ else
     options.solver = solver;
 end
 
+%solution = solvesdp(F, f'*x, sdpsettings(options, 'bnb.solver','nag'));
 solution = solvesdp(F, f'*x, options);
 xmin = double(x);
 fmin = f'*xmin;
