@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.10 2005/06/23 11:55:55 kvasnica Exp $
+% $Id: mpt_solveMIQP.m,v 1.11 2005/06/23 11:57:18 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -284,18 +284,17 @@ if isfield(mptOptions, 'yalmipdata'),
     
     % call an appropriate solver
     solution = eval([model.interfacedata.solver.call '(model.interfacedata);']);
-    
+
+    xmin = solution.Primal;
+    fmin = 0.5*xmin'*H*xmin + f'*xmin;
+
     % analyze the solution
     if solution.problem==0,
         % solution is optimal, obtain optimizer and compute objective value
         how = 'ok';
         exitflag = 1;
-        xmin = solution.Primal;
-        fmin = 0.5*xmin'*H*xmin + f'*xmin;
     else
         % a problem occured
-        xmin = NaN*ones(size(A, 2), 1);
-        fmin = NaN;
         if solution.problem < 0,
             how = 'nosolver';
             exitflag = -3;
