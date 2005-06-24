@@ -466,14 +466,16 @@ disp('Normalizing constraint polytope ...')
 
 %try CPLEX first because CPLEX is MUCH more reliable for large LPs than the other solvers
 defaultLP = Options.lpsolver;
-if any(ismember(mptOptions.solvers.lp, 2))
-    mpt_options('lpsolver',2);
-    lpsolver = 2;
-elseif any(ismember(mptOptions.solvers.lp, 8))
-    mpt_options('lpsolver',8);
-    lpsolver = 8;
-else
-    lpsolver = Options.lpsolver;
+prefered_solvers = [2 8 15 0 9 10 11 12 13 14 15 7 4 1 3 5];
+for ii = 1:length(prefered_solvers),
+    if any(ismember(mptOptions.solvers.lp_all, prefered_solvers(ii)))
+        lpsolver = prefered_solvers(ii);
+        if lpsolver~=defaultLP,
+            fprintf('Switching to solver %s (faster computation)...\n', mpt_solverInfo('lp', lpsolver));
+        end
+        mpt_options('lpsolver', lpsolver);
+        break
+    end
 end
 
 if statusbar,
