@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.13 2005/06/24 11:40:03 kvasnica Exp $
+% $Id: mptctrl.m,v 1.14 2005/06/24 11:54:01 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -288,6 +288,7 @@ elseif nargin==2 | nargin==3
         % NOTE! not possible if probStruct.tracking > 1, in this case the
         % subfunction will return an empty matrix, which is fine (see
         % mpt_getInput and mpt_mip)
+        disp('Constructing data for on-line computation...');
         ctrl.details.Matrices = sub_getMLDmatrices(sysStruct, probStruct);
         
     else
@@ -322,6 +323,7 @@ elseif nargin==2 | nargin==3
         if ~isfield(Options, 'noConstraintReduction'),
             Options.noConstraintReduction = 1;
         end
+        disp('Constructing data for on-line computation...');
         if (isfield(probStruct,'inputblocking') | isfield(probStruct,'deltablocking'))
             opt = Options;
             opt.noConstraintReduction = 1;
