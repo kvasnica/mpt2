@@ -6,6 +6,7 @@
 %   mpt_plotTimeTrajectory - Plots trajectories of states, inputs, outputs and disturbances
 %   mpt_plotJ              - Plots value function associated to a given controller
 %   mpt_plotU              - For a given explicit controller, plots value of the control action
+%   mpt_plotLyapunov       - Plot Lyapunov function associated to a given explicit controller
 %   mpt_plotArrangement    - Plots hyperplane arrangement of a polytope in H-representation
 %   mpt_plotSysStruct      - Plots the system partitions of a PWA system
 %   mpt_plotellip          - Plots a given ellipsoid
