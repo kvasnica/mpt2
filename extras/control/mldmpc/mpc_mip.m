@@ -220,7 +220,15 @@ end
 if ~isfield(Options,'verbose')
     Options.verbose = 0;
 end;
-
+if ~isfield(Options, 'returnproblem'),
+    % if true, mpc_mip will exit immediatelly after it constructs matrices of
+    % the problem
+    Options.returnproblem = 0;
+end
+if ~isfield(Options, 'problemmatrices'),
+    % if set, it has to contain matrices of the problem constructed beforehand
+    Options.problemmatrices = [];
+end
 
 
 % check dimensions and turn S and Q into cell structures
@@ -346,9 +354,42 @@ xt = xt(:);      % current state x(t)
 % terminal state constraint
 xtt = x1(:,end);
 
-% Build optimization matrices
-[S1, S2, S3, F1, F2, F3, c1, c2, c3, IntIndex, Ext] = mpc_buildmatFAST(horizon, ...
-    S, Q, x1, u1, d1, z1, y1, eps2, xtt, Options) ;
+if isempty(Options.problemmatrices),
+    % Build optimization matrices
+    [S1, S2, S3, F1, F2, F3, c1, c2, c3, IntIndex, Ext] = mpc_buildmatFAST(horizon, ...
+        S, Q, x1, u1, d1, z1, y1, eps2, xtt, Options) ;
+    
+    if Options.returnproblem,
+        % only return matrices of the constructed problem
+        matrices.S1 = S1;
+        matrices.S2 = S2;
+        matrices.S3 = S3;
+        matrices.F1 = F1;
+        matrices.F2 = F2;
+        matrices.F3 = F3;    
+        matrices.c1 = c1;
+        matrices.c2 = c2;
+        matrices.c3 = c3;    
+        matrices.IntIndex = IntIndex;
+        matrices.Ext = Ext;
+        ut = matrices;
+        return
+    end
+else
+    % use matrices constructed beforehand
+    matrices = Options.problemmatrices;
+    S1 = matrices.S1;
+    S2 = matrices.S2;
+    S3 = matrices.S3;
+    F1 = matrices.F1;
+    F2 = matrices.F2;
+    F3 = matrices.F3;
+    c1 = matrices.c1;
+    c2 = matrices.c2;
+    c3 = matrices.c3;
+    IntIndex = matrices.IntIndex;
+    Ext = matrices.Ext;
+end
 
 % number of (linear) constraints
 nlin = length(F2);
@@ -514,6 +555,18 @@ if isfield(Options, 'logfile'),
     MIoptions.logfile = Options.logfile;
 end
 
+if isfield(Options, 'nocost'),
+    % set objective function to zero if this flag is set
+    % this case is used in reachability analysis where we are only looking for a
+    % feasible solution
+    if Options.nocost==1,
+        if Options.norm==2,
+            G = zeros(size(G));
+        end
+        CC = zeros(size(CC));
+    end
+end
+        
 startt = clock;
 if Options.norm==2,
     [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), [], [], ...

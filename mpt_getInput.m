@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.15 2005/06/23 14:27:11 kvasnica Exp $
+% $Id: mpt_getInput.m,v 1.16 2005/06/24 11:40:48 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -156,8 +156,17 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             weights.Qd = probStruct.Qd;
         end
         weights.Qu = probStruct.R;
-        
+
         % defined options
+        if isfield(ctrl.details, 'Matrices'),
+            % use pre-calculated problem matrices stored in the controller
+            if ~isempty(ctrl.details.Matrices),
+                if isfield(ctrl.details.Matrices, 'F1') & isfield(ctrl.details.Matrices, 'IntIndex'),
+                    % double-check that the matrices contain appropriate fields
+                    Options.problemmatrices = ctrl.details.Matrices;
+                end
+            end
+        end
         Options.norm = probStruct.norm;
         Options.eps2 = 1e3; % tolerance on fulfillment of terminal state constraint
         Options.umin = sysStruct.umin;
