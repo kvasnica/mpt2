@@ -32,7 +32,7 @@ function status = isfulldim(P,Options)
 % see also ISBOUNDED
 %
 
-% $Id: isfulldim.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: isfulldim.m,v 1.2 2005/06/24 17:41:50 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -65,7 +65,7 @@ global mptOptions;
 abs_tol = mptOptions.abs_tol;
 
 lenP = length(P.Array);
-if lenP>0,
+if (lenP>0),
     status=zeros(lenP,1);
     for ii=1:lenP,
         if isempty(P.Array{ii}.RCheb)
