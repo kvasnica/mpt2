@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.57 2005/06/23 14:45:18 kvasnica Exp $
+% $Id: mpt_init.m,v 1.58 2005/06/24 08:01:08 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -433,6 +433,27 @@ try
     if nargs==0 & ispref('MPT_toolbox'),
         mptOptions = getpref('MPT_toolbox', 'mptOptions');
 
+        if ~isstruct(mptOptions),
+            % loaded settings is not a structure, remove it and instruct the
+            % user to run mpt_init once more
+            rmpref('MPT_toolbox');
+            disp('Corrupted settings found, re-initializing...');
+            dosave = 1;
+            % this error will be catched by the master try-block
+            error('Corrupter settings found.');
+        end
+        
+        if ~isfield(mptOptions, 'version'),
+            mptOptions.version = 'unknown';
+        end
+        if ~strcmp(mptOptions.version, mpt_ver),
+            % this settings was saved for some other version, re-initialize
+            % the toolbox
+            disp('Settings saved for older version, re-initializing...');
+            dosave = 1;
+            error('Settings saved for older version.');
+        end
+        
         try
             % update mptOptions.sdpsettings if somebody installed a new version
             % of YALMIP
@@ -829,6 +850,9 @@ end
 
 % prepare dummy model for fast execution of YALMIP-interfaced solvers
 mptOptions.yalmipdata = sub_prepareyalmipdata(yalmip_solver_strings);
+
+% save version string to mptOptions
+mptOptions.version = mpt_ver;
 
 if dosave,
     % save settings such that they can be later restored by getpref()
