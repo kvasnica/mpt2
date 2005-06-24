@@ -41,7 +41,7 @@ function [R,l,u,lv,uv]=bounding_box(P,Options,lookahead,A,b)
 % see also ENVELOPE, HULL, UNION
 
 % ---------------------------------------------------------------------------
-% $Id: bounding_box.m,v 1.2 2005/06/24 08:19:53 kvasnica Exp $
+% $Id: bounding_box.m,v 1.3 2005/06/24 08:29:41 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -92,6 +92,9 @@ end
 
 lenP = length(P.Array);
 if lenP>0,
+    if lookahead > 0,
+        error('Non-zero lookahead not supported for polyarrays.');
+    end
     dimP = dimension(P);
     allbboxes = zeros(dimP, lenP*2);
     for ii = 1:lenP,
@@ -126,8 +129,8 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
     % quick return if bounding box was already computed and stored
     l = P.bbox(:,1);
     u = P.bbox(:,2);
-    n = size(P.H,2);
     if Options.noPolyOutput == 0,
+        n = size(P.H,2);
         R=polytope([eye(n); -eye(n)],[u;-l]);
     else
         R=[];
