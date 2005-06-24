@@ -58,7 +58,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %
 % see also MPT_SOLVELP
 
-% $Id: mpt_solveLPi.m,v 1.7 2005/06/24 12:42:47 kvasnica Exp $
+% $Id: mpt_solveLPi.m,v 1.8 2005/06/24 16:17:24 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -172,18 +172,21 @@ elseif lpsolver==0, %f_nag,
     % NAG: e04naf.m
     %===============
 
-    [m,n]=size(A);
-
-    if isempty(x0)
-        x0=zeros(n,1);
+    if (~isempty(Aeq)),
+        % convert equality constraints Aeq x=Beq into Aeq x<=Beq and Aeq x>=Beq
+        A = [A; Aeq; -Aeq];  
+        B = [B; Beq; -Beq];
     end
-
-    A = [A; Aeq; -Aeq];  % convert equality constraints Aeq x=Beq into Aeq x<=Beq and Aeq x>=Beq
-    B = [B; Beq; -Beq];
+    
     if any(isnan(B)),
         B(find(isnan(B)))=1e9; % convert NaN bounds to some large number
     end
     [m,n] = size(A);
+    
+    if isempty(x0)
+        x0=zeros(n,1);
+    end
+
     itmax=450;
    
     H = zeros(n);
