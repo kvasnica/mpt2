@@ -35,7 +35,7 @@ function status = eq(P,Q,Options)
 % see also NE, LE, GE
 %
 
-% $Id: eq.m,v 1.3 2005/06/24 08:20:24 kvasnica Exp $
+% $Id: eq.m,v 1.4 2005/06/24 10:57:07 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -89,13 +89,15 @@ end
 lenP=length(P.Array);
 lenQ=length(Q.Array);
 
-if lenP==0 & lenQ==0 & ~isfulldim(P,Options) & ~isfulldim(Q,Options)
+isfulldimP = isfulldim(P);
+isfulldimQ = isfulldim(Q);
+if ~isfulldimP & ~isfulldimQ,
     % both polytopes empty, return TRUE
     status = 1;
     return
 end
 
-if (lenP==0 & ~isfulldim(P,Options)) | (lenQ==0 & ~isfulldim(Q,Options))
+if ~isfulldimP | ~isfulldimQ,
     % one of the polytopes empty, return FALSE
     status = 0;
     return
@@ -144,13 +146,15 @@ else
         [R, Plow, Pup] = bounding_box(P, bboxOpt);
         [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
         
-        if any(abs(Plow - Qlow) > Options.abs_tol) | any(abs(Pup - Qup) > Options.abs_tol),
-            % bounding boxes differ by more than abs_tol => polytopes cannot be equal
-            status = 0;
-            return
+        if ~isempty(Plow) & ~isempty(Qlow),
+            if any(abs(Plow - Qlow) > Options.abs_tol) | any(abs(Pup - Qup) > Options.abs_tol),
+                % bounding boxes differ by more than abs_tol => polytopes cannot be equal
+                status = 0;
+                return
+            end
+            % we cannot reach any conclusion based solely on the fact that bounding
+            % boxes are identical, therefore we continue...
         end
-        % we cannot reach any conclusion based solely on the fact that bounding
-        % boxes are identical, therefore we continue...
         
         Options.simplecheck=1;   % to allow premature break of recursion in mldivide
         if lenP>0,

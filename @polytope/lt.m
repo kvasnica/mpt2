@@ -43,7 +43,7 @@ function status = lt(P,Q,Options)
 % see also LE, GT, EQ, NE, GE
 %
 
-% $Id: lt.m,v 1.2 2005/06/24 08:20:24 kvasnica Exp $
+% $Id: lt.m,v 1.3 2005/06/24 10:57:07 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -148,12 +148,14 @@ else
         bboxOpt.noPolyOutput = 1;    % tell bounding_box() not to create a polytope object
         [R, Plow, Pup] = bounding_box(P, bboxOpt);
         [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
-        
-        if any(Plow + Options.abs_tol < Qlow) | any(Pup - Options.abs_tol > Qup),
-            % bounding box of P violates bounding box of Q, hence P cannot be a
-            % subset of Q
-            status = 0;
-            return
+
+        if ~isempty(Plow) & ~isempty(Qlow),
+            if any(Plow + Options.abs_tol < Qlow) | any(Pup - Options.abs_tol > Qup),
+                % bounding box of P violates bounding box of Q, hence P cannot be a
+                % subset of Q
+                status = 0;
+                return
+            end
         end
         % we cannot reach any conclusion based solely on the fact that bounding
         % boxes are identical, therefore we continue...
