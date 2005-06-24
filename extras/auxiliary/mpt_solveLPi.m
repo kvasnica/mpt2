@@ -58,7 +58,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %
 % see also MPT_SOLVELP
 
-% $Id: mpt_solveLPi.m,v 1.8 2005/06/24 16:17:24 kvasnica Exp $
+% $Id: mpt_solveLPi.m,v 1.9 2005/06/24 17:44:57 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -98,7 +98,7 @@ if nargin==8,
     x0_orig = x0;
 end
 
-if lpsolver==3, %f_cddcc,
+if (lpsolver==3)
     %=============
     % Fukuda: CDD - Criss-Cross Method
     %=============
@@ -167,7 +167,7 @@ if lpsolver==3, %f_cddcc,
         end
     end
 
-elseif lpsolver==0, %f_nag,
+elseif (lpsolver==0)
     %===============
     % NAG: e04naf.m
     %===============
@@ -241,7 +241,7 @@ elseif lpsolver==0, %f_nag,
         end
     end
 
-elseif lpsolver==9,
+elseif (lpsolver==9)
     %===============
     % NAG: e04mbf.m
     %===============
@@ -306,7 +306,7 @@ elseif lpsolver==9,
 
     
     
-elseif lpsolver==1, %f_lp
+elseif (lpsolver==1)
     %case 1,
     %=================
     % Matlab: linprog
@@ -351,7 +351,7 @@ elseif lpsolver==1, %f_lp
     end
 
     
-elseif lpsolver==2,
+elseif (lpsolver==2)
     % CPLEX 9
     
     H = [];
@@ -399,7 +399,7 @@ elseif lpsolver==2,
 
     
     
-elseif lpsolver==8, 
+elseif (lpsolver==8)
     %=============
     % ILOG: CPLEX 8
     %=============
@@ -486,7 +486,7 @@ elseif lpsolver==8,
     end
 
     
-elseif lpsolver==4, %f_glpk,
+elseif (lpsolver==4)
     %case 4,
     % GLPK solver interfaced by GLPKmex
 
@@ -541,7 +541,7 @@ elseif lpsolver==4, %f_glpk,
     end
 
    
-elseif lpsolver==5, %f_cddds,
+elseif (lpsolver==5)
     %case 5
     %=============
     % Fukuda: CDD - Dual Simplex Method
@@ -591,7 +591,7 @@ elseif lpsolver==5, %f_cddds,
     end
 
     
-elseif lpsolver==6,
+elseif (lpsolver==6)
     % SeDuMi
     [xopt,fval,lambda,exitflag,how]=yalmipLP(f,A,B,Aeq,Beq,x0,'sedumi');
     if nargin==8 & exitflag ~= 1,
@@ -611,7 +611,7 @@ elseif lpsolver==6,
     end
 
     
-elseif lpsolver==7, %f_qsopt,
+elseif (lpsolver==7)
     %case 7,
     %=======
     % QSopt
@@ -656,7 +656,7 @@ elseif lpsolver==7, %f_qsopt,
         end
     end
 
-elseif lpsolver==10
+elseif (lpsolver==10)
 
     %========
     % XPress
@@ -678,7 +678,7 @@ elseif lpsolver==10
         end
     end
 
-elseif lpsolver==11
+elseif (lpsolver==11)
     
     %========
     % Mosek
@@ -700,7 +700,7 @@ elseif lpsolver==11
         end
     end
 
-elseif lpsolver==12
+elseif (lpsolver==12)
     
     %========
     % OOQP
@@ -722,7 +722,7 @@ elseif lpsolver==12
         end
     end
     
-elseif lpsolver==13    
+elseif (lpsolver==13)
     
     %========
     % CLP
@@ -760,7 +760,7 @@ elseif lpsolver==13
         end
     end
 
-elseif lpsolver==14
+elseif (lpsolver==14)
     %========
     % BPMPD
     %========
@@ -808,7 +808,7 @@ elseif lpsolver==14
         end
     end
 
-elseif lpsolver==15,
+elseif (lpsolver==15)
     % CPLEX interfaced with CPLEXMEX (by Nicolo Giorgetti)
     
     SENSE = 1; % minimize
