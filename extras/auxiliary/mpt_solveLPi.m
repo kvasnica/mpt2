@@ -58,7 +58,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %
 % see also MPT_SOLVELP
 
-% $Id: mpt_solveLPi.m,v 1.6 2005/04/22 12:19:21 kvasnica Exp $
+% $Id: mpt_solveLPi.m,v 1.7 2005/06/24 12:42:47 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -259,7 +259,7 @@ elseif lpsolver==9,
     end
 
     [xopt,istate,fval,clambda,exitflag]=e04mbf([-1e9*ones(aux1+aux2,1);Beq],...
-        [1e9*ones(aux2,1);B;Beq],x0(:),f(:),[A;Aeq],0,itmax,1);
+        [1e9*ones(aux2,1);B;Beq],x0(:),f(:),[A;Aeq],-1,itmax,1);
 
     [aux1,aux2]=size([A;Aeq]);
     lambda=-clambda(aux2+1:aux1+aux2);
