@@ -41,7 +41,7 @@ function [R,l,u,lv,uv]=bounding_box(P,Options,lookahead,A,b)
 % see also ENVELOPE, HULL, UNION
 
 % ---------------------------------------------------------------------------
-% $Id: bounding_box.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: bounding_box.m,v 1.2 2005/06/24 08:19:53 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -90,8 +90,36 @@ if(nargin<3)
     lookahead=0;
 end
 
-if length(P.Array)>0
-    error('bounding_box: This function does not support polyarrays!');
+lenP = length(P.Array);
+if lenP>0,
+    dimP = dimension(P);
+    allbboxes = zeros(dimP, lenP*2);
+    for ii = 1:lenP,
+        bbox = P.Array{ii}.bbox;
+        if isempty(bbox),
+            % this element does not have a bounding box information stored,
+            % recompute it
+            bboxOpt.noPolyOutput = 1;
+            [R, low, up] = bounding_box(P.Array{ii}, struct('noPolyOutput', 1));
+            bbox = [low up];
+        end
+        allbboxes(:, 2*ii-1:2*ii) = bbox;
+    end
+    l = zeros(dimP, 1);
+    u = zeros(dimP, 1);
+    lv = [];
+    uv = [];
+    for ii = 1:dimP,
+        l(ii) = min(allbboxes(ii, :));
+        u(ii) = max(allbboxes(ii, :));
+    end
+    if Options.noPolyOutput,
+        % we don't need the bounding box as a polytope object
+        R = [];
+    else
+        R=polytope([eye(n); -eye(n)],[u;-l]);
+    end
+    return
 end
 
 if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
