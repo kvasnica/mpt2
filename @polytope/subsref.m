@@ -22,7 +22,7 @@ function Q = subsref(P, X)
 % see also SUBSASGN, END
 %
 
-% $Id: subsref.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: subsref.m,v 1.2 2005/06/24 16:16:23 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -53,7 +53,9 @@ function Q = subsref(P, X)
 if numel(X)>1,
     error('??? Attempt to reference field of non-structure array.');
 else
-    if ~strcmp(X.type,'()'),
+    %if ~strcmp(X.type,'()'),
+    if X.type(1)~='(',
+        % only indexes in round brackets are allowed
         if X.type(1)=='.',
             error(['Indexing with ''' X.type ''' not supported! Use [H,K]=double(P) to access the H-representation; type ''help polytope'' for more details']);
         end
@@ -67,14 +69,14 @@ if isempty(indices),
     return
 end
 
-if isempty(P.Array),
+lenP = length(P.Array);
+if (lenP==0)
     if indices(1)>1 | length(indices)>1,
         error('SUBSREF: ??? Index exceeds array dimension');
     end
     Q=P;
     return
 else
-    lenP = length(P.Array);
     if any(indices<=0),
         error('POLYTOPE:SUBSREF: Index is negative or zero');
     end
@@ -83,7 +85,7 @@ else
         error('POLYTOPE:SUBSREF: Index exceeds matrix dimension');
     end
     lenInd = length(indices);
-    if lenInd==1,
+    if (lenInd==1),
         Q = P.Array{indices};
     else
         Q = P;
