@@ -41,7 +41,7 @@ function [R,l,u,lv,uv]=bounding_box(P,Options,lookahead,A,b)
 % see also ENVELOPE, HULL, UNION
 
 % ---------------------------------------------------------------------------
-% $Id: bounding_box.m,v 1.3 2005/06/24 08:29:41 kvasnica Exp $
+% $Id: bounding_box.m,v 1.4 2005/06/24 10:56:45 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -95,16 +95,28 @@ if lenP>0,
     if lookahead > 0,
         error('Non-zero lookahead not supported for polyarrays.');
     end
+    forcerecompute = Options.noPolyOutput==1;
     dimP = dimension(P);
     allbboxes = zeros(dimP, lenP*2);
     for ii = 1:lenP,
         bbox = P.Array{ii}.bbox;
         if isempty(bbox),
-            % this element does not have a bounding box information stored,
-            % recompute it
-            bboxOpt.noPolyOutput = 1;
-            [R, low, up] = bounding_box(P.Array{ii}, struct('noPolyOutput', 1));
-            bbox = [low up];
+            if forcerecompute,
+                % this element does not have a bounding box information stored,
+                % recompute it
+                bboxOpt.noPolyOutput = 1;
+                [R, low, up] = bounding_box(P.Array{ii}, struct('noPolyOutput', 1));
+                bbox = [low up];
+            else
+                % just exit with no result if bounding box information does not
+                % exist for a given element
+                l = [];
+                u = [];
+                lv = [];
+                uv = [];
+                R = [];
+                return
+            end
         end
         allbboxes(:, 2*ii-1:2*ii) = bbox;
     end
