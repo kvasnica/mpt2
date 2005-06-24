@@ -25,7 +25,7 @@ function [R,fulldim] = intersect(P1,P2,Options)
 % see also AND
 %
 
-% $Id: intersect.m,v 1.2 2005/06/13 13:24:38 kvasnica Exp $
+% $Id: intersect.m,v 1.3 2005/06/24 08:22:48 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -146,8 +146,11 @@ else
         l = max([P1.bbox(:,1) P2.bbox(:,1)]')';
         u = min([P1.bbox(:,2) P2.bbox(:,2)]')';      
         cand = find(~((HH>0).*HH*(u-l) - (KK-HH*l) < -mptOptions.abs_tol));
-        HH = HH(cand,:);
-        KK = KK(cand,:);
+        if ~all(cand)
+            cand = find(cand)
+            HH = HH(cand,:);
+            KK = KK(cand,:);
+        end
     end
     
     R = polytope(HH, KK, normal, reduceit);   % intersection is obtained by eliminating redundant constraints from the system of inequalities
