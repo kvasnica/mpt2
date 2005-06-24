@@ -28,7 +28,7 @@ function R = and(varargin)
 % see also INTERSECT
 %
 
-% $Id: and.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: and.m,v 1.2 2005/06/24 19:04:35 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -78,6 +78,9 @@ normal=1;
 maxdimP=0;
 for ii=1:ni,
     % determine maximum dimension
+    if ~isa(varargin{ii}, 'polytope'),
+        error('AND: all input arguments must be polytope objects.');
+    end
     dimP=dimension(varargin{ii});
     if dimP>maxdimP,
         maxdimP=dimP;
@@ -85,9 +88,6 @@ for ii=1:ni,
 end
 for ii=1:ni,   % go through all input arguments
     P = varargin{ii};
-    if ~isa(P,'polytope')
-        error('AND: argument MUST be a polytope object!');
-    end
     lenP = length(P.Array);  
     if lenP>0, % if the input argument is a polyarray, we cycle through all it's elements
         for jj=1:lenP,
