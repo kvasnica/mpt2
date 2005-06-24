@@ -48,7 +48,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.7 2005/06/23 22:10:17 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.8 2005/06/24 16:16:55 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -264,8 +264,8 @@ while(notConverged>0 & iter<maxIter)
         convCtr=0;      %this extra counter is needed for error checks
         for j=1:length(targetPn)
             if isfulldimPn(i) & isfulldimTarget(j),
-                Px=domain(targetPn(j),A{dynamics(i)},f{dynamics(i)},Pn(i)); %compute set of states Pn(i)->targetPn(j)
-                if(isfulldim(Px)) 
+                [Px,dummy,feasible]=domain(targetPn(j),A{dynamics(i)},f{dynamics(i)},Pn(i)); %compute set of states Pn(i)->targetPn(j)
+                if(feasible) 
                     %transition exists
                     if Px~=Pn(i),
                         convCtr=convCtr+1;
