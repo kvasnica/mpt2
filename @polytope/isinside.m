@@ -35,7 +35,7 @@ function [isin, inwhich, closest] = isinside(P,x0,Options)
 % see also POLYTOPE
 %
 
-% $Id: isinside.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: isinside.m,v 1.2 2005/06/24 08:37:38 kvasnica Exp $
 %
 % (C) 2004 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
@@ -173,7 +173,8 @@ else
     fastbreak = Options.fastbreak;
 
     for ii=1:lenP,                         % cycle through all elements of Pn
-        if all(PArray{ii}.H * x0 - PArray{ii}.K <= abs_tol),    % for each P, check if Hx<=K holds
+        PArray_ii = PArray{ii};
+        if all(PArray_ii.H * x0 - PArray_ii.K <= abs_tol),    % for each P, check if Hx<=K holds
             isin=1;
             inwhich = [inwhich; ii];
             if fastbreak,
