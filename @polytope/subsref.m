@@ -22,7 +22,7 @@ function Q = subsref(P, X)
 % see also SUBSASGN, END
 %
 
-% $Id: subsref.m,v 1.2 2005/06/24 16:16:23 kvasnica Exp $
+% $Id: subsref.m,v 1.3 2005/06/24 17:42:15 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -53,8 +53,7 @@ function Q = subsref(P, X)
 if numel(X)>1,
     error('??? Attempt to reference field of non-structure array.');
 else
-    %if ~strcmp(X.type,'()'),
-    if X.type(1)~='(',
+    if (~strcmp(X.type,'()')),
         % only indexes in round brackets are allowed
         if X.type(1)=='.',
             error(['Indexing with ''' X.type ''' not supported! Use [H,K]=double(P) to access the H-representation; type ''help polytope'' for more details']);
