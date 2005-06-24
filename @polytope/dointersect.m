@@ -24,7 +24,7 @@ function answer = dointersect(P1,P2)
 % see also AND
 %
 
-% $Id: dointersect.m,v 1.1 2004/12/11 20:13:55 kvasnica Exp $
+% $Id: dointersect.m,v 1.2 2005/06/24 08:28:04 kvasnica Exp $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -64,6 +64,16 @@ end
 
 if lenP1 == 1 & lenP2 == 1
     % special case, both inputs are single polytopes
+    
+    if ~isempty(P1.bbox) & ~isempty(P2.bbox)
+        if all(P1.bbox(:,2) < P2.bbox(:,1)) | all(P1.bbox(:,1) > P2.bbox(:,2))
+            % even bounding boxes of the two polytopes do not intersect, abort
+            % quickly
+            answer = 0;
+            return
+        end
+    end
+
     Hint = [P1.H; P2.H];
     Kint = [P1.K; P2.K];
     [xcheb, rcheb] = chebyball_f(Hint, Kint, mptOptions);
