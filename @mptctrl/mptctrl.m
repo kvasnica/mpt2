@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.12 2005/06/23 14:27:28 kvasnica Exp $
+% $Id: mptctrl.m,v 1.13 2005/06/24 11:40:03 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -284,6 +284,12 @@ elseif nargin==2 | nargin==3
         [nx,nu,ny] = mpt_sysStructInfo(sysStruct);
         sysStruct.dims = struct('nx', nx, 'nu', nu, 'ny', ny);
         
+        % try to construct matrices of the MPC problem
+        % NOTE! not possible if probStruct.tracking > 1, in this case the
+        % subfunction will return an empty matrix, which is fine (see
+        % mpt_getInput and mpt_mip)
+        ctrl.details.Matrices = sub_getMLDmatrices(sysStruct, probStruct);
+        
     else
         % =========================================================================
         % we have an LTI system, construct matrices
@@ -347,3 +353,205 @@ ctrl.details.dims = struct('nx', nx, 'nu', nu, 'ny', ny);
 % =========================================================================
 % create the object
 ctrl = class(ctrl, 'mptctrl');
+
+
+
+%--------------------------------------------------------------------------
+function Matrices = sub_getMLDmatrices(sysStruct, probStruct),
+
+if probStruct.tracking > 0,
+    % cannot pre-compute matrices of the MPC problem for time-varying references
+    Matrices = [];
+    return;
+end
+
+ny = sysStruct.data.MLD.ny;
+nx = sysStruct.data.MLD.nx;
+
+% define weights
+if isfield(probStruct, 'Qy')
+    weights.Qy = probStruct.Qy;
+else
+    weights.Qx = probStruct.Q;
+end
+if isfield(probStruct, 'Qz'),
+    % penalty on "z" variables
+    weights.Qz = probStruct.Qz;
+end
+if isfield(probStruct, 'Qd'),
+    % penalty on "d" variables
+    weights.Qd = probStruct.Qd;
+end
+weights.Qu = probStruct.R;
+
+% defined options
+Options.norm = probStruct.norm;
+Options.eps2 = 1e3; % tolerance on fulfillment of terminal state constraint
+Options.umin = sysStruct.umin;
+Options.umax = sysStruct.umax;
+if any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin))
+    Options.dumax = sysStruct.dumax;
+    Options.dumin = sysStruct.dumin;
+end
+
+Options.TerminalConstraint = 0;
+if probStruct.Tconstraint==2 & isfield(probStruct, 'Tset'),
+    if isfulldim(probStruct.Tset),
+        % tell mpc_mip to include terminal set constraint
+        Options.Tset = probStruct.Tset;
+    end
+end
+
+% define references
+if isfield(probStruct, 'Qy'),
+    if isfield(probStruct, 'yref'),
+        ref.y = probStruct.yref;
+    else
+        ref.y = zeros(ny,1);
+    end
+else
+    if isfield(probStruct, 'xref'),
+        ref.x = probStruct.xref;
+        if isfield(probStruct, 'uref')
+            ref.u = probStruct.uref;
+        end
+    else
+        ref.x = zeros(nx,1);
+    end
+end
+
+if isfield(probStruct, 'xN'),
+    clear ref
+    ref.x = probStruct.xN;
+    % tell mpc_mip to include terminal set constraint
+    Options.TerminalConstraint = 1;
+    % zero tolerance on satisfaction of terminal set constraint
+    Options.eps2 = Options.abs_tol;
+end
+
+% in case of time-varying penalties, mpc_mip expects them to be in a
+% cell array
+%   weights{1}.Qx (.Qy, .Qu, .Qd, .Qz)
+%   ...
+%   weights{N}.Qx (.Qy, .Qu, .Qd, .Qz)
+% we make the conversion in a subfunction...
+weights = sub_fixweights(weights);
+
+% if time-varying penalties is used, mpc_mip wants to have one MLD
+% model per each sampling time, so we make it happy...
+S = {};
+for ii = 1:probStruct.N,
+    S{ii} = sysStruct.data.MLD;
+end
+
+% the prediction horizon in mpc_mip is determined as sum(horizon)...
+horizon = repmat(1, 1, probStruct.N);
+
+% tell mpc_mip() not to solve the given problem, rather just to return matrices
+% of the MPC problem
+Options.returnproblem = 1;
+
+% dummy initial state, we are not solving the problem, so it does not matter
+% what the value is
+x0 = zeros(nx, 0);
+
+Matrices = mpc_mip(S, x0, ref, weights, horizon, horizon, Options);
+
+
+
+%---------------------------------------------------
+function W = sub_fixweights(weights),
+% in case of time-varying penalties, mpc_mip expects them to be in a
+% cell array
+%   weights{1}.Qx (.Qy, .Qu, .Qd, .Qz)
+%   ...
+%   weights{N}.Qx (.Qy, .Qu, .Qd, .Qz)
+% we make the conversion here
+
+Qx_cell = 0;
+Qy_cell = 0;
+Qu_cell = 0;
+Qz_cell = 0;
+Qd_cell = 0;
+haveQy  = 0;
+haveQz  = 0;
+haveQd  = 0;
+Qx_length = 0;
+Qy_length = 0;
+Qu_length = 0;
+Qz_length = 0;
+Qd_length = 0;
+
+if isfield(weights, 'Qx'),
+    if iscell(weights.Qx),
+        Qx_cell = 1;
+        Qx_length = length(weights.Qx);
+    end
+end
+if isfield(weights, 'Qu'),
+    if iscell(weights.Qu),
+        Qu_cell = 1;
+        Qu_length = length(weights.Qu);
+    end
+end
+if isfield(weights, 'Qy'),
+    haveQy = 1;
+    if iscell(weights.Qy),
+        Qy_cell = 1;
+        Qy_length = length(weights.Qy);
+    end
+end
+if isfield(weights, 'Qz'),
+    haveQz = 1;
+    if iscell(weights.Qz),
+        Qz_cell = 1;
+        Qz_length = length(weights.Qz);
+    end
+end
+if isfield(weights, 'Qd'),
+    haveQd = 1;
+    if iscell(weights.Qd),
+        Qd_cell = 1;
+        Qd_length = length(weights.Qd);
+    end
+end
+
+if Qx_cell | Qu_cell | Qy_cell | Qz_cell | Qd_cell,
+    N = max([Qx_length Qu_length Qy_length Qz_length Qd_length]);
+    W = {};
+    for ii = 1:N,
+        if Qx_cell,
+            W{ii}.Qx = weights.Qx{ii};
+        else
+            W{ii}.Qx = weights.Qx;
+        end
+        if Qu_cell,
+            W{ii}.Qu = weights.Qu{ii};
+        else
+            W{ii}.Qu = weights.Qu;
+        end
+        if haveQy,
+            if Qy_cell,
+                W{ii}.Qy = weights.Qy{ii};
+            else
+                W{ii}.Qy = weights.Qy;
+            end
+        end
+        if haveQz,
+            if Qz_cell,
+                W{ii}.Qz = weights.Qz{ii};
+            else
+                W{ii}.Qz = weights.Qz;
+            end
+        end
+        if haveQd,
+            if Qd_cell,
+                W{ii}.Qd = weights.Qd{ii};
+            else
+                W{ii}.Qd = weights.Qd;
+            end
+        end
+    end
+else
+    W = weights;
+end
