@@ -44,8 +44,10 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.5 2005/06/23 21:21:47 kvasnica Exp $
+% $Id: domain.m,v 1.6 2005/06/24 13:56:01 kvasnica Exp $
 %
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
@@ -148,18 +150,19 @@ else
     % transformation of P exists
     feasible = rc >= mptOptions.abs_tol;
     
-    if Options.noReduce,
-        R = polytope(HH, KK, 0, 2);
-        keptrows = [];
-        return
-    end
     if feasible,
-        % compute the polytope
+        % intersection exists, compute the domain polytope
         R = polytope(HH, KK, 0, 2);
-        [R, keptrows] = reduce(R);
-        tmp=find(keptrows<=nconstr(P));
-        keptrows=ones(1,length(keptrows));
-        keptrows(tmp)=0;
+        if Options.noReduce,
+            % the polytope does not need reduction if this flag is true
+            keptrows = [];
+        else
+            % reduce the polytope
+            [R, keptrows] = reduce(R);
+            tmp=find(keptrows<=nconstr(P));
+            keptrows=ones(1,length(keptrows));
+            keptrows(tmp)=0;
+        end
     else
         % intersection does not exists, domain is empty
         R = mptOptions.emptypoly;
