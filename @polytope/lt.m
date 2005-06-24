@@ -43,7 +43,7 @@ function status = lt(P,Q,Options)
 % see also LE, GT, EQ, NE, GE
 %
 
-% $Id: lt.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% $Id: lt.m,v 1.2 2005/06/24 08:20:24 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -103,16 +103,23 @@ end
 lenP=length(P.Array);
 lenQ=length(Q.Array);
 
-if lenP==0 & ~isfulldim(P,Options)
+if ~isfulldim(P,Options)
     % if P is empty, statement is true
     status = 1;
     return
 end
 
-if lenQ==0 & ~isfulldim(Q,Options)
+if ~isfulldim(Q,Options)
     % if Q is empty, statement is false
     status = 0;
     return
+end
+
+% check dimensions
+dimP = dimension(P);
+dimQ = dimension(Q);
+if dimP ~= dimQ,
+    error('LT: Only polytopes of equal dimensionality can be compared.');
 end
 
 if Options.elementwise,
@@ -137,6 +144,20 @@ if Options.elementwise,
     end
 else
     if lenP>0 | lenQ>0,
+        % try to rule out some cases based on bounding boxes
+        bboxOpt.noPolyOutput = 1;    % tell bounding_box() not to create a polytope object
+        [R, Plow, Pup] = bounding_box(P, bboxOpt);
+        [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
+        
+        if any(Plow + Options.abs_tol < Qlow) | any(Pup - Options.abs_tol > Qup),
+            % bounding box of P violates bounding box of Q, hence P cannot be a
+            % subset of Q
+            status = 0;
+            return
+        end
+        % we cannot reach any conclusion based solely on the fact that bounding
+        % boxes are identical, therefore we continue...
+        
         Options.simplecheck=1;    % to allow premature abort of recursion in mldivide
         if Options.verbose>0,
             disp('Strict comparison (<,>) is very expensive. Please use (<=, >=) if possible.');
@@ -163,8 +184,16 @@ if ~Q.minrep
 end
 [ncP,nxP]=size(P.H);
 [ncQ,nxQ]=size(Q.H);
-if nxP~=nxQ
-    error('LT: Only polytopes of equal dimensionality can be compared');
+
+Pbbox = P.bbox;
+Qbbox = Q.bbox;
+if ~isempty(Pbbox) & ~isempty(Qbbox),
+    if any(Pbbox(:,1) + Options.abs_tol < Qbbox(:,1)) | any(Pbbox(:,2) - Options.abs_tol > Qbbox(:,2)),
+        % bounding box of P violates bounding box of Q, hence P cannot be a
+        % subset of Q
+        status = 0;
+        return
+    end
 end
 
 status=0;

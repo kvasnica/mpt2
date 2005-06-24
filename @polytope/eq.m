@@ -35,7 +35,7 @@ function status = eq(P,Q,Options)
 % see also NE, LE, GE
 %
 
-% $Id: eq.m,v 1.2 2005/06/23 22:09:29 kvasnica Exp $
+% $Id: eq.m,v 1.3 2005/06/24 08:20:24 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -138,82 +138,19 @@ else
         elseif dimP ~= dimQ,
             error('EQ: Only polytopes of equal dimensionality can be compared');
         end
-        
+
         % try to rule out some cases based on bounding boxes
-        allPbboxes = [];
-        allQbboxes = [];
-        haveallbboxes = 1;
-        if lenP==0,
-            % P is a single polytope, extract it's bounding box
-            Pbbox = P.bbox;
-            if isempty(Pbbox),
-                % bounding box field is empty
-                haveallbboxes = 0;
-            else
-                allPbboxes = Pbbox;
-            end
-        else
-            % P is a polyarray, stack bounding box info of each polytope to one
-            % matrix
-            for ii = 1:lenP,
-                Pbbox = P.Array{ii}.bbox;
-                if isempty(Pbbox),
-                    % bounding box field is empty, no point of going on...
-                    haveallbboxes = 0;
-                    break
-                else
-                    allPbboxes = [allPbboxes Pbbox];
-                end
-            end
+        bboxOpt.noPolyOutput = 1;    % tell bounding_box() not to create a polytope object
+        [R, Plow, Pup] = bounding_box(P, bboxOpt);
+        [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
+        
+        if any(abs(Plow - Qlow) > Options.abs_tol) | any(abs(Pup - Qup) > Options.abs_tol),
+            % bounding boxes differ by more than abs_tol => polytopes cannot be equal
+            status = 0;
+            return
         end
-        if haveallbboxes,
-            % all elements of P had the bounding box information stored inside,
-            % now test the Q polytope
-            if lenQ==0,
-                % Q is a single polytope
-                Qbbox = Q.bbox;
-                if isempty(Qbbox),
-                    % no bounding box infor stored in the object
-                    haveallbboxes = 0;
-                else
-                    allQbboxes = Qbbox;
-                end
-            else
-                % Q is a polyarray, examine each element
-                for ii = 1:lenQ,
-                    Qbbox = Q.Array{ii}.bbox;
-                    if isempty(Qbbox),
-                        % no bounding box info stored inside, abort...
-                        haveallbboxes = 0;
-                        break
-                    else
-                        allQbboxes = [allQbboxes Qbbox];
-                    end
-                end
-            end
-        end
-        if haveallbboxes,
-            % both P and Q had bounding box info stored inside, now compare
-            % minima and maxima...
-            sizeP = size(allPbboxes, 1);
-            minPbboxes = zeros(sizeP, 1);
-            minQbboxes = zeros(sizeP, 1);
-            maxPbboxes = zeros(sizeP, 1);
-            maxQbboxes = zeros(sizeP, 1);
-            for ii = 1:sizeP,
-                minPbboxes(ii) = min(allPbboxes(ii, :));
-                minQbboxes(ii) = min(allQbboxes(ii, :));
-                maxPbboxes(ii) = max(allPbboxes(ii, :));
-                maxQbboxes(ii) = max(allQbboxes(ii, :));
-            end
-            if any(abs(minPbboxes - minQbboxes) > Options.abs_tol) | any(abs(maxPbboxes - maxQbboxes) > Options.abs_tol),
-                % bounding boxes differ by more than abs_tol => polytopes cannot be equal
-                status = 0;
-                return
-            end
-            % we cannot reach any conclusion based solely on the fact that bounding
-            % boxes are identical, therefore we continue...
-        end
+        % we cannot reach any conclusion based solely on the fact that bounding
+        % boxes are identical, therefore we continue...
         
         Options.simplecheck=1;   % to allow premature break of recursion in mldivide
         if lenP>0,
