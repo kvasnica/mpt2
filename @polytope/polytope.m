@@ -107,7 +107,7 @@ function [P] = polytope(varargin)
 % see also POLYTOPE/DOUBLE, CHEBYBALL, ISFULLDIM, ISMINREP, ISNORMAL, EXTREME
 %
 
-% $Id: polytope.m,v 1.2 2005/05/10 13:03:21 kvasnica Exp $
+% $Id: polytope.m,v 1.3 2005/06/25 15:02:18 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -323,7 +323,7 @@ if(P.RCheb<mptOptions.abs_tol)
 end
 
 if reduceit,
-    P = reduce(P,Options,lambda);
+    P = reduce(P,Options);
 end
 
 return;
