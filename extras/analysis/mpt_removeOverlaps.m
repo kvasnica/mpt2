@@ -40,7 +40,7 @@ function [newCtrlStruct]=mpt_removeOverlaps(Partition,Options)
 % see also MPT_ITERATIVEPWA, MPT_ITERATIVE, MPT_OPTCONTROLPWA, MPT_PLOTU
 %
 
-% $Id: mpt_removeOverlaps.m,v 1.3 2005/06/03 14:15:39 kvasnica Exp $
+% $Id: mpt_removeOverlaps.m,v 1.4 2005/06/25 15:02:49 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -531,7 +531,7 @@ for ii=1:npart
                 if auxI_mm==3,
                     fulldim=1;
                 else
-                    R = sub_chebyball(Haux,Kaux,nx,rel_tol,abs_tol,lpsolver);
+                    [xcheb, R] = sub_chebyball(Haux,Kaux,nx,rel_tol,abs_tol,lpsolver);
                     fulldim = (R>=abs_tol);
                 end
                 if fulldim
@@ -545,7 +545,7 @@ for ii=1:npart
                         if ii<kk,                                                     % if so, we just remove the region once
                             Intersection.nR=Intersection.nR+1;
                             Intersection.who(Intersection.nR,:)=[kk mm];
-                            Paux = polytope(Haux, Kaux, 0, 2);
+                            Paux = polytope(Haux, Kaux, 0, 2, xcheb, R);
                             Intersection.Pn = [Intersection.Pn Paux];
                         end
                     else
@@ -553,11 +553,11 @@ for ii=1:npart
                         H = [Haux; Baux];
                         K = [Kaux; -Caux];
                         % get radius of chebyshev's ball of the intersection
-                        R = sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver);
+                        [xcheb, R] = sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver);
                        
                         if R>=abs_tol,
                             % faster call - do not reduce the polytope yet
-                            Paux = polytope(H,K,0,2);
+                            Paux = polytope(H, K, 0, 2, xcheb, R);
                             Intersection.nR=Intersection.nR+1;
                             Intersection.who(Intersection.nR,:)=[kk mm];
                             Intersection.Pn = [Intersection.Pn Paux];
@@ -723,7 +723,7 @@ ctrlStruct.overlaps = 0;
 
 
 % ---------------------------------------------------------------------------------------
-function R=sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver)
+function [xcheb, R]=sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver)
 
 if all(K>-1e9),
     % use 'rescue' function - resolve an LP automatically if it is infeasible
@@ -784,6 +784,7 @@ if ~strcmp(how,'ok')
         K,[],[],x0,lpsolver,1);
 end
 
+xcheb = xopt(1:nx); % center of the ball
 R=-xopt(nx+1); % Radius of the ball
 
 
