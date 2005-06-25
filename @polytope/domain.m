@@ -44,7 +44,7 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.9 2005/06/25 10:01:43 kvasnica Exp $
+% $Id: domain.m,v 1.10 2005/06/25 11:21:56 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -101,11 +101,12 @@ end
 if ~isfield(Options, 'lpsolver'),
     Options.lpsolver = mptOptions.lpsolver;
 end
-if ~isfield(Options, 'checkBboxes'),
-    checkBboxes = 1;
-else
-    checkBboxes = Options.checkBboxes;
-end
+% uncomment the following code to activate pre-processing using bounding boxes
+% if ~isfield(Options, 'checkBboxes'),
+%     checkBboxes = 1;
+% else
+%     checkBboxes = Options.checkBboxes;
+% end
 
 lenP=length(P.Array);
 lenQ=length(Q.Array);
@@ -146,28 +147,29 @@ else
     end
     Ahorizon = A^horizon;
 
-    if checkBboxes,
-        % try to rule out certain transitions based on bounding boxes
-        qbbox = Q.bbox;
-        pbbox = P.bbox;
-        if ~isempty(qbbox) & ~isempty(pbbox),
-            % compute bounding box of range(Q, A, f)
-            qrbbox = Ahorizon*qbbox + [Af Af];
-            
-            % check if bounding box of range(Q, A, f) intersects with P. if not,
-            % domain will be empty
-            if (all(pbbox(:,2) < qrbbox(:,1)) | all(pbbox(:,1) > qrbbox(:,2)))
-                % even bounding boxes of the two polytopes do not intersect, abort
-                % quickly
-                feasible = 0;
-                R = mptOptions.emptypoly;
-                keptrows = [];
-                return
-            end
-            % we cannot reach any conclusion based solely on the fact that bounding
-            % boxes do intersect, therefore we continue...
-        end
-    end
+    % uncomment the following code to activate pre-processing using bounding boxes
+    %     if checkBboxes,
+    %         % try to rule out certain transitions based on bounding boxes
+    %         qbbox = Q.bbox;
+    %         pbbox = P.bbox;
+    %         if ~isempty(qbbox) & ~isempty(pbbox),
+    %             % compute bounding box of range(Q, A, f)
+    %             qrbbox = Ahorizon*qbbox + [Af Af];
+    %             
+    %             % check if bounding box of range(Q, A, f) intersects with P. if not,
+    %             % domain will be empty
+    %             if (all(pbbox(:,2) < qrbbox(:,1)) | all(pbbox(:,1) > qrbbox(:,2)))
+    %                 % even bounding boxes of the two polytopes do not intersect, abort
+    %                 % quickly
+    %                 feasible = 0;
+    %                 R = mptOptions.emptypoly;
+    %                 keptrows = [];
+    %                 return
+    %             end
+    %             % we cannot reach any conclusion based solely on the fact that bounding
+    %             % boxes do intersect, therefore we continue...
+    %         end
+    %     end
     
     HH = [P.H*Ahorizon; Q.H];
     KK = [P.K-P.H*Af; Q.K];
