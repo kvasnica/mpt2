@@ -40,7 +40,7 @@ function [newCtrlStruct]=mpt_removeOverlaps(Partition,Options)
 % see also MPT_ITERATIVEPWA, MPT_ITERATIVE, MPT_OPTCONTROLPWA, MPT_PLOTU
 %
 
-% $Id: mpt_removeOverlaps.m,v 1.4 2005/06/25 15:02:49 kvasnica Exp $
+% $Id: mpt_removeOverlaps.m,v 1.5 2005/06/25 15:14:48 kvasnica Exp $
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -757,9 +757,8 @@ if ~strcmp(how,'ok')
     % If any boundary is -Inf polytope P is empty
     %--------------------------------------------
     if any(K==-Inf)
-        xc=zeros(nx,1);
+        xcheb=zeros(nx,1);
         R=-Inf;
-        lambda=zeros(nc,1);
         return;
     end
     
@@ -770,9 +769,8 @@ if ~strcmp(how,'ok')
     K(ii)=[];
     
     if size(H,1)==0
-        xc=zeros(nx,1);
+        xcheb=zeros(nx,1);
         R=Inf;
-        lambda=zeros(nc,1);
         return;
     end
     
