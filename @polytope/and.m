@@ -28,7 +28,7 @@ function R = and(varargin)
 % see also INTERSECT
 %
 
-% $Id: and.m,v 1.2 2005/06/24 19:04:35 kvasnica Exp $
+% $Id: and.m,v 1.3 2005/06/25 15:00:36 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -127,9 +127,20 @@ for ii=1:ni,   % go through all input arguments
             if Options.verbose>=2,
                 disp('warning: empty polytope detected!');
             end
-            R=polytope;
+            R=mptOptions.emptypoly;
             return
         end
     end
 end
-R = polytope(HH, KK, normal);   % the intersection is obtained by eliminating all redundant constraints
+
+Options.lpsolver = mptOptions.lpsolver;
+[xcheb, rcheb] = chebyball_f(HH, KK, Options);
+if rcheb > Options.abs_tol,
+    % intersection is a full-dimensional polytope
+    
+    % note that we also provide xcheb and rcheb to polytope(), otherwise we
+    % would re-compute these two parameters in the polytope constructor
+    R = polytope(HH, KK, normal, 0, xcheb, rcheb);
+else
+    R = mptOptions.emptypoly;
+end

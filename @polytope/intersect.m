@@ -25,7 +25,7 @@ function [R,fulldim] = intersect(P1,P2,Options)
 % see also AND
 %
 
-% $Id: intersect.m,v 1.3 2005/06/24 08:22:48 kvasnica Exp $
+% $Id: intersect.m,v 1.4 2005/06/25 15:00:56 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -71,6 +71,9 @@ end
 if ~isfield(Options,'reduce_intersection') % if set to 0, the intersection will not be reduced, i.e. no removal of redundant constraints takes place 
     Options.reduce_intersection=1;
 end
+if ~isfield(Options, 'lpsolver'),
+    Options.lpsolver = mptOptions.lpsolver;
+end
 
 normal = 0;
 if Options.reduce_intersection==0,
@@ -103,44 +106,38 @@ if lenP1>0 | lenP2>0,
     fulldim = isfulldim(R(1));
     return
 else
-    if isempty(P1.RCheb),
-        [P1.xCheb, P1.RCheb] = chebyball_f(P1.H,P1.K, Options);
-    end
-    if isempty(P2.RCheb),
-        [P2.xCheb, P2.RCheb] = chebyball_f(P2.H,P2.K, Options);
-    end
-    
     havebboxes = 0;
     if ~isempty(P1.bbox) & ~isempty(P2.bbox)
         havebboxes = 1;
         if all(P1.bbox(:,2) < P2.bbox(:,1)) | all(P1.bbox(:,1) > P2.bbox(:,2))
+            % bounding boxes do not intersect => polytopes do not intersect
             fulldim = 0;
             R=mptOptions.emptypoly;
             return
         end
     end
-    
-    if P1.RCheb < Options.abs_tol
-        P1.H=[];
-        P1.K=[];
-    end
-    if P2.RCheb < Options.abs_tol
-        P2.H=[];
-        P2.K=[];
-    end
-    HH=[P1.H; P2.H];
-    KK=[P1.K; P2.K];
-    if ~normal,
-        normal = P1.normal & P2.normal;
-    end
-    if P1.RCheb < Options.abs_tol | P2.RCheb < Options.abs_tol,
-        if Options.verbose>0,
-            disp('INTERSECT warning: empty polytope detected!');
-        end
+
+    if ~isfulldim(P1),
+        % intersection with an empty polytope is an empty polytope
         fulldim = 0;
-        R=mptOptions.emptypoly;
-        return
+        R = mptOptions.emptypoly;
+        return    
+    else
+        H1 = P1.H;
+        K1 = P1.K;
     end
+    if ~isfulldim(P2),
+        % intersection with an empty polytope is an empty polytope
+        fulldim = 0;
+        R = mptOptions.emptypoly;
+        return    
+    else
+        H2 = P2.H;
+        K2 = P2.K;
+    end
+    
+    HH = [H1; H2];
+    KK = [K1; K2];
     
     if havebboxes,
         l = max([P1.bbox(:,1) P2.bbox(:,1)]')';
@@ -152,7 +149,17 @@ else
             KK = KK(cand,:);
         end
     end
+
+    [xcheb, rcheb] = chebyball_f(HH, KK, Options);
+    fulldim = (rcheb > Options.abs_tol);
+    if fulldim
+        % intersection is obtained by eliminating redundant constraints from the system of inequalities
+        
+        % note that we also provide xcheb and rcheb to polytope(), otherwise we
+        % would re-compute these two parameters in the polytope constructor
+        R = polytope(HH, KK, normal, reduceit, xcheb, rcheb);
+    else
+        R = mptOptions.emptypoly;
+    end
     
-    R = polytope(HH, KK, normal, reduceit);   % intersection is obtained by eliminating redundant constraints from the system of inequalities
-    fulldim = (R.RCheb > Options.abs_tol);
 end
