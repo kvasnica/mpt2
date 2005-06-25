@@ -44,7 +44,7 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.7 2005/06/24 16:15:49 kvasnica Exp $
+% $Id: domain.m,v 1.8 2005/06/25 09:55:23 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -139,8 +139,32 @@ else
         Q.H = [];
         Q.K = [];
     end
+    Ahorizon = A^horizon;
     
-    HH = [P.H*A^horizon; Q.H];
+    qbbox = Q.bbox;
+    pbbox = P.bbox;
+    if ~isempty(qbbox) & ~isempty(pbbox),
+        % try to rule out certain transitions based on bounding boxes
+        
+        % compute bounding box of range(Q, A, f)
+        qrbboxmin = Ahorizon*qbbox(:,1) + Af;
+        qrbboxmax = Ahorizon*qbbox(:,2) + Af;
+        
+        % check if bounding box of range(Q, A, f) intersects with P. if not,
+        % domain will be empty
+        if (all(pbbox(:,2) < qbboxmin) | all(pbbox(:,1) > qbboxmax))
+            % even bounding boxes of the two polytopes do not intersect, abort
+            % quickly
+            feasible = 0;
+            R = mptOptions.emptypoly;
+            keptrows = [];
+            return
+        end
+        % we cannot reach any conclusion based solely on the fact that bounding
+        % boxes do intersect, therefore we continue...
+    end
+    
+    HH = [P.H*Ahorizon; Q.H];
     KK = [P.K-P.H*Af; Q.K];
     
     % compute center and radius of chebyshev's ball
