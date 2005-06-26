@@ -314,7 +314,8 @@ end%Pn
 %---------------------------------------------------
 
 
-
+mldivideOpt = Options;
+mldivideOpt.simplecheck = 1;
 
 %----------------------------------------------------------------------------------------------------
 %ADD CONSTRAINTS FOR LYAPUNOV DECAY
@@ -418,26 +419,29 @@ for dyn_ctr=1:unc_loop
                 end
             end
             
+            possible_transition = 1;
             if(fullMap)
                 if(~isfulldimP(j))
-                    how='NOTok';
+                    % no transition
+                    continue;
                 else
-                    how='ok';
                     for k=1:n
                         %first check if bounding boxes intersect
-                        if(strcmp(how,'ok'))
-                            if(upperCur(k)<BoxMin{j}(k))
-                                how='NOTok';
-                            elseif(lowerCur(k)>BoxMax{j}(k))
-                                how='NOTok';
-                            end
-                        end%strcmp how
+                        if(upperCur(k)<BoxMin{j}(k))
+                            % bounding boxes do not intersect => no transition
+                            % exists
+                            possible_transition = 0;
+                            break
+                        elseif (lowerCur(k)>BoxMax{j}(k))
+                            % bounding boxes do not intersect => no transition
+                            % exists
+                            possible_transition = 0;
+                            break
+                        end
                     end %n
                 end
-            else
-                how='ok'; %test with reachability
             end
-            if(strcmp(how,'ok'))
+            if(possible_transition)
                 %possible target, i.e. bounding boxes intersect
                 
                 %extract subset from region i which enters region j in one time step.
@@ -488,12 +492,13 @@ for dyn_ctr=1:unc_loop
                     %myprog = addLmi(myprog,'W{transCtr}>0');                 %eigenvalues must be greater equal zero
                     myprog = myprog + lmi('W{transCtr}>0');                 %eigenvalues must be greater equal zero
                 end%feasible
-            end%strcmp
+            end%possible_transition
         end%for j
         
         if(~Options.is_invariant)
             %check that no state exits the feasible state space
-            [xcenter,R]=chebyball(Pn(i)\invP);
+            Paux = mldivide(Pn(i), invP, mldivideOpt);
+            [xcenter,R]=chebyball(Paux);
             
             if(max(R)<Options.abs_tol*1e3);
                 %everything is great

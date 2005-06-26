@@ -351,31 +351,33 @@ for dyn_ctr=1:unc_loop
                 end
             end
             
+            possible_transition = 1;
             if(fullMap)
                 if(~isfulldimP(j))
-                    how='NOTok';
+                    % no transition
+                    continue;
                 else
-                    how='ok';
                     for k=1:n
                         %first check if bounding boxes intersect
-                        if(strcmp(how,'ok'))
-                            if(upperCur(k)<BoxMin{j}(k))
-                                how='NOTok';
-                            elseif(lowerCur(k)>BoxMax{j}(k))
-                                how='NOTok';
-                            end
-                        end%strcmp how
+                        if(upperCur(k)<BoxMin{j}(k))
+                            % bounding boxes do not intersect => no transition
+                            % exists
+                            possible_transition = 0;
+                            break
+                        elseif (lowerCur(k)>BoxMax{j}(k))
+                            % bounding boxes do not intersect => no transition
+                            % exists
+                            possible_transition = 0;
+                            break
+                        end
                     end %n
                 end
-            else
-                how='ok'; %test with reachability
             end
-            if(strcmp(how,'ok'))
+            if(possible_transition)
                 %possible target, i.e. bounding boxes intersect
                 %extract subset from region i which enters region j in one time step.
         
                 [tmpP,keptrows,feasible]=domain(Pn(j),ABF,BG,Pn(i),lookahead);
-                %[tmpP,keptrows,feasible] = mpt_getReachSubset(Pn(i),Pn(j),A,B,Fi{i},Gi{i},lookahead,Options);
                 if(feasible)  
                     %transition exists from
                     start=i;    %subset of region i

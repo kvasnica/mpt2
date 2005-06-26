@@ -24,7 +24,7 @@ function [dQ,feasible,drho,runtime]=mpt_getPWPLyapFct(ctrl,ndeg,Options)
 %                               numerous numerical issues with certain LMI solvers.
 %                               If this value is set to 2, an additional check via state trajectories
 %                               will be performed. 
-% Options.enforcePositivity   - If set to zero, positivity constraints for PWQ function are not 
+% Options.enforcePositivity   - If set to zero, positivity constraints for PWP function are not 
 %                               included in LMI (reduces constraints and computation time)
 %                               Post computation verification is performed to check if postivity holds
 %                               If not, positivity constraints are added and solution recomputed.
@@ -134,7 +134,7 @@ end
 verifySolution=Options.debug_level;
 
 if ~isfield(Options,'epsilon'),
-    Options.epsilon=mptOptions.abs_tol;   %epsilon is added to guarantee that a quadratic lower bound on PWQ exists
+    Options.epsilon=mptOptions.abs_tol;   %epsilon is added to guarantee that a quadratic lower bound on PWP exists
 end
 epsilon=Options.epsilon;
 if ~isfield(Options,'abs_tol')
@@ -179,7 +179,7 @@ if ~isfield(sysStruct,'verified')
 end
 
 if isfulldim(sysStruct.noise)
-    error('Cannot compute PWQ Lyapunov function for systems with additive disturbances.');
+    error('Cannot compute PWP Lyapunov function for systems with additive disturbances.');
 end    
 
 if (iscell(sysStruct.A))
@@ -233,7 +233,7 @@ noU=size(Bcell{1},2);
 try
     yalmip('clear') ;       %initialize yalmip
 catch
-    error('mpt_getPWQLyapFct: You need to download and install Yalmip for this function to work');
+    error('mpt_getPWPLyapFct: You need to download and install Yalmip for this function to work');
 end
 
 
@@ -306,10 +306,11 @@ for i=1:length(Pn)
 end%Pn
 %---------------------------------------------------
 
-
+mldivideOpt = Options;
+mldivideOpt.simplecheck = 1;
 
 %---------------------------------------------------
-% Find PWQ Lyapunov function such that the Lyapunov values decrease for each transition
+% Find PWP Lyapunov function such that the Lyapunov values decrease for each transition
 
 transCtr=0; %counter for the number of feasible transitions
 if(pwasystem)
@@ -372,26 +373,29 @@ for dyn_ctr=1:unc_loop
         end
         
         for j=1:lenP
+            possible_transition = 1;
             if(fullMap)
                 if(~isfulldimP(j))
-                    how='NOTok';
+                    % no transition
+                    continue;
                 else
-                    how='ok';
                     for k=1:nx
                         %first check if bounding boxes intersect
-                        if(strcmp(how,'ok'))
-                            if(upperCur(k)<BoxMin{j}(k))
-                                how='NOTok';
-                            elseif(lowerCur(k)>BoxMax{j}(k))
-                                how='NOTok';
-                            end
-                        end%strcmp how
+                        if(upperCur(k)<BoxMin{j}(k))
+                            % bounding boxes do not intersect => no transition
+                            % exists
+                            possible_transition = 0;
+                            break
+                        elseif (lowerCur(k)>BoxMax{j}(k))
+                            % bounding boxes do not intersect => no transition
+                            % exists
+                            possible_transition = 0;
+                            break
+                        end
                     end %nx
                 end
-            else
-                how='ok'; %test with reachability
             end
-            if(strcmp(how,'ok'))
+            if(possible_transition)
                 %possible target, i.e. bounding boxes intersect
                 
                 %extract subset from region i which enters region j in one time step.
@@ -481,32 +485,33 @@ for dyn_ctr=1:unc_loop
             end%strcmp
         end%for j
         
-       if(~Options.is_invariant)
-        %check that no state exits the feasible state space
-        [xcenter,R]=chebyball(Pn(i)\invP);
-            
-        if(max(R)<Options.abs_tol*1e3);
-            %everything is great
-        else
-            fprintf('\n\n')
-            disp('mpt_getPWQLyapFct: Partition is not invariant and therefore it cannot be asymptotically stable !!')
-            dQ=[];
-            dL=[];
-            dC=[];
-            feasible=0;
-            drho=[];
-            runtime=[];
-            return
+        if(~Options.is_invariant)
+            %check that no state exits the feasible state space
+            Paux = mldivide(Pn(i), invP, mldivideOpt);
+            [xcenter,R]=chebyball(Paux);
+
+            if(max(R)<Options.abs_tol*1e3);
+                %everything is great
+            else
+                fprintf('\n\n')
+                disp('mpt_getPWPLyapFct: Partition is not invariant and therefore it cannot be asymptotically stable !!')
+                dQ=[];
+                dL=[];
+                dC=[];
+                feasible=0;
+                drho=[];
+                runtime=[];
+                return
+            end
         end
-      end
         
     end%for i
 end%for sys
 
 if(transCtr==0)
-    error('mpt_getPWQLyapFct: No transition between regions detected... aborting')
+    error('mpt_getPWPLyapFct: No transition between regions detected... aborting')
 else
-    disp(['mpt_getPWQLyapFct: Found ' num2str(transCtr) ' feasible transitions.'])
+    disp(['mpt_getPWPLyapFct: Found ' num2str(transCtr) ' feasible transitions.'])
 end
 %---------------------------------------------------
 
