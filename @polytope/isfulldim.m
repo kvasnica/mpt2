@@ -32,7 +32,7 @@ function status = isfulldim(P,Options)
 % see also ISBOUNDED
 %
 
-% $Id: isfulldim.m,v 1.2 2005/06/24 17:41:50 kvasnica Exp $
+% $Id: isfulldim.m,v 1.3 2005/06/26 12:46:36 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -77,8 +77,7 @@ if (lenP>0),
 else
     RCheb = P.RCheb;
     if isempty(RCheb)
-        [P.xCheb,P.RCheb]=chebyball(P);
-        Rcheb = P.RCheb;
+        [xCheb,RCheb]=chebyball(P);
     end
     status= (RCheb>=abs_tol);    % polytope is fully dimensional if chebyshev's radius is positive
 end
