@@ -35,7 +35,7 @@ function status = eq(P,Q,Options)
 % see also NE, LE, GE
 %
 
-% $Id: eq.m,v 1.4 2005/06/24 10:57:07 kvasnica Exp $
+% $Id: eq.m,v 1.5 2005/06/26 12:46:04 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -103,6 +103,8 @@ if ~isfulldimP | ~isfulldimQ,
     return
 end
 
+abs_tol = Options.abs_tol;
+
 if Options.elementwise,
     % we compare P and Q elementwise, i.e. P(1)==Q(1), P(2)==Q(1), ..., P(n)==Q(1);
     % P(1)==Q(2), P(2)==Q(2), ..., P(n)==Q(2); ... P(1)==Q(m), ..., P(n)==Q(m)
@@ -147,7 +149,8 @@ else
         [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
         
         if ~isempty(Plow) & ~isempty(Qlow),
-            if any(abs(Plow - Qlow) > Options.abs_tol) | any(abs(Pup - Qup) > Options.abs_tol),
+            bbox_tol = 1000*abs_tol;
+            if any(abs(Plow - Qlow) > bbox_tol) | any(abs(Pup - Qup) > bbox_tol),
                 % bounding boxes differ by more than abs_tol => polytopes cannot be equal
                 status = 0;
                 return
@@ -160,7 +163,7 @@ else
         if lenP>0,
             myOnes=ones(size(P.Array{1}.H,2),1);
             for i=1:lenP
-                P.Array{i}.K=P.Array{i}.K+abs(P.Array{i}.H*myOnes*Options.abs_tol);
+                P.Array{i}.K=P.Array{i}.K+abs(P.Array{i}.H*myOnes*abs_tol);
             end
         end
         status = ~isfulldim(mldivide(Q,P,Options));
@@ -168,13 +171,13 @@ else
             return
         end
         for i=1:length(P.Array)
-            P.Array{i}.K=P.Array{i}.K-abs(P.Array{i}.H*myOnes*Options.abs_tol);
+            P.Array{i}.K=P.Array{i}.K-abs(P.Array{i}.H*myOnes*abs_tol);
         end
         
         if lenQ>0,
             myOnes=ones(size(Q.Array{1}.H,2),1);
             for i=1:lenQ
-                Q.Array{i}.K=Q.Array{i}.K+abs(Q.Array{i}.H*myOnes*Options.abs_tol);
+                Q.Array{i}.K=Q.Array{i}.K+abs(Q.Array{i}.H*myOnes*abs_tol);
             end
         end
         status = ~isfulldim(mldivide(P,Q,Options));
@@ -197,7 +200,8 @@ end
 Pbbox = P.bbox;
 Qbbox = Q.bbox;
 if ~isempty(Pbbox) & ~isempty(Qbbox),
-    if any(abs(Pbbox(:,1) - Qbbox(:,1)) > Options.abs_tol) | any(abs(Pbbox(:,2) - Qbbox(:,2)) > Options.abs_tol),
+    bbox_tol = 1000*abs_tol;
+    if any(abs(Pbbox(:,1) - Qbbox(:,1)) > bbox_tol) | any(abs(Pbbox(:,2) - Qbbox(:,2)) > bbox_tol),
         % bounding boxes differ by more than abs_tol => polytopes cannot be equal
         status = 0;
         return
@@ -209,8 +213,6 @@ end
 status=1;
 PAB=[P.H P.K];
 QAB=[Q.H Q.K];
-
-abs_tol = Options.abs_tol;
 
 for ii=1:ncP
     %if all(sum(abs(QAB-repmat(PAB(ii,:),ncQ,1)),2)>abs_tol)

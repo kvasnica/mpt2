@@ -43,7 +43,7 @@ function status = lt(P,Q,Options)
 % see also LE, GT, EQ, NE, GE
 %
 
-% $Id: lt.m,v 1.3 2005/06/24 10:57:07 kvasnica Exp $
+% $Id: lt.m,v 1.4 2005/06/26 12:46:04 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -150,7 +150,8 @@ else
         [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
 
         if ~isempty(Plow) & ~isempty(Qlow),
-            if any(Plow + Options.abs_tol < Qlow) | any(Pup - Options.abs_tol > Qup),
+            bbox_tol = 1000*Options.abs_tol;
+            if any(Plow + bbox_tol < Qlow) | any(Pup - bbox_tol > Qup),
                 % bounding box of P violates bounding box of Q, hence P cannot be a
                 % subset of Q
                 status = 0;
@@ -187,10 +188,13 @@ end
 [ncP,nxP]=size(P.H);
 [ncQ,nxQ]=size(Q.H);
 
+abs_tol = Options.abs_tol;
+
 Pbbox = P.bbox;
 Qbbox = Q.bbox;
 if ~isempty(Pbbox) & ~isempty(Qbbox),
-    if any(Pbbox(:,1) + Options.abs_tol < Qbbox(:,1)) | any(Pbbox(:,2) - Options.abs_tol > Qbbox(:,2)),
+    bbox_tol = 1000*abs_tol;
+    if any(Pbbox(:,1) + bbox_tol < Qbbox(:,1)) | any(Pbbox(:,2) - bbox_tol > Qbbox(:,2)),
         % bounding box of P violates bounding box of Q, hence P cannot be a
         % subset of Q
         status = 0;
@@ -203,17 +207,17 @@ minRc=Inf;
 for ii=1:ncQ
     [xc,Rc]=chebyball_f([P.H;-Q.H(ii,:)],[P.K;-Q.K(ii)],Options);
     minRc=min(minRc,Rc);
-    if Rc>Options.abs_tol   % if ii-th border of Q is crossed with P then P~<Q
+    if (Rc > abs_tol)   % if ii-th border of Q is crossed with P then P~<Q
         return;
     end
 end
-if minRc<-Options.abs_tol
+if (minRc < -abs_tol)
     status=1;
     return;
 end
 for ii=1:ncP
     [xc,Rc]=chebyball_f([Q.H;-P.H(ii,:)],[Q.K;-P.K(ii)],Options);
-    if Rc>Options.abs_tol   % if there is part of Q not covered with P then P<Q
+    if (Rc > abs_tol)   % if there is part of Q not covered with P then P<Q
         status=1;
         return;
     end
