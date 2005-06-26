@@ -44,7 +44,7 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.11 2005/06/25 15:00:18 kvasnica Exp $
+% $Id: domain.m,v 1.12 2005/06/26 12:47:10 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -179,8 +179,7 @@ else
     
     % if the ball has a non-zero radius, intersection of Q with affine
     % transformation of P exists
-    abs_tol = mptOptions.abs_tol;
-    feasible = (rcheb >= abs_tol);
+    feasible = (rcheb >= mptOptions.abs_tol);
     
     if feasible,
         % intersection exists, compute the domain polytope
