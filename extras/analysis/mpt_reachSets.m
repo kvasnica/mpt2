@@ -58,7 +58,7 @@ function [Psets, Vsets, PreachN, VreachN] = mpt_reachSets(structure, X0, U0, N, 
 % see also POLYTOPE/RANGE, MPT_REACHXU, MPT_VERIFY
 %
 
-% $Id: mpt_reachSets.m,v 1.11 2005/06/27 13:32:25 kvasnica Exp $
+% $Id: mpt_reachSets.m,v 1.12 2005/06/27 19:26:34 kvasnica Exp $
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -673,7 +673,7 @@ elseif lenPn == 1,
         npe = size(P, 2);
         nx = dimension(Pn);
         f = -ones(1,nx+1);
-        A = [Ve -ones(nve,1); -P' ones(npe, 1); 0 0 1];
+        A = [Ve -ones(nve,1); -P' ones(npe, 1); zeros(1, nx) 1];
         B = [zeros(nve+npe, 1); 1];
         [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,[],[],[],lpsolver,0);
 
@@ -743,7 +743,7 @@ else
             %             end
             if sephp,
                 % we still need to check if intersection exists
-                A = [Ve -ones(nve,1); -P' ones(npe, 1); 0 0 1];
+                A = [Ve -ones(nve,1); -P' ones(npe, 1); zeros(1, nx) 1];
                 B = [zeros(nve+npe, 1); 1];
                 [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,[],[],[],lpsolver,0);
                 sephp = ~all(xopt==0) & ~any(xopt==1e9);
