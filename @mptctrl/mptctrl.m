@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.15 2005/06/27 12:05:26 kvasnica Exp $
+% $Id: mptctrl.m,v 1.16 2005/06/27 13:31:53 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -267,13 +267,15 @@ elseif nargin==2 | nargin==3
         if ~haveMLD
             % =========================================================================
             % no MLD model available, obtain it by doing a PWA2MLD conversion
-            disp('======================================================================');
-            disp('WARNING: No MLD model available in system structure! Trying to convert');
-            disp('         PWA model to MLD representation. This conversion can be very');
-            disp('         inefficient! You should always opt for HYSDEL model instead.');
-            disp('======================================================================');
-            fprintf('\n'); 
-            fprintf('Converting PWA system into MLD representation...\n');
+            if Options.verbose > -1,
+                disp('======================================================================');
+                disp('WARNING: No MLD model available in system structure! Trying to convert');
+                disp('         PWA model to MLD representation. This conversion can be very');
+                disp('         inefficient! You should always opt for HYSDEL model instead.');
+                disp('======================================================================');
+                fprintf('\n'); 
+                fprintf('Converting PWA system into MLD representation...\n');
+            end
             if ~isfield(sysStruct, 'xmax') | ~isfield(sysStruct, 'xmin')
                 % xmax and xmin must be defined for pwa2mld translation
                 error('State constraints must be defined!');
