@@ -22,6 +22,12 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % ctrl     - Explicit controller (MPTCTRL object)
 % Options.verbose   - Level of verbosity 0,1 or 2
 % Options.nohull    - If set to 1, do not compute convex unions
+% Options.maxIter   - maximum number of iterations. Set is not invariant if
+%                     iteration is aborted prior to convergence  (default is 200)
+% Options.useTmap   - If set to 1 (default), transition map will be computed to
+%                     rule out certain transitions
+% Options.maxsplanes - maximum number of generated separating hyperplanes when
+%                      computing transition map (default is 1000)
 %
 % NOTE: Length of Pn, A, f must be identical
 %
@@ -48,7 +54,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.8 2005/06/24 16:16:55 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.9 2005/06/27 20:20:48 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -112,8 +118,17 @@ if ~isfield(Options,'nounion')
     % if regions should be merged or not
     Options.nounion=0;
 end
+if ~isfield(Options, 'useTmap'),
+    % if set to 1, transition map will be computed to rule out certain
+    % transitions
+    Options.useTmap = 1;
+end
+if ~isfield(Options, 'maxIter'),
+    % Set is not invariant if iteration is aborted prior to convergence
+    Options.maxIter = 200;
+end
 
-maxIter=200;  %hard code to 200; Set is not invariant if iteration is aborted prior to convergence
+maxIter = Options.maxIter;
 
 if nargs==1,
     ctrl = Pn;
@@ -240,14 +255,26 @@ while(notConverged>0 & iter<maxIter)
     transP=polytope;    %initialize to empty polytope
     tdyn=[];
     notConverged=0;
-    
-    isfulldimPn = zeros(1, length(Pn));
-    for ii = 1:length(Pn),
-        isfulldimPn(ii) = isfulldim(Pn(ii));
-    end
-    isfulldimTarget = zeros(1, length(targetPn));
-    for ii = 1:length(targetPn),
-        isfulldimTarget(ii) = isfulldim(targetPn(ii));
+
+    if Options.useTmap,
+        % compute transition map
+        
+        % prepare Acell and Fcell
+        lenPn = length(Pn);
+        Acell = cell(1, lenPn);
+        Fcell = cell(1, lenPn);
+        for ii = 1:lenPn,
+            Acell{ii} = A{dynamics(ii)};
+            Fcell{ii} = f{dynamics(ii)};
+        end
+        % compute the transition map
+        if Options.verbose > -1,
+            fprintf('Computing transition map...\n');
+        end
+        [tmap, Pn, targetPn] = mpt_transmap(Pn, Acell, Fcell, targetPn, Options);
+        if Options.verbose > -1,
+            fprintf('Transition map ruled out %.2f%% of possible transitions.\n', 100*(length(find(tmap==1)) / (lenPn * length(targetPn))));
+        end
     end
     
     for i=1:length(Pn)
@@ -263,7 +290,13 @@ while(notConverged>0 & iter<maxIter)
         tP=emptypoly;   %initialize transition polyarray
         convCtr=0;      %this extra counter is needed for error checks
         for j=1:length(targetPn)
-            if isfulldimPn(i) & isfulldimTarget(j),
+            if Options.useTmap,
+                possible_transition = (tmap(i, j) == 0);
+            else
+                possible_transition = 1;
+            end
+            if (possible_transition), 
+                % possible transition exists
                 [Px,dummy,feasible]=domain(targetPn(j),A{dynamics(i)},f{dynamics(i)},Pn(i)); %compute set of states Pn(i)->targetPn(j)
                 if(feasible) 
                     %transition exists
