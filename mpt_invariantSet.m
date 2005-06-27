@@ -21,6 +21,12 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 %                     (default is 0)
 % Options.nohull    - If set to 1, do not compute convex unions (may
 %                     significantly prolong run-time)
+% Options.maxIter   - maximum number of iterations. Set is not invariant if
+%                     iteration is aborted prior to convergence (default is 200)
+% Options.useTmap   - If set to 1 (default), transition map will be computed to
+%                     rule out certain transitions
+% Options.maxsplanes - maximum number of generated separating hyperplanes when
+%                      computing transition map (default is 1000)
 %
 % NOTE: If the algorihtms stalls, use Options.hullunion=1. This hack is,
 %       however, limited to small dimensions, say 2, 3, 4.
@@ -33,7 +39,7 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 % see also MPT_INFSETPWA
 %
 
-% $Id: mpt_invariantSet.m,v 1.2 2005/02/28 19:26:45 kvasnica Exp $
+% $Id: mpt_invariantSet.m,v 1.3 2005/06/27 20:21:13 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -115,6 +121,9 @@ if (iscell(sysStruct.A))
                 Fcell{ii}=sysStruct.B{jj}*Gi{ii}+sysStruct.f{jj};
             end
         end
+    end
+    if Options.verbose > 0,
+        disp('Linking finished, now computing invariant set...');
     end
 else
     hasaffine = isfield(sysStruct, 'f');
