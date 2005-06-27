@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMILP(f,A,B,Aeq,Beq,lb,ub,vartype,para
 %
 % see also MPT_SOLVELP, MPT_SOLVEMIQP
 
-% $Id: mpt_solveMILP.m,v 1.11 2005/06/23 11:55:55 kvasnica Exp $
+% $Id: mpt_solveMILP.m,v 1.12 2005/06/27 13:33:56 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -177,11 +177,11 @@ if solver==0
     
 elseif solver==1
     % YALMIP / BNB
-    [xmin,fmin,how,exitflag]=yalmipMILP(f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'bnb');
+    [xmin,fmin,how,exitflag]=yalmipMILP(f(:),A,B,Aeq,Beq,lb,ub,vartype,param,options,'bnb');
     
 elseif solver==2,
     % use glpk
-    nc = size(A,1);
+    [nc, nx] = size(A);
     indeq = [];
     if ~isempty(Aeq),
         A = [A; Aeq];
@@ -189,11 +189,21 @@ elseif solver==2,
         indeq = (nc+1:size(A,1))';
         nc = size(A,1);
     end
-
+    if isempty(lb),
+        lb = repmat(1e-9, nx, 1);
+    end
+    if isempty(ub),
+        ub = repmat(1e9, nx, 1);
+    end
+    if length(lb)~=nx | length(ub)~=nx,
+        error('Wrong size of LB and/or UB.');
+    end
     % change 'B' (boolean) vartype to 'I' (integer)
     % glpkmex does not support 'B' type variables
     bpos = find(vartype=='B');
     vartype(bpos) = 'I';
+    lb(bpos) = 0;
+    ub(bpos) = 1;
     
     SENSE = 1; % minimize
     CTYPE = repmat('U',nc,1); % all constraints <=
