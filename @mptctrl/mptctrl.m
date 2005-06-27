@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.14 2005/06/24 11:54:01 kvasnica Exp $
+% $Id: mptctrl.m,v 1.15 2005/06/27 12:05:26 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -120,6 +120,11 @@ function ctrl = mptctrl(varargin)
 %          Boston, MA  02111-1307  USA
 %
 % ---------------------------------------------------------------------------
+
+global mptOptions
+if ~isstruct(mptOptions),
+    mpt_error;
+end
 
 if nargin > 0,
     % if input is an MPTCTRL object, do nothing
@@ -239,7 +244,14 @@ elseif nargin==2 | nargin==3
         end
     end
 
-    
+    if nargin==3,
+        Options = varargin{end};
+    else
+        Options = [];
+    end
+    if ~isfield(Options, 'verbose'),
+        Options.verbose = mptOptions.verbose;
+    end
     
     if iscell(sysStruct.A)
     
@@ -277,8 +289,11 @@ elseif nargin==2 | nargin==3
         % =========================================================================
         % add state and output constraints as defined in
         % sysStruct.{xmax|xmin|ymax|ymin}
-        ctrl.sysStruct.data.MLD = addMLDconstraints(ctrl.sysStruct.data.MLD, sysStruct);
-        if any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin))
+        MLD = addMLDconstraints(ctrl.sysStruct.data.MLD, sysStruct);
+        ctrl.sysStruct.data.MLD = MLD;
+        sysStruct.data.MLD = MLD;
+        
+        if Options.verbose>-1 & (any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin)))
             fprintf('\nWARNING: deltaU constraints will only be satisfied in open-loop solutions!\n\n');
         end
         [nx,nu,ny] = mpt_sysStructInfo(sysStruct);
@@ -288,7 +303,9 @@ elseif nargin==2 | nargin==3
         % NOTE! not possible if probStruct.tracking > 1, in this case the
         % subfunction will return an empty matrix, which is fine (see
         % mpt_getInput and mpt_mip)
-        disp('Constructing data for on-line computation...');
+        if Options.verbose > -1,
+            disp('Constructing data for on-line computation...');
+        end
         ctrl.details.Matrices = sub_getMLDmatrices(sysStruct, probStruct);
         
     else
@@ -323,7 +340,12 @@ elseif nargin==2 | nargin==3
         if ~isfield(Options, 'noConstraintReduction'),
             Options.noConstraintReduction = 1;
         end
-        disp('Constructing data for on-line computation...');
+        if ~isfield(Options, 'verbose'),
+            Options.verbose = mptOptions.verbose;
+        end
+        if Options.verbose > -1,
+            disp('Constructing data for on-line computation...');
+        end
         if (isfield(probStruct,'inputblocking') | isfield(probStruct,'deltablocking'))
             opt = Options;
             opt.noConstraintReduction = 1;
