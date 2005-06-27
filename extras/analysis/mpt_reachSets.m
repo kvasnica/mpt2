@@ -58,7 +58,7 @@ function [Psets, Vsets, PreachN, VreachN] = mpt_reachSets(structure, X0, U0, N, 
 % see also POLYTOPE/RANGE, MPT_REACHXU, MPT_VERIFY
 %
 
-% $Id: mpt_reachSets.m,v 1.10 2005/03/21 22:45:45 kvasnica Exp $
+% $Id: mpt_reachSets.m,v 1.11 2005/06/27 13:32:25 kvasnica Exp $
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
@@ -576,6 +576,9 @@ for iN = 1:N,
         for jj = 1:length(V0),
             [V0int, whichdyn] = sub_intersect(V0{jj}', Pn, En, Hn, Kn, emptypoly, abs_tol, lpsolver);
             if ~isempty(V0int)
+                if ~iscell(V0int),
+                    V0int = {V0int};
+                end
                 for ii = 1:length(V0int),
                     exi = V0int{ii};
                     Ai = ACL{whichdyn(ii)};
