@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.1 $ $Date: 2005/06/23 20:11:53 $
+% $Revision: 1.2 $ $Date: 2005/06/27 09:10:13 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -1659,82 +1659,53 @@ function [isBorder,xBorder] = checkIfBorder(borderVec,kBorder,ZXpoly,Options)
 %  1. compute all remaining extreme points of the bounding box
 %  2. change the procedure to handle arbitrary dimensions
 %========================================
-function q = sub_whichquadrant(P,center)
+function quadIdx = sub_whichquadrant(P,center)
 %========================================
 %
 Options.noPolyOutput = 1;
 [R,l,u] = bounding_box(P,Options);
 
-nx = dimension(P);
-vert = ones(nx,2^nx);
-binOne=dec2bin(1);
-for i=1:2^nx
-    decVec=dec2bin(i-1,nx);
-    for j=1:nx
-        if(decVec(j)==binOne)
-            vert(j,i)=l(j);
-        else
-            vert(j,i)=u(j);
+nx = length(center);
+exp2nx = 2^nx;
+q1 = zeros(1,exp2nx);
+powerTwo = (2*ones(nx,1)).^([0:nx-1]');
+xBeyond = u;
+for i=2:(exp2nx+1),
+    twoQuadrant = find(xBeyond==0);
+    len2Quad = length(twoQuadrant);
+    
+    if ( len2Quad ),
+        q = zeros(1,2*len2Quad);
+        for j=1:len2Quad,
+            jIdx = twoQuadrant(j);
+            xBeyond(jIdx) = 1 ;
+            vi = (xBeyond - center) > 0;
+            qIdx = 2*j;
+            q(qIdx-1) = 1 + vi' * powerTwo;
+            q(qIdx)   = q(qIdx-1);
+            if ( (center(jIdx) < 1) & (center(jIdx) >= -1) ),
+                q(qIdx) = q(qIdx) - powerTwo(jIdx);
+            end
+            xBeyond(jIdx)=0;
         end
+    else
+        vi = (xBeyond - center) > 0;
+        q  = 1 + vi' * powerTwo;
+    end
+    q1(q) = 1;
+    
+    if ( i < exp2nx ),
+        for j=1:nx
+            if ( bitget(i-1,nx-j+1) )
+                xBeyond(j) = l(j);
+            else
+                xBeyond(j) = u(j);
+            end
+        end
+    elseif ( i == exp2nx ),
+        xBeyond = l;
     end
 end
-
-%-------------------My-------------------
-q1 = zeros(1,2^nx);
-for i=1:2^nx
-    q2 = sub_whichquadrant_point(vert(:,i),center);
-    q1(q2) = 1;
-end
-q = find(q1==1);
-
-return
+quadIdx = find(q1==1);
 %
 %========= END sub_whichquadrant ===============
-
-
-%===================================================
-%
-function q = sub_whichquadrant_point(xBeyond,center)
-%
-%===================================================
-q  = [];
-q1 = [];
-
-nx = length(xBeyond);
-%center = zeros(nx,1);       % center per default
-twoQuadrant = find(xBeyond==0);
-
-if length(twoQuadrant)==0
-    %One = eye(nx);
-    vi = (xBeyond - center) > 0;
-    q1 = 1;
-    for i=0:nx-1
-        q1 = q1 + (vi(i+1))*2^i;
-    end
-else
-    for j=1:length(twoQuadrant)
-        xBeyond(twoQuadrant(j))=1;
-        %One = eye(nx);
-        vi = (xBeyond - center) > 0;
-        q = 1;
-        for i=0:nx-1
-            q = q + (vi(i+1))*2^i;
-        end
-
-        q1 = [q1 q];
-        xBeyond(twoQuadrant(j))=-1;
-        %One = eye(nx);
-        vi = (xBeyond - center) > 0;
-        q = 1;
-        for i=0:nx-1
-            q = q + (vi(i+1))*2^i;
-        end
-        xBeyond(twoQuadrant(j))=0;
-        q1 = [q1 q];
-    end
-end
-q = q1;
-
-return
-%
-% ============ END sub_whichquadrant_point =========
