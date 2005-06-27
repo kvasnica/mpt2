@@ -24,8 +24,8 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % Options.nohull    - If set to 1, do not compute convex unions
 % Options.maxIter   - maximum number of iterations. Set is not invariant if
 %                     iteration is aborted prior to convergence  (default is 200)
-% Options.useTmap   - If set to 1 (default), transition map will be computed to
-%                     rule out certain transitions
+% Options.useTmap   - If set to true (default is false), transition map will be
+%                     computed to rule out certain transitions
 % Options.maxsplanes - maximum number of generated separating hyperplanes when
 %                      computing transition map (default is 1000)
 %
@@ -54,7 +54,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.9 2005/06/27 20:20:48 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.10 2005/06/27 21:01:30 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -121,7 +121,7 @@ end
 if ~isfield(Options, 'useTmap'),
     % if set to 1, transition map will be computed to rule out certain
     % transitions
-    Options.useTmap = 1;
+    Options.useTmap = 0;
 end
 if ~isfield(Options, 'maxIter'),
     % Set is not invariant if iteration is aborted prior to convergence
