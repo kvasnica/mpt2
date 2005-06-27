@@ -41,7 +41,7 @@ function [flag, N, Vreach] = mpt_verify(object, X0, Xf, N, U0, Options)
 % see also MPT_REACHSETS, MPT_REACHXU
 %
 
-% $Id: mpt_verify.m,v 1.2 2005/06/27 13:49:09 kvasnica Exp $
+% $Id: mpt_verify.m,v 1.3 2005/06/27 13:50:54 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -97,11 +97,13 @@ end
 if ~isfulldim(Xf),
     error('Set of final states must be a fully dimensional polytope!');
 end
-if nargin==4,
+if nargin<=4,
     Options = [];
-elseif nargin > 4,
+elseif nargin == 5,
     if isa(U0, 'struct'),
         Options = U0;
+    else
+        Options = [];
     end
 end
 
