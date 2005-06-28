@@ -24,7 +24,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.2 2005/06/28 10:46:04 kvasnica Exp $
+% $Id: mpt_transmap.m,v 1.3 2005/06/28 11:02:44 kvasnica Exp $
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch
@@ -55,11 +55,30 @@ global mptOptions
 if ~isstruct(mptOptions),
     mpt_error;
 end
+if nargin < 4,
+    Options = [];
+end
 if ~isfield(Options, 'lpsolver'),
     Options.lpsolver = mptOptions.lpsolver;
 end
 if ~isfield(Options, 'abs_tol'),
     Options.abs_tol = mptOptions.abs_tol;
+end
+
+if ~isa(Pn, 'polytope'),
+    error('First input must be a polytope object.');
+end
+if ~iscell(Acell),
+    error('Second input must be a cell array.');
+end
+if ~iscell(fcell),
+    error('Third input must be a cell array.');
+end
+if length(Acell) ~= length(Pn),
+    error('Length of Acell must be equal to length of Pn.');
+end
+if length(fcell) ~= length(Pn),
+    error('Length of fcell must be equal to length of Pn.');
 end
 
 lpsolver = Options.lpsolver;
@@ -83,12 +102,10 @@ end
 
 n = dimension(Pn);
 
+% compute bounding box of every polytope
 for i=1:lenP
-
     BoxMin{i} = min(ex{i}')';
     BoxMax{i} = max(ex{i}')';
-    
-    %Pn(i) = set(Pn(i),'bbox',[BoxMin{i} BoxMax{i}]);
 
     %now extract all other extreme points of the bounding box
     for j=1:2^n
@@ -138,8 +155,6 @@ vecexplus = [explus{1:end}];
 indiciesex = cumsum([1 cellfun('prodofsize',ex)/n]);
 indiciesexplus = cumsum([1 cellfun('prodofsize',explus)/n]);
 lpsolver = Options.lpsolver;
-
-%neighbour = ones(lenP,lenP);
 
 for i=1:lenP
 
