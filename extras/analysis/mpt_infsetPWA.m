@@ -54,7 +54,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.10 2005/06/27 21:01:30 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.11 2005/06/28 10:46:33 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -271,9 +271,10 @@ while(notConverged>0 & iter<maxIter)
         if Options.verbose > -1,
             fprintf('Computing transition map...\n');
         end
-        [tmap, Pn, targetPn] = mpt_transmap(Pn, Acell, Fcell, targetPn, Options);
+        [tmap, Pn] = mpt_transmap(Pn, Acell, Fcell, Options);
+        
         if Options.verbose > -1,
-            fprintf('Transition map ruled out %.2f%% of possible transitions.\n', 100*(length(find(tmap==1)) / (lenPn * length(targetPn))));
+            fprintf('Transition map discarded %.2f%% of possible transitions.\n', 100*(1 - nnz(tmap)/numel(tmap)));
         end
     end
     
@@ -291,7 +292,7 @@ while(notConverged>0 & iter<maxIter)
         convCtr=0;      %this extra counter is needed for error checks
         for j=1:length(targetPn)
             if Options.useTmap,
-                possible_transition = (tmap(i, j) == 0);
+                possible_transition = (tmap(i, j) == 1);
             else
                 possible_transition = 1;
             end
