@@ -36,7 +36,7 @@ function status = le(P,Q,Options)
 % see also GE, EQ, NE, LT, GT
 %
 
-% $Id: le.m,v 1.5 2005/06/26 12:46:04 kvasnica Exp $
+% $Id: le.m,v 1.6 2005/06/29 09:40:41 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -155,17 +155,17 @@ end
 
 abs_tol = Options.abs_tol;
 
-Pbbox = P.bbox;
-Qbbox = Q.bbox;
-if ~isempty(Pbbox) & ~isempty(Qbbox),
-    bbox_tol = 1000*abs_tol;
-    if any(Pbbox(:,1) + bbox_tol < Qbbox(:,1)) | any(Pbbox(:,2) - bbox_tol > Qbbox(:,2)),
-        % bounding box of P violates bounding box of Q, hence P cannot be a
-        % subset of Q
-        status = 0;
-        return
-    end
-end
+% Pbbox = P.bbox;
+% Qbbox = Q.bbox;
+% if ~isempty(Pbbox) & ~isempty(Qbbox),
+%     bbox_tol = 1000*abs_tol;
+%     if any(Pbbox(:,1) + bbox_tol < Qbbox(:,1)) | any(Pbbox(:,2) - bbox_tol > Qbbox(:,2)),
+%         % bounding box of P violates bounding box of Q, hence P cannot be a
+%         % subset of Q
+%         status = 0;
+%         return
+%     end
+% end
 
 status=1;
 for ii=1:ncQ

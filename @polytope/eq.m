@@ -35,7 +35,7 @@ function status = eq(P,Q,Options)
 % see also NE, LE, GE
 %
 
-% $Id: eq.m,v 1.5 2005/06/26 12:46:04 kvasnica Exp $
+% $Id: eq.m,v 1.6 2005/06/29 09:40:41 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -149,7 +149,7 @@ else
         [R, Qlow, Qup] = bounding_box(Q, bboxOpt);
         
         if ~isempty(Plow) & ~isempty(Qlow),
-            bbox_tol = 1000*abs_tol;
+            bbox_tol = 1e3*abs_tol;
             if any(abs(Plow - Qlow) > bbox_tol) | any(abs(Pup - Qup) > bbox_tol),
                 % bounding boxes differ by more than abs_tol => polytopes cannot be equal
                 status = 0;
@@ -197,18 +197,18 @@ if nxP~=nxQ
     error('EQ: Only polytopes of equal dimensionality can be compared');
 end
 
-Pbbox = P.bbox;
-Qbbox = Q.bbox;
-if ~isempty(Pbbox) & ~isempty(Qbbox),
-    bbox_tol = 1000*abs_tol;
-    if any(abs(Pbbox(:,1) - Qbbox(:,1)) > bbox_tol) | any(abs(Pbbox(:,2) - Qbbox(:,2)) > bbox_tol),
-        % bounding boxes differ by more than abs_tol => polytopes cannot be equal
-        status = 0;
-        return
-    end
-    % we cannot reach any conclusion based solely on the fact that bounding
-    % boxes are identical, therefore we continue...
-end
+% Pbbox = P.bbox;
+% Qbbox = Q.bbox;
+% if ~isempty(Pbbox) & ~isempty(Qbbox),
+%     bbox_tol = 1e4*abs_tol;
+%     if any(abs(Pbbox(:,1) - Qbbox(:,1)) > bbox_tol) | any(abs(Pbbox(:,2) - Qbbox(:,2)) > bbox_tol),
+%         % bounding boxes differ by more than abs_tol => polytopes cannot be equal
+%         status = 0;
+%         return
+%     end
+%     % we cannot reach any conclusion based solely on the fact that bounding
+%     % boxes are identical, therefore we continue...
+% end
 
 status=1;
 PAB=[P.H P.K];
