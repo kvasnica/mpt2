@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.4 $ $Date: 2005/06/09 08:57:13 $
+% $Revision: 1.5 $ $Date: 2005/06/29 08:38:52 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -882,8 +882,16 @@ activeConstraints = list_active;
 details.feasible = 1;
 details.no_of_constr=no_of_constr;
 details.Pn = Pn;
-details.Bi = mat2cell(BC(:,1:nx),ones(nRegions,1),nx);
-details.Ci = mat2cell(BC(:,end),ones(nRegions,1),1);
+% replace the following code by loops (Matlab 6.1 seems not to have mat2cell by
+% default)
+% details.Bi = mat2cell(BC(:,1:nx),ones(nRegions,1),nx);
+% details.Ci = mat2cell(BC(:,end),ones(nRegions,1),1);
+details.Bi = cell(1, nRegions);
+details.Ci = cell(1, nRegions);
+for ir = 1:nRegions,
+    details.Bi{ir} = BC(ir, 1:nx);
+    details.Ci{ir} = BC(ir, end);
+end
 details.Ai = Ai;
 details.nRegions = nRegions;
 details.degenerate = degenerate;
