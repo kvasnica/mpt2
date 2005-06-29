@@ -53,7 +53,7 @@ function ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options)
 %
 % see also MPT_CONTROL, MPT_OPTINFCONTROLPWA, MPT_ITERATIVEPWA
 
-% $Id: mpt_optControlPWA.m,v 1.7 2005/06/23 22:11:07 kvasnica Exp $Date: 2005/06/23 22:11:07 $
+% $Id: mpt_optControlPWA.m,v 1.8 2005/06/29 12:36:09 kvasnica Exp $Date: 2005/06/29 12:36:09 $
 %
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch
@@ -794,6 +794,8 @@ for k = horizon:-1:1,
             for merged_idx = idxMerged,
                 Step{k}.mergedCtrlStruct.Pn = [Step{k}.mergedCtrlStruct.Pn, ...
                     merged{merged_idx}.Pn];
+                Step{k}.mergedCtrlStruct.Pfinal = [Step{k}.mergedCtrlStruct.Pfinal, ...
+                    merged{merged_idx}.Pfinal];
                 Step{k}.mergedCtrlStruct.Ai = {Step{k}.mergedCtrlStruct.Ai{:}, ...
                     merged{merged_idx}.Ai{:}};
                 Step{k}.mergedCtrlStruct.Bi = {Step{k}.mergedCtrlStruct.Bi{:}, ...
@@ -855,7 +857,7 @@ ctrlStruct.details.roRunTime = roTime;
 for k = 1:horizon,
     ctrlStruct.details.Horizon{k} = ...
         Step{horizon-k+1}.mergedCtrlStruct;
-    ctrlStruct.details.Horizon{k}.Pfinal = [];
+    %ctrlStruct.details.Horizon{k}.Pfinal = polytope;
     for pfin_idx = 1:Step{horizon-k+1}.nPartitions,
         ctrlStruct.details.Horizon{k}.Pfinal = ...
             [ctrlStruct.details.Horizon{k}.Pfinal, ...
