@@ -41,7 +41,7 @@ function [flag, N, Vreach] = mpt_verify(object, X0, Xf, N, U0, Options)
 % see also MPT_REACHSETS, MPT_REACHXU
 %
 
-% $Id: mpt_verify.m,v 1.3 2005/06/27 13:50:54 kvasnica Exp $
+% $Id: mpt_verify.m,v 1.4 2005/06/29 12:37:27 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -125,7 +125,7 @@ Options.Xf = Xf;
 if nargin==4 | (nargin==5 & ~isa(U0, 'polytope')),
     % verification with no U0
     havemld = 0;
-    if mpt_isSysStruct(object) & Options.usereachsets==0,
+    if mpt_issysstruct(object) & Options.usereachsets==0,
         % input is a system structure. 
         sysStruct = object;
 
