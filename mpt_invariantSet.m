@@ -39,7 +39,7 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 % see also MPT_INFSETPWA
 %
 
-% $Id: mpt_invariantSet.m,v 1.5 2005/06/29 11:01:40 kvasnica Exp $
+% $Id: mpt_invariantSet.m,v 1.6 2005/06/29 13:53:28 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -84,6 +84,9 @@ if ~isfield(Options, 'verbose')
 end
 if ~isfield(Options, 'abs_tol')
     Options.abs_tol = mptOptions.abs_tol;
+end
+if ~isfield(Options, 'useTmap')
+    Options.useTmap = 1;
 end
 
 if ~isexplicit(ctrl)
