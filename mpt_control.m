@@ -51,7 +51,7 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_control.m,v 1.19 2005/06/23 20:14:01 kvasnica Exp $
+% $Id: mpt_control.m,v 1.20 2005/06/29 13:53:50 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -372,7 +372,6 @@ ctrlStruct.details.origProbStruct = origProbStruct;
 
 fprintf('\nSolution consists of %d regions\n\n',nR);
 
-    ctrl = mptctrl(ctrlStruct);
 try
     ctrl = mptctrl(ctrlStruct);
 catch
