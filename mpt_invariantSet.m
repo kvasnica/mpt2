@@ -23,7 +23,7 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 %                     significantly prolong run-time)
 % Options.maxIter   - maximum number of iterations. Set is not invariant if
 %                     iteration is aborted prior to convergence (default is 200)
-% Options.useTmap   - If set to true (default is false), transition map will be
+% Options.useTmap   - If set to true (default), transition map will be
 %                     computed to rule out certain transitions
 % Options.maxsplanes - maximum number of generated separating hyperplanes when
 %                      computing transition map (default is 1000)
@@ -39,7 +39,7 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 % see also MPT_INFSETPWA
 %
 
-% $Id: mpt_invariantSet.m,v 1.4 2005/06/27 21:01:06 kvasnica Exp $
+% $Id: mpt_invariantSet.m,v 1.5 2005/06/29 11:01:40 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
