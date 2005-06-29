@@ -1,7 +1,7 @@
 function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Options)
 %MPT_MPLP Explicitly solves the given linear program (LP)
 %
-% [Pn,Fi,Gi,Phard,details]=mpt_mplp(Matrices,Options)
+% [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.3 $ $Date: 2005/06/29 08:38:53 $
+% $Revision: 1.4 $ $Date: 2005/06/29 09:26:35 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
