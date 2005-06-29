@@ -89,7 +89,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver5(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.6 $ $Date: 2005/04/28 08:45:30 $
+% $Revision: 1.7 $ $Date: 2005/06/29 10:03:27 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -627,7 +627,11 @@ while region <= nRegions & nRegions <= MAXREGIONS,
         isinOpt.fastbreak = 0;
         vi = (xBeyond - center) > 0;
         q = 1 + 2.^[0:nx-1] * vi;
-        searchIndex = Pquadrant{q}(find(Pquadrant{q}~=region));    % polytopes in the same quadrant excluding the present one
+        if isempty(Pquadrant{q}),
+            searchIndex = [];
+        else
+            searchIndex = Pquadrant{q}(find(Pquadrant{q}~=region));  
+        end
         [isin,neighbor] = isinside(Pn(searchIndex), xBeyond, isinOpt);
         nMatch = length(neighbor);
         if nMatch > 0,

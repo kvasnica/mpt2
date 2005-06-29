@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.4 $ $Date: 2005/06/29 09:26:35 $
+% $Revision: 1.5 $ $Date: 2005/06/29 10:03:27 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -620,7 +620,11 @@ while region <= nRegions & nRegions <= MAXREGIONS,
         q = 1 + 2.^[0:nx-1] * vi;
         % polytopes in the same quadrant excluding the present one
         %
-        searchIndex = Pquadrant{q}(find(Pquadrant{q}~=region));  
+        if isempty(Pquadrant{q}),
+            searchIndex = [];
+        else
+            searchIndex = Pquadrant{q}(find(Pquadrant{q}~=region));  
+        end
         if ( ~isCostParametrized ),
             % we can speed-up the search by exploiting the fact that the
             % value function is convex
