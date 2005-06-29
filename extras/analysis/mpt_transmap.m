@@ -24,7 +24,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.4 2005/06/29 08:19:16 kvasnica Exp $
+% $Id: mpt_transmap.m,v 1.5 2005/06/29 14:29:20 kvasnica Exp $
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch
@@ -64,6 +64,16 @@ end
 if ~isfield(Options, 'abs_tol'),
     Options.abs_tol = mptOptions.abs_tol;
 end
+if isfield(Options, 'targetPn'),
+    havetarget = 1;
+    targetPn = Options.targetPn;
+    if ~isa(targetPn, 'polytope'),
+        error('Options.targetPn must be a polytope object.');
+    end
+    lenTarget = length(targetPn);
+else
+    havetarget = 0;
+end
 
 if ~isa(Pn, 'polytope'),
     error('First input must be a polytope object.');
@@ -81,41 +91,61 @@ if length(fcell) ~= length(Pn),
     error('Length of fcell must be equal to length of Pn.');
 end
 
+
 lpsolver = Options.lpsolver;
 abs_tol = Options.abs_tol;
 large_tol = 10*abs_tol;
 
 lenP = length(Pn);
-tmap = ones(lenP,lenP);
+if havetarget,
+    tmap = ones(lenP, lenTarget);
+else
+    tmap = ones(lenP,lenP);
+end
 
 % Vertex enumeration
 for is=1:lenP
     [E, R, Pn(is)] = extreme(Pn(is));
-    ex{is} = E';
-    
     % round almost-zero elements
-    ex{is}(find(abs(ex{is}) < 1e-12)) = 0;
-    explus{is} = Acell{is}*ex{is} + repmat(fcell{is},1,size(ex{is},2));
+    E(find(abs(E) < 1e-12)) = 0;
+    E = E';
+    ex{is} = E;
     
+    % affine map of extreme points
+    Eplus = Acell{is}*E + repmat(fcell{is},1,size(E,2));
     % round almost-zero elements
-    explus{is}(find(abs(explus{is}) < 1e-12)) = 0;
+    Eplus(find(abs(Eplus) < 1e-12)) = 0;
+    explus{is} = Eplus;
+end
+if havetarget,
+    for is=1:lenTarget
+        E = extreme(targetPn(is));
+        % round almost-zero elements
+        E(find(abs(E) < 1e-12)) = 0;
+        ext{is} = E';
+    end
 end
 
 n = dimension(Pn);
 
 % compute bounding box of every polytope
+BoxMin = cell(1, lenP);
+BoxMax = cell(1, lenP);
 for i=1:lenP
-    BoxMin{i} = min(ex{i}')';
-    BoxMax{i} = max(ex{i}')';
-
+    oneBoxMin = min(ex{i}')';
+    oneBoxMax = max(ex{i}')';
+    if ~havetarget,
+        BoxMin{i} = oneBoxMin;
+        BoxMax{i} = oneBoxMax;
+    end
     %now extract all other extreme points of the bounding box
     for j=1:2^n
         index=dec2bin(j-1,n);
         for k=1:n
             if(index(k)=='1')
-                boxPoint{i}{j}(k)=BoxMax{i}(k);
+                boxPoint{i}{j}(k)=oneBoxMax(k);
             else
-                boxPoint{i}{j}(k)=BoxMin{i}(k);
+                boxPoint{i}{j}(k)=oneBoxMin(k);
             end
         end%for k=1:n
         if(size(boxPoint{i}{j},1)<size(boxPoint{i}{j},2))
@@ -123,21 +153,37 @@ for i=1:lenP
         end
     end%for j=1:2^(n)
 end%Pn
+if havetarget,
+    BoxMin = cell(1, lenTarget);
+    BoxMax = cell(1, lenTarget);
+    for i = 1:lenTarget,
+        BoxMin{i} = min(ext{i}')';
+        BoxMax{i} = max(ext{i}')';
+    end
+end
 
 
+if havetarget,
+    lenP2 = lenTarget;
+    % save original ex points, replace them with ext
+    ex_orig = ex;
+    ex = ext;
+else
+    lenP2 = lenP;
+end
 % Initial prune, based on coordinate cuts
 % Typically removes 10%
 for r = 1:n
     a = eyev(n,r);
     b = 0;
     for prunei = 1:lenP
-        iprunes(prunei) = all((a'*explus{prunei} < -1e3*abs_tol));
+        iprunes(prunei) = all((a'*explus{prunei} < -large_tol));
     end
-    for prunej = 1:lenP
-        jprunes(prunej) = all((a'*ex{prunej} > 1e3*abs_tol));
+    for prunej = 1:lenP2
+        jprunes(prunej) = all((a'*ex{prunej} > large_tol));
     end
     for prunei = 1:lenP
-        for prunej = 1:lenP
+        for prunej = 1:lenP2
             if iprunes(prunei)
                 if jprunes(prunej)
                     tmap(prunei,prunej) = 0;
@@ -146,16 +192,20 @@ for r = 1:n
         end
     end
 end
-
-for i = 1:lenP
-    isfulldimP(i) = isfulldim(Pn(i));   
+if havetarget,
+    % restore saved points
+    ex = ex_orig;
 end
 
-vecex = [ex{1:end}];
+if havetarget,
+    vecex = [ext{1:end}];
+    indiciesex = cumsum([1 cellfun('prodofsize',ext)/n]);
+else
+    vecex = [ex{1:end}];
+    indiciesex = cumsum([1 cellfun('prodofsize',ex)/n]);
+end
 vecexplus = [explus{1:end}];
-indiciesex = cumsum([1 cellfun('prodofsize',ex)/n]);
 indiciesexplus = cumsum([1 cellfun('prodofsize',explus)/n]);
-lpsolver = Options.lpsolver;
 
 for i=1:lenP
 
@@ -166,12 +216,12 @@ for i=1:lenP
     else
         fullMap=0;
     end
-
+    
     if fullMap,
         lowerCur = min((Acell{i} * [boxPoint{i}{:}] + repmat(fcell{i},1,length(boxPoint{i})))')';
         upperCur = max((Acell{i} * [boxPoint{i}{:}] + repmat(fcell{i},1,length(boxPoint{i})))')';
     end
-
+    
     for j = find(tmap(i,:))
 
         if tmap(i,j)
@@ -185,13 +235,17 @@ for i=1:lenP
 
         if tmap(i,j)
 
-            [a,b,f] = separatinghp(ex{j},explus{i},lpsolver,n);
+            if havetarget,
+                [a,b,f] = separatinghp(ext{j},explus{i},lpsolver,n);
+            else
+                [a,b,f] = separatinghp(ex{j},explus{i},lpsolver,n);
+            end
 
             if (f == 1) % Found one!
                 AA = a*vecexplus;
                 BB = a*vecex;
                 jprunes  = zeros(lenP,1);
-                for prunej = 1:lenP
+                for prunej = 1:lenP2
                     jprunes(prunej) = all((BB(indiciesex(prunej):indiciesex(prunej+1)-1)-b)<=-large_tol);
                 end
                 jprunes = logical(jprunes);
