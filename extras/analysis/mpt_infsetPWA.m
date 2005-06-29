@@ -54,7 +54,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.12 2005/06/29 09:18:11 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.13 2005/06/29 11:00:25 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -256,11 +256,17 @@ while(notConverged>0 & iter<maxIter)
     tdyn=[];
     notConverged=0;
 
+    lenPn = length(Pn);
+    isfulldimPn = zeros(1, lenPn);
+    for ii = 1:lenPn,
+        if isfulldim(Pn(ii)),
+            isfulldimPn(ii) = 1;
+        end
+    end
     if Options.useTmap,
         % compute transition map
         
         % prepare Acell and Fcell
-        lenPn = length(Pn);
         Acell = cell(1, lenPn);
         Fcell = cell(1, lenPn);
         for ii = 1:lenPn,
@@ -286,11 +292,16 @@ while(notConverged>0 & iter<maxIter)
                 error('Break...');
             end     
         end
-        
+        if ~isfulldimPn(i),
+            continue
+        end
         trans=0;        %initialize transition counter
         tP=emptypoly;   %initialize transition polyarray
         convCtr=0;      %this extra counter is needed for error checks
         for j=1:length(targetPn)
+            if ~isfulldimPn(j),
+                continue
+            end
             if Options.useTmap,
                 possible_transition = (tmap(i, j) == 1);
             else
