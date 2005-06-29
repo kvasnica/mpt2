@@ -24,7 +24,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % Options.nohull    - If set to 1, do not compute convex unions
 % Options.maxIter   - maximum number of iterations. Set is not invariant if
 %                     iteration is aborted prior to convergence  (default is 200)
-% Options.useTmap   - If set to true (default), transition map will be
+% Options.useTmap   - If set to true (default is false), transition map will be
 %                     computed to rule out certain transitions
 % Options.maxsplanes - maximum number of generated separating hyperplanes when
 %                      computing transition map (default is 1000)
@@ -54,7 +54,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.13 2005/06/29 11:00:25 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.14 2005/06/29 13:53:07 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -121,7 +121,7 @@ end
 if ~isfield(Options, 'useTmap'),
     % if set to 1, transition map will be computed to rule out certain
     % transitions
-    Options.useTmap = 1;
+    Options.useTmap = 0;
 end
 if ~isfield(Options, 'maxIter'),
     % Set is not invariant if iteration is aborted prior to convergence
@@ -263,6 +263,14 @@ while(notConverged>0 & iter<maxIter)
             isfulldimPn(ii) = 1;
         end
     end
+    lenTargetPn = length(targetPn);
+    isfulldimTarget = zeros(1, lenTargetPn);
+    for ii = 1:lenTargetPn,
+        if isfulldim(targetPn(ii)),
+            isfulldimTarget(ii) = 1;
+        end
+    end
+
     if Options.useTmap,
         % compute transition map
         
@@ -299,7 +307,7 @@ while(notConverged>0 & iter<maxIter)
         tP=emptypoly;   %initialize transition polyarray
         convCtr=0;      %this extra counter is needed for error checks
         for j=1:length(targetPn)
-            if ~isfulldimPn(j),
+            if ~isfulldimTarget(j),
                 continue
             end
             if Options.useTmap,
