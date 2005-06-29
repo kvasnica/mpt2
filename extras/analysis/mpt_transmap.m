@@ -24,7 +24,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.3 2005/06/28 11:02:44 kvasnica Exp $
+% $Id: mpt_transmap.m,v 1.4 2005/06/29 08:19:16 kvasnica Exp $
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch
@@ -83,6 +83,7 @@ end
 
 lpsolver = Options.lpsolver;
 abs_tol = Options.abs_tol;
+large_tol = 10*abs_tol;
 
 lenP = length(Pn);
 tmap = ones(lenP,lenP);
@@ -175,7 +176,7 @@ for i=1:lenP
 
         if tmap(i,j)
             if (fullMap)
-                if any((upperCur < BoxMin{j}) | (lowerCur>BoxMax{j}))
+                if any((upperCur + large_tol < BoxMin{j}) | (lowerCur - large_tol > BoxMax{j}))
                     tmap(i,j) = 0;
                 end
             else
@@ -187,18 +188,19 @@ for i=1:lenP
             [a,b,f] = separatinghp(ex{j},explus{i},lpsolver,n);
 
             if (f == 1) % Found one!
-                AA = a'*vecexplus;
-                BB = a'*vecex;
-                iprunes  = zeros(lenP,1);
-                for prunei = i:lenP
-                    iprunes(prunei) = all((AA(indiciesexplus(prunei):indiciesexplus(prunei+1)-1)-b)>=0);
-                end
+                AA = a*vecexplus;
+                BB = a*vecex;
                 jprunes  = zeros(lenP,1);
                 for prunej = 1:lenP
-                    jprunes(prunej) = all((BB(indiciesex(prunej):indiciesex(prunej+1)-1)-b)<=0);
+                    jprunes(prunej) = all((BB(indiciesex(prunej):indiciesex(prunej+1)-1)-b)<=-large_tol);
                 end
                 jprunes = logical(jprunes);
                 if any(jprunes)
+                    iprunes  = zeros(lenP,1);
+                    for prunei = i:lenP
+                        iprunes(prunei) = all((AA(indiciesexplus(prunei):indiciesexplus(prunei+1)-1)-b)>=large_tol);
+                    end
+
                     for prunei = find(iprunes)
                         tmap(prunei,jprunes) = 0;
                     end
@@ -219,6 +221,6 @@ A = [X' -ones(mx,1);-Y' ones(my,1)];
 b = [-ones(mx,1);-ones(my,1)];
 f = zeros(1,nx+1);
 [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,b,[],[],[],lpsolver,0);
-a = xopt(1:nx);
+a = xopt(1:nx)';
 b = xopt(end);
 how = ~all(abs(xopt<1e-8)) & ~any(xopt==1e9);
