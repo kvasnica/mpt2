@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.58 2005/06/24 08:01:08 kvasnica Exp $
+% $Id: mpt_init.m,v 1.59 2005/06/30 12:32:14 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -431,6 +431,7 @@ end
 % however we only do so if mpt_init was called with no input arguments
 try
     if nargs==0 & ispref('MPT_toolbox'),
+        fprintf('Restoring saved settings...\n');
         mptOptions = getpref('MPT_toolbox', 'mptOptions');
 
         if ~isstruct(mptOptions),
