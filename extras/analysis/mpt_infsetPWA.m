@@ -26,8 +26,15 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 %                     iteration is aborted prior to convergence  (default is 200)
 % Options.useTmap   - If set to true (default is false), transition map will be
 %                     computed to rule out certain transitions
-% Options.maxsplanes - maximum number of generated separating hyperplanes when
-%                      computing transition map (default is 1000)
+% Options.sphratio  - Gives factor which governs maximum number of separating
+%                     hyperplanes computed in transition maps. Number of
+%                     separating  hyperplnaes computed at each step is given by
+%                     length(Pn)*length(targetPn) / Options.ratio
+%                     Default value is 20.
+%                     Set this option to 0 if you don't want to impose any limit
+%                     on number of separating hyperplanes.
+% Options.mergefinal - If set to true (default), tries to simplify
+%                      final result by merging regions
 %
 % NOTE: Length of Pn, A, f must be identical
 %
@@ -54,12 +61,12 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.16 2005/07/06 08:30:59 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.17 2005/07/06 10:12:34 kvasnica Exp $
 %
-% (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
-%          grieder@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
+% (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
+%          grieder@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
 
@@ -126,6 +133,21 @@ end
 if ~isfield(Options, 'maxIter'),
     % Set is not invariant if iteration is aborted prior to convergence
     Options.maxIter = 200;
+end
+if ~isfield(Options, 'mergefinal'),
+    % If true, tries to merge final result
+    mergefinal = 1;
+else
+    mergefinal = Options.mergefinal;
+end
+if ~isfield(Options, 'sphratio'),
+    sphratio = 20;
+else
+    sphratio = Options.sphratio;
+end
+if sphratio == 0,
+    % to avoid "division by zero" warnings
+    sphration = 1e-9;
 end
 
 maxIter = Options.maxIter;
@@ -286,8 +308,7 @@ while(notConverged>0 & iter<maxIter)
             fprintf('Computing transition map...\n');
         end
         tmapOptions.targetPn = targetPn;
-        tmapOptions.maxsph = lenPn*lenTargetPn/3;
-        %[tmap, Pn] = mpt_transmap(Pn, Acell, Fcell, Options);
+        tmapOptions.maxsph = ceil(lenPn*lenTargetPn/sphratio);
         tmap = mpt_transmap(Pn, Acell, Fcell, tmapOptions);
         
         if Options.verbose > -1,
@@ -415,33 +436,35 @@ if statusbar,
 end
 
 %%TRY TO MERGE THE FINAL RESULT
-for dyn=1:max(dynamics)
-    ctr=0;
-    Pt=emptypoly;
-    
-    dynSet=find(dynamics==dyn); 
-    Pt=Pn(dynSet);   %set of polytopes with dynamic dyn
-
-    %try to merge polytopes
-    if nx<=3,
-        % use union for dimensions smaller than 4
-        [Pu,how]=union(Pt, Options); 
-    else
-        % use greedy merging for higher dimensions (computation of union becomes
-        % prohibitive for dimensions above 3 and more than 2 input polytopes)
-        Pu = merge(Pt, mergeOpt);
-        how = length(Pu) <= length(Pt);
-    end
-    
-    if(how==1)
-        %union is convex
-        Pn = [Pn Pu];               %add new set 
-        for kk=1:length(Pu)
-            dynamics(end+1)=dyn;    %add new set
+if mergefinal,
+    for dyn=1:max(dynamics)
+        ctr=0;
+        Pt=emptypoly;
+        
+        dynSet=find(dynamics==dyn); 
+        Pt=Pn(dynSet);   %set of polytopes with dynamic dyn
+        
+        %try to merge polytopes
+        if nx<=3,
+            % use union for dimensions smaller than 4
+            [Pu,how]=union(Pt, Options); 
+        else
+            % use greedy merging for higher dimensions (computation of union becomes
+            % prohibitive for dimensions above 3 and more than 2 input polytopes)
+            Pu = merge(Pt, mergeOpt);
+            how = length(Pu) <= length(Pt);
         end
         
-        Pn(dynSet)=[];          %remove old sets 
-        dynamics(dynSet)=[];    %remove old sets
+        if(how==1)
+            %union is convex
+            Pn = [Pn Pu];               %add new set 
+            for kk=1:length(Pu)
+                dynamics(end+1)=dyn;    %add new set
+            end
+            
+            Pn(dynSet)=[];          %remove old sets 
+            dynamics(dynSet)=[];    %remove old sets
+        end
     end
 end
 
