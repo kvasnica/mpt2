@@ -27,7 +27,7 @@ function [P,Vconv]=hull(V,Options)
 %
 % see also POLYTOPE/HULL, EXTREME, UNION, ENVELOPE
 
-% $Id: hull.m,v 1.4 2005/03/10 12:37:02 kvasnica Exp $
+% $Id: hull.m,v 1.5 2005/07/06 08:30:05 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
 %     kvasnica@control.ee.ethz.ch
@@ -114,7 +114,11 @@ if Options.extreme_solver==3,
 elseif Options.extreme_solver==1,
     % LRS (matlab implementation)
     [P, Vconv, H, K] = hull_lrs(V, Options);
-        
+
+elseif Options.extreme_solver==2,
+    % analytic solution, alternative method
+    [P, Vconv, H, K] = hull_matlab_alt(V, Options);
+    
 else
     % analytical solution
     [P, Vconv, H, K] = hull_matlab(V, Options);
@@ -168,6 +172,9 @@ if Options.debug_level>0
                 case 0
                     % matlab
                     [P, Vconv, H, K] = hull_matlab(Vorig, Options);
+                case 2
+                    % matlab alternative
+                    [P, Vconv, H, K] = hull_matlab_alt(Vorig, Options);
                 otherwise
                     error(sprintf('HULL: unknown solver %d', nextsolver));
             end
@@ -446,6 +453,35 @@ else
 end
 
 return
+
+
+%--------------------------------------------------------------------------
+function [P,Vconv,H,K]=hull_matlab_alt(V, Options)
+
+w = warning;
+warning off
+V = unique(V, 'rows');
+k = convhulln(V);
+Vconv = V(unique(k),:);  % store extreme points
+c = mean(Vconv);
+V = V - repmat(c,[size(V,1) 1]);
+H = zeros(size(k, 1), size(V, 2));
+ind_remove = [];
+for ix = 1:size(k,1)
+    F = V(k(ix,:),:);
+    aa = (F\ones(size(F,1),1))';
+    if any(isinf(aa)),
+        ind_remove = [ind_remove ix];
+        continue
+    end
+    H(ix,:) = aa;
+end
+ind_keep = setdiff(1:size(k, 1), ind_remove);
+H = H(ind_keep, :);
+K = ones(size(H, 1), 1);
+K = K + H*c';
+P = polytope(H, K);
+warning(w);
 
 
 
