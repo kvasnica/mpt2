@@ -25,8 +25,15 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 %                     iteration is aborted prior to convergence (default is 200)
 % Options.useTmap   - If set to true (default), transition map will be
 %                     computed to rule out certain transitions
-% Options.maxsplanes - maximum number of generated separating hyperplanes when
-%                      computing transition map (default is 1000)
+% Options.mergefinal - If set to true (default is false), tries to simplify
+%                      final result by merging regions
+% Options.sphratio  - Gives factor which governs maximum number of separating
+%                     hyperplanes computed in transition maps. Number of
+%                     separating  hyperplnaes computed at each step is given by
+%                     length(Pn)*length(targetPn) / Options.ratio
+%                     Default value is 20.
+%                     Set this option to 0 if you don't want to impose any limit
+%                     on number of separating hyperplanes.
 %
 % NOTE: If the algorihtms stalls, use Options.hullunion=1. This hack is,
 %       however, limited to small dimensions, say 2, 3, 4.
@@ -39,7 +46,7 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 % see also MPT_INFSETPWA
 %
 
-% $Id: mpt_invariantSet.m,v 1.6 2005/06/29 13:53:28 kvasnica Exp $
+% $Id: mpt_invariantSet.m,v 1.7 2005/07/06 10:14:06 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -87,6 +94,9 @@ if ~isfield(Options, 'abs_tol')
 end
 if ~isfield(Options, 'useTmap')
     Options.useTmap = 1;
+end
+if ~isfield(Options, 'mergefinal'),
+    Options.mergefinal = 0;
 end
 
 if ~isexplicit(ctrl)
