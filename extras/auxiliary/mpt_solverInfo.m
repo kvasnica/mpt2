@@ -16,7 +16,7 @@ function [out,err]=mpt_solverInfo(sclass, stype)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_solverInfo.m,v 1.4 2005/04/21 20:26:58 kvasnica Exp $
+% $Id: mpt_solverInfo.m,v 1.5 2005/07/06 08:29:22 kvasnica Exp $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -168,7 +168,7 @@ err = 0;
 switch solver,
     case 0, out = 'Analytical method';
     case 1, out = 'LRS';
-    case 2, out = 'LRS (mex)';
+    case 2, out = 'Analytical method (alternative)';
     case 3, out = 'CDD';
     case 4, out = 'CDD without reduction';
     otherwise, out = 'unknown'; err=1;        
@@ -262,6 +262,8 @@ if strcmpi(solver,'cdd'),
     out=3;
 elseif strcmpi(solver,'lrs'),
     out = 1;
+elseif strcmpi(solver, 'matlab_alt'),
+    out = 2;
 elseif strcmpi(solver,'matlab') | strcmpi(solver, 'analytical method'),
     out=0;
 elseif strcmpi(solver, 'fastest available')
