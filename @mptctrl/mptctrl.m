@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.16 2005/06/27 13:31:53 kvasnica Exp $
+% $Id: mptctrl.m,v 1.17 2005/07/06 17:19:20 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -385,6 +385,8 @@ ctrl = class(ctrl, 'mptctrl');
 %--------------------------------------------------------------------------
 function Matrices = sub_getMLDmatrices(sysStruct, probStruct),
 
+global mptOptions
+
 if probStruct.tracking > 0,
     % cannot pre-compute matrices of the MPC problem for time-varying references
     Matrices = [];
@@ -452,7 +454,7 @@ if isfield(probStruct, 'xN'),
     % tell mpc_mip to include terminal set constraint
     Options.TerminalConstraint = 1;
     % zero tolerance on satisfaction of terminal set constraint
-    Options.eps2 = Options.abs_tol;
+    Options.eps2 = mptOptions.abs_tol;
 end
 
 % in case of time-varying penalties, mpc_mip expects them to be in a
