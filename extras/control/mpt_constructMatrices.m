@@ -108,7 +108,7 @@ function [G,W,E,H,F,Y,Cf,Cx,Cc,symmetric,bndA,bndb,Pinvset]=mpt_constructMatrice
 %	     (no. Inputs * prediction Horzion) elemenst correspond to the input
 %            
 
-% $Id: mpt_constructMatrices.m,v 1.4 2005/05/26 13:38:04 kvasnica Exp $
+% $Id: mpt_constructMatrices.m,v 1.5 2005/07/06 08:29:40 kvasnica Exp $
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -813,7 +813,7 @@ end
 
 A = Anom;
 B = Bnom;
-
+Porig = P;
 
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 %% BUILDING THE COST FUNCTION:
@@ -839,11 +839,11 @@ if(probStruct.norm==2)
     
     for i=1:horizon         
         Asum=Asum+Ai;           
-                                %Set: x(i)=AAi*x(i)+vecX*U+Asum*f
-                                %     y(i)=C  *x(i)+D*vecX*U+gg 
-            AAi=A*Ai;               %=A^i used for faster computation
-            vecX=[Ai*B vecX];       %store [A^{i-1}B ... AB B] 
-            vecX(:,nuH+1:end)=[];   %store [A^{i-1}B ... AB B] 
+        %Set: x(i)=AAi*x(i)+vecX*U+Asum*f
+        %     y(i)=C  *x(i)+D*vecX*U+gg 
+        AAi=A*Ai;               %=A^i used for faster computation
+        vecX=[Ai*B vecX];       %store [A^{i-1}B ... AB B] 
+        vecX(:,nuH+1:end)=[];   %store [A^{i-1}B ... AB B] 
    
         vecU=[zeros(nu,(i-1)*nu) eye(nu) zeros(nu,(horizon-i)*nu)];   %u(i)=vecU*U
         
@@ -852,6 +852,11 @@ if(probStruct.norm==2)
         end 
         if iscell(probStruct.Q),%in case of time varying cost matrices
             Q = probStruct.Q{i};
+        end
+        if iscell(Porig),
+            P = Porig{i};
+        else
+            P = Porig;
         end
         
         %Sum J=J+u(i)'Ru(i) below  
@@ -926,8 +931,16 @@ elseif(probStruct.norm==1)
     %  is transformed into           J=  H [U epsilon] + F x0                          
     %                                
     %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    xcost=size(Q,1);
-    ucost=size(R,1);
+    if iscell(Q),
+        xcost = size(Q{1}, 1);
+    else
+        xcost=size(Q,1);
+    end
+    if iscell(R),
+        ucost = size(R{1}, 1);
+    else
+        ucost=size(R,1);
+    end
     if(~ycost)
         xNcost=size(P,1);
     else
