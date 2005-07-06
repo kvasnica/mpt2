@@ -61,7 +61,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.17 2005/07/06 10:12:34 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.18 2005/07/06 10:37:40 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -147,7 +147,7 @@ else
 end
 if sphratio == 0,
     % to avoid "division by zero" warnings
-    sphration = 1e-9;
+    sphratio = 1e-9;
 end
 
 maxIter = Options.maxIter;
