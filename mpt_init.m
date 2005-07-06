@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.59 2005/06/30 12:32:14 kvasnica Exp $
+% $Id: mpt_init.m,v 1.60 2005/07/06 08:28:42 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -526,6 +526,7 @@ if nargs==1,
                 rmpref('MPT_toolbox');
             end
             nargs = 0;
+            dosave = 1;
         elseif strcmpi(vargs{1}, 'save'),
             dosave = 1;
             nargs = 0;
@@ -629,7 +630,7 @@ lp_pref = [0 9 3 15 2 8 14 7 1 13 5 10 11 12];
 qp_pref = [0 1 9 2 8 4 5 6 7 10];
 milp_pref = [0 7 6 3 2 4 5 1];
 miqp_pref = [0 5 4 2 3 1];
-extreme_pref = [3 0 1];
+extreme_pref = [3 2 0 1];
 
 solvers.lp = choosepreferred(solvers.lp, lp_pref);
 solvers.qp = choosepreferred(solvers.qp, qp_pref);
@@ -753,7 +754,7 @@ end
 mptOptions.emptypoly = polytope;
 
 solvers.extreme = [];
-for solver = [0 1 3],
+for solver = [0 1 2 3],
     if test_extreme(solver),
         solvers.extreme = [solvers.extreme; solver];
     end
