@@ -306,10 +306,15 @@ elseif isa(obj, 'char')
 
     [pathstr, namestr, extstr] = fileparts(fname);
     if isempty(extstr),
-        if isempty(pathstr),
-            fname = [namestr '.hys'];
+        if matrixhysdel,
+            extstr = '.mhys';
         else
-            fname = [pathstr filesep namestr '.hys'];
+            extstr = '.hys';
+        end
+        if isempty(pathstr),
+            fname = [namestr extstr];
+        else
+            fname = [pathstr filesep namestr extstr];
         end
     end
     HYSCODE = readfile(fname);
