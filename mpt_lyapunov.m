@@ -34,6 +34,19 @@ function ctrl = mpt_lyapunov(ctrl, funtype, ndeg, Options)
 % Options  - additional options (see help mpt_getQuadLyapFct, mpt_getPWALyapFct,
 %            mpt_getCommonSOSLyapFct and mpt_getPWQLyapFct for more details)
 %
+% Options.useTmap      - If set to true (default), transition map will
+%                        be computed to rule out certain transitions
+% Options.sphratio     - Gives factor which governs maximum number of separating
+%                        hyperplanes computed in transition maps. Number of
+%                        separating  hyperplnaes computed at each step is given
+%                        by length(Pn)^2 / Options.ratio
+%                        Default value is 20.
+%                        Set this option to 0 if you don't want to impose any
+%                        limit on number of separating hyperplanes. The higher
+%                        the value of this parameter is, the less separating
+%                        hyperplanes will be computed, resulting in (possibly)
+%                        less efficiency.
+%
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
@@ -43,7 +56,7 @@ function ctrl = mpt_lyapunov(ctrl, funtype, ndeg, Options)
 % see also MPT_GETQUADLYAPFCT, MPT_GETPWQLYAPFCT, MPT_GETPWALYAPFCT
 %
 
-% $Id: mpt_lyapunov.m,v 1.7 2005/06/09 11:56:59 kvasnica Exp $
+% $Id: mpt_lyapunov.m,v 1.8 2005/07/06 11:14:35 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
