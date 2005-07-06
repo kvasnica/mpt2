@@ -24,7 +24,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.5 2005/06/29 14:29:20 kvasnica Exp $
+% $Id: mpt_transmap.m,v 1.6 2005/07/06 08:32:00 kvasnica Exp $
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch
@@ -64,6 +64,10 @@ end
 if ~isfield(Options, 'abs_tol'),
     Options.abs_tol = mptOptions.abs_tol;
 end
+if ~isfield(Options, 'maxsph'),
+    Options.maxsph = Inf;
+end
+
 if isfield(Options, 'targetPn'),
     havetarget = 1;
     targetPn = Options.targetPn;
@@ -95,6 +99,7 @@ end
 lpsolver = Options.lpsolver;
 abs_tol = Options.abs_tol;
 large_tol = 10*abs_tol;
+maxsph = Options.maxsph;
 
 lenP = length(Pn);
 if havetarget,
@@ -198,15 +203,14 @@ if havetarget,
 end
 
 if havetarget,
-    vecex = [ext{1:end}];
-    indiciesex = cumsum([1 cellfun('prodofsize',ext)/n]);
-else
-    vecex = [ex{1:end}];
-    indiciesex = cumsum([1 cellfun('prodofsize',ex)/n]);
+    ex = ext;
 end
+vecex = [ex{1:end}];
+indiciesex = cumsum([1 cellfun('prodofsize',ex)/n]);
 vecexplus = [explus{1:end}];
 indiciesexplus = cumsum([1 cellfun('prodofsize',explus)/n]);
 
+sphcount = 0;
 for i=1:lenP
 
     %check if polytope is mapped onto a full dimensional polytope or onto
@@ -235,12 +239,14 @@ for i=1:lenP
 
         if tmap(i,j)
 
-            if havetarget,
-                [a,b,f] = separatinghp(ext{j},explus{i},lpsolver,n);
-            else
-                [a,b,f] = separatinghp(ex{j},explus{i},lpsolver,n);
+            if sphcount > maxsph,
+                % exit if maximum number of allowed separating haperplanes has
+                % been reached
+                return
             end
-
+            [a,b,f] = separatinghp(ex{j},explus{i},lpsolver,n);
+            sphcount = sphcount + 1;
+            
             if (f == 1) % Found one!
                 AA = a*vecexplus;
                 BB = a*vecex;
