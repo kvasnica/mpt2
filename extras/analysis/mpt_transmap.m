@@ -12,6 +12,11 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % ---------------------------------------------------------------------------
 % Pn          - polytope array
 % A, f        - cells containing affine map: x(k+1) = A{i}*x + f{i}
+% Options.maxsph   - maximum number of separating hyperplnaes to compute
+%                    (default is Inf, i.e. no limit)
+% Options.targetPn - optional target partition if it is different from Pn
+% Options.lpsolver - LP solver to use
+% Options.abs_tol  - absolute tolerance
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -24,7 +29,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.6 2005/07/06 08:32:00 kvasnica Exp $
+% $Id: mpt_transmap.m,v 1.7 2005/07/06 10:11:01 kvasnica Exp $
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch
