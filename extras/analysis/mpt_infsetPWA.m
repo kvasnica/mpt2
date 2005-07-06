@@ -54,7 +54,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.15 2005/06/29 14:29:00 kvasnica Exp $
+% $Id: mpt_infsetPWA.m,v 1.16 2005/07/06 08:30:59 kvasnica Exp $
 %
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -285,15 +285,17 @@ while(notConverged>0 & iter<maxIter)
         if Options.verbose > -1,
             fprintf('Computing transition map...\n');
         end
-        Options.targetPn = targetPn;
-        [tmap, Pn] = mpt_transmap(Pn, Acell, Fcell, Options);
+        tmapOptions.targetPn = targetPn;
+        tmapOptions.maxsph = lenPn*lenTargetPn/3;
+        %[tmap, Pn] = mpt_transmap(Pn, Acell, Fcell, Options);
+        tmap = mpt_transmap(Pn, Acell, Fcell, tmapOptions);
         
         if Options.verbose > -1,
             fprintf('Transition map discarded %.2f%% of possible transitions.\n', 100*(1 - nnz(tmap)/numel(tmap)));
         end
     end
     
-    for i=1:length(Pn)
+    for i=1:lenPn
         
         if statusbar,
             if isempty(mpt_statusbar(Options.status_handle, (i-1)/length(Pn), prog_min, prog_max)),
@@ -307,7 +309,7 @@ while(notConverged>0 & iter<maxIter)
         trans=0;        %initialize transition counter
         tP=emptypoly;   %initialize transition polyarray
         convCtr=0;      %this extra counter is needed for error checks
-        for j=1:length(targetPn)
+        for j=1:lenTargetPn
             if ~isfulldimTarget(j),
                 continue
             end
