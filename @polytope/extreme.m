@@ -53,7 +53,7 @@ function [V,R,P,adjV,adjf] = extreme(P,Options)
 % see also HULL
 %
 
-% $Id: extreme.m,v 1.11 2005/05/10 20:22:22 kvasnica Exp $
+% $Id: extreme.m,v 1.12 2005/07/06 08:28:15 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -106,6 +106,9 @@ end
 if ~isfield(Options,'verbose')
     Options.verbose = mptOptions.verbose;
 end
+if ~isfield(Options, 'lpsolver'),
+    Options.lpsolver = mptOptions.lpsolver;
+end
 
 if length(P.Array)>0,
     error('EXTREME: this function does not work for arrays of polytopes!');
@@ -152,7 +155,12 @@ elseif Options.extreme_solver==1,
     end
     
 elseif Options.extreme_solver==2,
-    error('CDD through text file not available');
+    % analytic solution - alternative method
+    if nargout>3,
+        [V,R,P,adjV,adjf] = matlab_extreme_alt(P,Options);
+    else
+        [V,R,P] = matlab_extreme_alt(P,Options);
+    end
     
 else
     error('extreme: unknown solver!');
@@ -203,6 +211,14 @@ if(Options.debug_level>0) %& ~Vstored
                         [V,R,P] = matlab_extreme(Porig,Options);
                     end
 
+                case 2
+                    % matlab, alternative method
+                    if nargout>3,
+                        [V,R,P,adjV,adjf] = matlab_extreme_alt(Porig,Options);
+                    else
+                        [V,R,P] = matlab_extreme_alt(Porig,Options);
+                    end
+                    
                 case 4
                     % do nothing, this solver is only utilized by hull.m
                 otherwise
@@ -284,7 +300,7 @@ if(Options.debug_level>1)
 end
 
 % assign polytope with updated vertices in caller's workspace
-if ~isempty(inputname(1)),
+if ~isempty(inputname(1)) & nargout<3,
     assignin('caller',inputname(1),P);
 end
 
@@ -519,7 +535,37 @@ V=X;
 
 
 
+%-------------------------------------------------------------------------
+function [V,R,P,adjV,adjf] = matlab_extreme_alt(P,Options)
+% alternative method for extreme points enumeration
 
+V = []; R = []; adjV={}; adjf=[];
+
+if ~isbounded(P),
+    % this method requires a bounded polytope
+    return
+end
+
+H = P.H;
+K = P.K;
+[xcheb, rcheb] = chebyball_f(H, K, Options);
+
+% shift polytope such that it contains the origin
+K = K - H*xcheb;
+D = H ./ repmat(K,[1 size(H,2)]);
+k = convhulln(D);
+G  = zeros(size(k,1),size(D,2));
+for ii = 1:size(k,1)
+    F = D(k(ii, :), :);
+    % create inequalities
+    G(ii,:) = (F\ones(size(F,1),1))';
+end
+% shift polytope back to original location
+V = G + repmat(xcheb', [size(G,1),1]);
+
+if nargout>3,
+    [adjV, R] = sub_adjacent_vertices(V,P,Options);
+end
 
 
 %-------------------------------------------------------------------------
