@@ -41,7 +41,7 @@ function [dQ,dL,dC,feasible,drho,runtime]=mpt_getPWQLyapFct(ctrl,Options)
 %                        hyperplanes computed in transition maps. Number of
 %                        separating  hyperplnaes computed at each step is given
 %                        by length(Pn)^2 / Options.ratio
-%                        Default value is 10.
+%                        Default value is 20.
 %                        Set this option to 0 if you don't want to impose any
 %                        limit on number of separating hyperplanes.
 %
@@ -74,7 +74,7 @@ function [dQ,dL,dC,feasible,drho,runtime]=mpt_getPWQLyapFct(ctrl,Options)
 % "Analysis of discrete-time piecewise affine and hybrid systems",
 % Ferrari-Trecate G., F.A. Cuzzola, D. Mignone and M. Morari
 
-% $Id: mpt_getPWQLyapFct.m,v 1.7 2005/07/06 10:46:03 kvasnica Exp $
+% $Id: mpt_getPWQLyapFct.m,v 1.8 2005/07/06 11:13:10 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -165,7 +165,7 @@ if ~isfield(Options, 'useTmap'),
     Options.useTmap = 1;
 end
 if ~isfield(Options, 'sphratio'),
-    sphratio = 10;
+    sphratio = 20;
 else
     sphratio = Options.sphratio;
 end
@@ -320,13 +320,14 @@ rho=sdpvar(1,1);   %optimization variable for exponential stability
 %Compute bounding boxes for all regions 
 %this serves to speed up the subsequent computation of transition sets
 
-Options.noPolyOutput = 1;
+bbOptions = Options;
+bbOptions.noPolyOutput = 1;
 % we don't need the bounding box as a polytope object, just it's extreme points
 
 if ~Options.useTmap,
     for i=1:length(Pn)
         %compute bounding box for region
-        [R,BoxMin{i},BoxMax{i}]=bounding_box(Pn(i),Options);       %get the two most extreme points
+        [R,BoxMin{i},BoxMax{i}]=bounding_box(Pn(i),bbOptions);       %get the two most extreme points
         %now extract all other extreme points of the bounding box
         for j=1:2^n
             index=dec2bin(j-1,n);
@@ -400,10 +401,8 @@ for dyn_ctr=1:unc_loop
         Acell = cell(1, lenP);
         Fcell = cell(1, lenP);
         if pwasystem,
-            for ii = 1:lenP,
-                Acell{ii} = ABFcell{ii};
-                Fcell{ii} = BGcell{ii};
-            end
+            Acell = ABFcell;
+            Fcell = BGcell;
         else
             for ii = 1:lenP,
                 Acell{ii} = A+B*Fi{ii}(1:nu,:);
