@@ -29,7 +29,7 @@ function [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,Options)
 % see also MPT_VERIFYSYSSTRUCT, MPT_VERIFYPROBSTRUCT
 %
 
-% $Id: mpt_verifySysProb.m,v 1.4 2005/06/06 15:10:34 kvasnica Exp $
+% $Id: mpt_verifySysProb.m,v 1.5 2005/07/06 08:29:11 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -172,15 +172,6 @@ elseif size(probStruct.R,2)~=nu,
     end
 end
 
-if isfield(probStruct,'Qy'),
-    if size(probStruct.Qy,2)~=ny & ~isfield(sysStruct,'Cy'),
-        if Options.guierrors,
-            error(sprintf('Penalty on outputs must be a %dx%d matrix!',ny,ny));
-        else
-            error(sprintf('"%s.Qy" must be a %dx%d matrix!',psn,ny,ny));
-        end
-    end
-end
 if isfield(probStruct,'Rdu'),
     if size(probStruct.Rdu,2)~=nu,
         if Options.guierrors,
