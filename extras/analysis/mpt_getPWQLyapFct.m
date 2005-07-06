@@ -16,22 +16,34 @@ function [dQ,dL,dC,feasible,drho,runtime]=mpt_getPWQLyapFct(ctrl,Options)
 % INPUT
 % ---------------------------------------------------------------------------  
 % ctrl                        - Explicit controller (EXPCTRL object)
-% Options.enforcePositivity   - If set to zero, positivity constraints for PWQ function are not 
-%                               included in LMI (reduces constraints and computation time)
-%                               Post computation verification is performed to check if postivity holds
-%                               If not, positivity constraints are added and solution recomputed.
-% Options.abs_tol             - Absolute tolerance
-% Options.lpsolver            - Which LP solver to use (see help mpt_solveLP for details)
-% Options.epsilon             - This is a tolerance factor which is introduced to turn
-%                               LMI inequalities into strict inequalities.
-% Options.debug_level         - If this is set to 1, the solution provided by the LMI
-%                               solver will be double-checked manually. We strongly
-%                               advise to set this to 1, since we've experienced
-%                               numerous numerical issues with certain LMI solvers.
-% Options.nicescale           - This will add additional constraints to obtain a nicely scaled
-%                               Lyapunov function. There is no benefit in this apart from 
-%                               getting nicer plots afterwards. Therefore this is switched 
-%                               off by default
+% Options.enforcePositivity   - If set to zero, positivity constraints for PWQ
+%                               function are not included in LMI (reduces
+%                               constraints and computation time) Post
+%                               computation verification is performed to check
+%                               if postivity holds. If not, positivity
+%                               constraints are added and solution recomputed. 
+% Options.abs_tol      - Absolute tolerance
+% Options.lpsolver     - Which LP solver to use (see help mpt_solveLP for
+%                        details) 
+% Options.epsilon      - This is a tolerance factor which is introduced to
+%                        turn LMI inequalities into strict inequalities.
+% Options.debug_level  - If this is set to 1, the solution provided by the LMI
+%                        solver will be double-checked manually. We strongly
+%                        advise to set this to 1, since we've experienced
+%                        numerous numerical issues with certain LMI solvers.
+% Options.nicescale    - This will add additional constraints to obtain a nicely
+%                        scaled Lyapunov function. There is no benefit in this
+%                        apart from getting nicer plots afterwards. Therefore
+%                        this is switched off by default
+% Options.useTmap      - If set to true (default), transition map will
+%                        be computed to rule out certain transitions
+% Options.sphratio     - Gives factor which governs maximum number of separating
+%                        hyperplanes computed in transition maps. Number of
+%                        separating  hyperplnaes computed at each step is given
+%                        by length(Pn)^2 / Options.ratio
+%                        Default value is 10.
+%                        Set this option to 0 if you don't want to impose any
+%                        limit on number of separating hyperplanes.
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -62,6 +74,10 @@ function [dQ,dL,dC,feasible,drho,runtime]=mpt_getPWQLyapFct(ctrl,Options)
 % "Analysis of discrete-time piecewise affine and hybrid systems",
 % Ferrari-Trecate G., F.A. Cuzzola, D. Mignone and M. Morari
 
+% $Id: mpt_getPWQLyapFct.m,v 1.7 2005/07/06 10:46:03 kvasnica Exp $
+%
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (C) 2004 Pratik Biswas       
 %          pbiswas@stanford.edu
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich       
@@ -142,6 +158,20 @@ if ~isfield(Options,'nicescale'),
 end
 if ~isfield(Options,'enforcePositivity'),
     Options.enforcePositivity=0;
+end
+if ~isfield(Options, 'useTmap'),
+    % if set to 1, transition map will be computed to rule out certain
+    % transitions
+    Options.useTmap = 1;
+end
+if ~isfield(Options, 'sphratio'),
+    sphratio = 10;
+else
+    sphratio = Options.sphratio;
+end
+if sphratio == 0,
+    % to avoid "division by zero" warnings
+    sphratio = 1e-9;
 end
 
 if ~isfield(Options, 'statusbar')
@@ -293,24 +323,26 @@ rho=sdpvar(1,1);   %optimization variable for exponential stability
 Options.noPolyOutput = 1;
 % we don't need the bounding box as a polytope object, just it's extreme points
 
-for i=1:length(Pn)
-    %compute bounding box for region
-    [R,BoxMin{i},BoxMax{i}]=bounding_box(Pn(i),Options);       %get the two most extreme points
-    %now extract all other extreme points of the bounding box
-    for j=1:2^n
-        index=dec2bin(j-1,n);
-        for k=1:n
-            if(index(k)==binaryOne)
-                boxPoint{i}{j}(k)=BoxMax{i}(k);
-            else
-                boxPoint{i}{j}(k)=BoxMin{i}(k);
+if ~Options.useTmap,
+    for i=1:length(Pn)
+        %compute bounding box for region
+        [R,BoxMin{i},BoxMax{i}]=bounding_box(Pn(i),Options);       %get the two most extreme points
+        %now extract all other extreme points of the bounding box
+        for j=1:2^n
+            index=dec2bin(j-1,n);
+            for k=1:n
+                if(index(k)==binaryOne)
+                    boxPoint{i}{j}(k)=BoxMax{i}(k);
+                else
+                    boxPoint{i}{j}(k)=BoxMin{i}(k);
+                end
+            end%for k=1:n
+            if(size(boxPoint{i}{j},1)<size(boxPoint{i}{j},2))
+                boxPoint{i}{j}= boxPoint{i}{j}';
             end
-        end%for k=1:n
-        if(size(boxPoint{i}{j},1)<size(boxPoint{i}{j},2))
-            boxPoint{i}{j}= boxPoint{i}{j}';
-        end
-    end%for j=1:2^(n)
-end%Pn
+        end%for j=1:2^(n)
+    end%Pn
+end
 %---------------------------------------------------
 
 
@@ -336,7 +368,7 @@ for i = 1:lenP
     isfulldimP(i) = isfulldim(Pn(i));
 end
 
-if Options.verbose > -1,
+if Options.verbose > -1 & ~Options.useTmap,
     disp(['Performing Reachability Analysis   0/' num2str(lenP)])
 end
 
@@ -361,6 +393,36 @@ for dyn_ctr=1:unc_loop
         end     
     end
     
+    if Options.useTmap,
+        % compute transition map
+        
+        % prepare dynamics cells
+        Acell = cell(1, lenP);
+        Fcell = cell(1, lenP);
+        if pwasystem,
+            for ii = 1:lenP,
+                Acell{ii} = ABFcell{ii};
+                Fcell{ii} = BGcell{ii};
+            end
+        else
+            for ii = 1:lenP,
+                Acell{ii} = A+B*Fi{ii}(1:nu,:);
+                Fcell{ii} = B*Gi{ii}(1:nu,:);
+            end
+        end
+            
+        % compute the transition map
+        if Options.verbose > -1,
+            fprintf('Computing transition map...\n');
+        end
+        tmapOptions.maxsph = ceil(lenP^2/sphratio);
+        tmap = mpt_transmap(Pn, Acell, Fcell, tmapOptions);
+        
+        if Options.verbose > -1,
+            fprintf('Transition map discarded %.2f%% of possible transitions.\n', 100*(1 - nnz(tmap)/numel(tmap)));
+        end
+    end
+
     for i=1:lenP
         
         progress = (i-1)/lenP;
@@ -371,10 +433,12 @@ for dyn_ctr=1:unc_loop
             end     
         end
         
-        if(mod(i,round(lenP/5))==0)
-            if Options.verbose > -1,
-            	disp(['Performing Reachability Analysis   ' num2str(i) '/' num2str(length(Pn))])
-        	end
+        if ~Options.useTmap,
+            if(mod(i,round(lenP/5))==0) 
+                if Options.verbose > -1,
+                    disp(['Performing Reachability Analysis   ' num2str(i) '/' num2str(length(Pn))])
+                end
+            end
         end
         %dynamics for this start region
         if pwasystem
@@ -390,22 +454,24 @@ for dyn_ctr=1:unc_loop
             %initialize invariance check polytope
             invP=polytope;
         end
-        
-        %check if polytope is mapped onto a full dimensional polytope or onto
-        %a facet (this has an impact on the subsequent reachability analysis)
-        if(all(abs(eig(ABF))>Options.abs_tol))
-            fullMap=1;
-        else
-            fullMap=0;
-        end
-        
-        %compute bounding box for region at t+1
-        upperCur=ones(n,1)*-Inf;
-        lowerCur=ones(n,1)*Inf;
-        for j=1:2^n
-            boxPoint_t1{i}{j}=ABF*boxPoint{i}{j}+BG;
-            lowerCur=min([lowerCur boxPoint_t1{i}{j}]')';
-            upperCur=max([upperCur boxPoint_t1{i}{j}]')';
+
+        if ~Options.useTmap,
+            %check if polytope is mapped onto a full dimensional polytope or onto
+            %a facet (this has an impact on the subsequent reachability analysis)
+            if(all(abs(eig(ABF))>Options.abs_tol))
+                fullMap=1;
+            else
+                fullMap=0;
+            end
+            
+            %compute bounding box for region at t+1
+            upperCur=ones(n,1)*-Inf;
+            lowerCur=ones(n,1)*Inf;
+            for j=1:2^n
+                boxPoint_t1{i}{j}=ABF*boxPoint{i}{j}+BG;
+                lowerCur=min([lowerCur boxPoint_t1{i}{j}]')';
+                upperCur=max([upperCur boxPoint_t1{i}{j}]')';
+            end
         end
         
         for j=1:lenP
@@ -418,29 +484,35 @@ for dyn_ctr=1:unc_loop
                     end     
                 end
             end
-            
-            possible_transition = 1;
-            if(fullMap)
-                if(~isfulldimP(j))
-                    % no transition
-                    continue;
-                else
-                    for k=1:n
-                        %first check if bounding boxes intersect
-                        if(upperCur(k)<BoxMin{j}(k))
-                            % bounding boxes do not intersect => no transition
-                            % exists
-                            possible_transition = 0;
-                            break
-                        elseif (lowerCur(k)>BoxMax{j}(k))
-                            % bounding boxes do not intersect => no transition
-                            % exists
-                            possible_transition = 0;
-                            break
-                        end
-                    end %n
+        
+            if Options.useTmap,
+                % use information from the transition map
+                possible_transition = tmap(i, j);
+            else
+                possible_transition = 1;
+                if(fullMap)
+                    if(~isfulldimP(j))
+                        % no transition
+                        continue;
+                    else
+                        for k=1:n
+                            %first check if bounding boxes intersect
+                            if(upperCur(k)<BoxMin{j}(k))
+                                % bounding boxes do not intersect => no transition
+                                % exists
+                                possible_transition = 0;
+                                break
+                            elseif (lowerCur(k)>BoxMax{j}(k))
+                                % bounding boxes do not intersect => no transition
+                                % exists
+                                possible_transition = 0;
+                                break
+                            end
+                        end %n
+                    end
                 end
             end
+            
             if(possible_transition)
                 %possible target, i.e. bounding boxes intersect
                 
