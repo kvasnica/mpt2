@@ -270,6 +270,7 @@ end
 %close(progr.h);
 %error(lasterr);
 %end
+drawnow
 close(progr.h);
 fprintf('Conversion from HYSDEL to PWA form finished (%1.2f sec)\n', etime(clock,t_start))
 
