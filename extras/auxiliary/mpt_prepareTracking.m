@@ -25,7 +25,7 @@ function [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct)
 %                 by default, this is identical to the weight on u;
 %
 
-% $Id: mpt_prepareTracking.m,v 1.3 2005/03/11 22:12:05 kvasnica Exp $
+% $Id: mpt_prepareTracking.m,v 1.4 2005/07/11 21:47:17 kvasnica Exp $
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -119,9 +119,15 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref')
     % output constraints are substituted in mpt_constructMatrices because they
     % depend on the output equation which could be different in different
     % segements for PWA systems 
-    
-    probStruct.xref = xref;
-    probStruct.uref = uref;
+
+    if any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin)),
+        % include uref into xref if we have deltaU formulation
+        probStruct.xref = [xref; uref];
+        probStruct.uref = zeros(size(uref));
+    else
+        probStruct.xref = xref;
+        probStruct.uref = uref;
+    end
     probStruct.tracking = 0;
     sysStructTr = sysStruct;
     probStructTr = probStruct;
