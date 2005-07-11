@@ -36,7 +36,7 @@ function [U,feasible,fval,sysStruct,probStruct,Matrices,X]=mpt_solveMPC(x0,sysSt
 %
 % see also mpt_mplp, mpt_mpqp for explicit feedback solutions 
 
-% $Id: mpt_solveMPC.m,v 1.2 2005/03/01 11:19:44 kvasnica Exp $
+% $Id: mpt_solveMPC.m,v 1.3 2005/07/11 21:48:33 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -188,9 +188,12 @@ else
             [U,lambda,how,exitflag,fval]=mpt_solveQP(H,x0'*F+Matrices.Cf,G,W+E*x0);
             fval=0.5*U'*H*U+x0'*F*U+x0'*Y*x0+Matrices.Cf*U+Matrices.Cc+Matrices.Cx*x0; %+Matrices.Cx*x0+Matrices.Cc;
         else
-            [U,fval,lambda,exitflag]=mpt_solveLP(H,G,W+E*x0);
+            [U,fval,lambda,exitflag,how]=mpt_solveLP(H,G,W+E*x0);
             fval=H*U;
             U=U(1:nuH);
+            if ~strcmpi(how, 'ok'),
+                exitflag = 0;
+            end
         end
     end
     
@@ -204,11 +207,13 @@ end
     
 X = x0';
 Umat = reshape(U, nu, size(U,1)/nu)';
-if ~iscell(sysStruct.A),
-    for ii=1:size(Umat,1),
-        x0 = mpt_simSys(sysStruct, x0, Umat(ii,:)');
-        x0 = x0';
-        X = [X; x0'];
+if nargout > 6,
+    if ~iscell(sysStruct.A),
+        for ii=1:size(Umat,1),
+            x0 = mpt_simSys(sysStruct, x0, Umat(ii,:)');
+            x0 = x0';
+            X = [X; x0'];
+        end
     end
 end
 
