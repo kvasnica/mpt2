@@ -36,7 +36,7 @@ function [U,feasible,fval,sysStruct,probStruct,Matrices,X]=mpt_solveMPC(x0,sysSt
 %
 % see also mpt_mplp, mpt_mpqp for explicit feedback solutions 
 
-% $Id: mpt_solveMPC.m,v 1.3 2005/07/11 21:48:33 kvasnica Exp $
+% $Id: mpt_solveMPC.m,v 1.4 2005/07/11 22:21:02 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -191,7 +191,9 @@ else
             [U,fval,lambda,exitflag,how]=mpt_solveLP(H,G,W+E*x0);
             fval=H*U;
             U=U(1:nuH);
-            if ~strcmpi(how, 'ok'),
+            if strcmpi(how, 'ok'),
+                exitflag = 1;
+            else
                 exitflag = 0;
             end
         end
