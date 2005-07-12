@@ -55,7 +55,7 @@ function ctrlStruct = mpt_iterative(sysStruct,probStruct,Options)
 % see also MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_iterative.m,v 1.4 2005/04/28 07:40:25 kvasnica Exp $
+% $Id: mpt_iterative.m,v 1.5 2005/07/12 09:37:23 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -334,7 +334,7 @@ while(notConverged & loopCtr<Options.maxCtr)
     
     loopCtr=loopCtr+1;
 
-    if Options.verbose >= 0,
+    if Options.verbose > 0,
         fprintf('Iteration %d\n', loopCtr);
     end
     if ~Options.ispwa,
