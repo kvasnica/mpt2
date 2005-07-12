@@ -21,7 +21,7 @@ function status=mpt_isValidCS(ctrlStruct,Options)
 % status      - 1 if input is a valid controller structure, 0 otherwise
 %
 
-% $Id: mpt_isValidCS.m,v 1.1 2005/02/23 14:01:27 kvasnica Exp $
+% $Id: mpt_isValidCS.m,v 1.2 2005/07/12 15:53:02 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -54,6 +54,10 @@ end
 
 if ~isfield(Options,'nowarnings'),
     Options.nowarnings = 0;
+end
+
+if isa(ctrlStruct, 'mptctrl') 
+  ctrlStruct = struct(ctrlStruct);
 end
 
 status = 0;
