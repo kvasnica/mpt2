@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.17 2005/07/06 17:19:20 kvasnica Exp $
+% $Id: mptctrl.m,v 1.18 2005/07/13 18:47:54 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -203,10 +203,12 @@ elseif nargin==2 | nargin==3
 
     % =========================================================================
     % verify sysStruct and probStruct, catch any errors
-    try
-        [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct);
-    catch
-        rethrow(lasterror);
+    if ~isfield(sysStruct, 'verified') | ~isfield(probStruct, 'verified'),
+        try
+            [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct);
+        catch
+            rethrow(lasterror);
+        end
     end
     
     ctrl.sysStruct = sysStruct;
@@ -274,6 +276,8 @@ elseif nargin==2 | nargin==3
                 disp('         inefficient! You should always opt for HYSDEL model instead.');
                 disp('======================================================================');
                 fprintf('\n'); 
+            end
+            if Options.verbose > 0,
                 fprintf('Converting PWA system into MLD representation...\n');
             end
             if ~isfield(sysStruct, 'xmax') | ~isfield(sysStruct, 'xmin')
@@ -305,10 +309,10 @@ elseif nargin==2 | nargin==3
         % NOTE! not possible if probStruct.tracking > 1, in this case the
         % subfunction will return an empty matrix, which is fine (see
         % mpt_getInput and mpt_mip)
-        if Options.verbose > -1,
+        if Options.verbose > 0,
             disp('Constructing data for on-line computation...');
         end
-        ctrl.details.Matrices = sub_getMLDmatrices(sysStruct, probStruct);
+        ctrl.details.Matrices = sub_getMLDmatrices(sysStruct, probStruct, Options);
         
     else
         % =========================================================================
@@ -383,10 +387,12 @@ ctrl = class(ctrl, 'mptctrl');
 
 
 %--------------------------------------------------------------------------
-function Matrices = sub_getMLDmatrices(sysStruct, probStruct),
+function Matrices = sub_getMLDmatrices(sysStruct, probStruct, Options),
 
 global mptOptions
 
+verb = Options.verbose;
+Options.verbose=0;
 if probStruct.tracking > 0,
     % cannot pre-compute matrices of the MPC problem for time-varying references
     Matrices = [];
@@ -484,8 +490,33 @@ Options.returnproblem = 1;
 x0 = zeros(nx, 0);
 
 Matrices = mpc_mip(S, x0, ref, weights, horizon, horizon, Options);
+Matrices.F1eq = [];
+Matrices.F2eq = [];
+Matrices.F3eq = [];
 
-
+Matrices.info = [];
+if isfield(Options, 'convert2eq'),
+    if Options.convert2eq==1,
+        Matrices.info.eqconverted = 1;
+        [ne, nx_f1] = size(Matrices.F1);
+        [Ain,Bin,Aeq,Beq] = mpt_ineq2eq([Matrices.F1 -Matrices.F3], Matrices.F2);
+        if ~isempty(Aeq),
+            Matrices.F1 = Ain(:, 1:nx_f1);
+            Matrices.F2 = Bin;
+            Matrices.F3 = -Ain(:, nx_f1+1:end);
+            Matrices.F1eq = Aeq(:, 1:nx_f1);
+            Matrices.F2eq = Beq;
+            Matrices.F3eq = -Aeq(:, nx_f1+1:end);
+            if verb > 0,
+                fprintf('%d inequalities originally / %d inequalities replaced by %d equalities / %d inequalities now\n', ...
+                    ne, 2*length(Beq), length(Beq), length(Bin));
+            end
+            Matrices.info.ineqorig = ne;
+            Matrices.info.neweq = length(Beq);
+            Matrices.info.newineq = size(Ain, 1);
+        end
+    end
+end
 
 %---------------------------------------------------
 function W = sub_fixweights(weights),

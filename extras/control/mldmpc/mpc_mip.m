@@ -229,7 +229,10 @@ if ~isfield(Options, 'problemmatrices'),
     % if set, it has to contain matrices of the problem constructed beforehand
     Options.problemmatrices = [];
 end
-
+if ~isfield(Options, 'convert2eq'),
+    % if true, detects inequality constraints which form equality constraints
+    Options.convert2eq = 0;
+end
 
 % check dimensions and turn S and Q into cell structures
 % ---------------------------------------------------------------------
@@ -354,6 +357,9 @@ xt = xt(:);      % current state x(t)
 % terminal state constraint
 xtt = x1(:,end);
 
+F1eq = [];
+F2eq = [];
+F3eq = [];
 if isempty(Options.problemmatrices),
     % Build optimization matrices
     [S1, S2, S3, F1, F2, F3, c1, c2, c3, IntIndex, Ext] = mpc_buildmatFAST(horizon, ...
@@ -387,6 +393,14 @@ else
     c1 = matrices.c1;
     c2 = matrices.c2;
     c3 = matrices.c3;
+    if isfield(matrices, 'F1eq'),
+        if ~isfield(matrices, 'F2eq') | ~isfield(matrices, 'F3eq'),
+            error('F2eq or F3eq missing in Options.problemmatrices.');
+        end
+        F1eq = matrices.F1eq;
+        F2eq = matrices.F2eq;
+        F3eq = matrices.F3eq;
+    end
     IntIndex = matrices.IntIndex;
     Ext = matrices.Ext;
 end
@@ -409,7 +423,28 @@ G  = S1;
 CC = (S2+xt'*S3)';
 AA = F1;
 B  = F2+F3*xt;
-
+if ~isempty(F1eq),
+    AAeq = F1eq;
+    BBeq = F2eq + F3eq*xt;
+else
+    eqconverted = 0;
+    if isfield(matrices, 'info'),
+        if isfield(matrices.info, 'eqconverted'),
+            eqconverted = matrices.info.eqconverted;
+        end
+    end
+    if ~eqconverted,
+        if Options.convert2eq,
+            ne = size(AA, 1);
+            [AA, B, AAeq, BBeq] = mpt_ineq2eq(AA, B);
+            fprintf('%d inequalities originally / %d inequalities replaced by %d equalities\n', ne, 2*length(BBeq), length(BBeq));
+            nlin = length(B);
+        else
+            AAeq = [];
+            BBeq = [];
+        end
+    end
+end
 
 
 % initial solution of optimizer
@@ -566,13 +601,13 @@ if isfield(Options, 'nocost'),
         CC = zeros(size(CC));
     end
 end
-        
+
 startt = clock;
 if Options.norm==2,
-    [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), [], [], ...
+    [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), AAeq, BBeq, ...
         bl, bu, vartype, [], MIoptions);
 else
-    [xopt, fopt, Eflagm, flag] = mpt_solveMILP(CC, AA, B+epsil*ones(nlin,1), [], [], ...
+    [xopt, fopt, Eflagm, flag] = mpt_solveMILP(CC, AA, B+epsil*ones(nlin,1), AAeq, BBeq, ...
         bl, bu, vartype, [], MIoptions);
 end
 runtime = etime(clock, startt);
