@@ -87,7 +87,7 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options)
 %
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Id: mpt_mplp.m,v 1.4 2005/06/23 20:12:58 kvasnica Exp $
+% $Id: mpt_mplp.m,v 1.5 2005/07/13 12:10:40 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %     kvasnica@control.ee.ethz.ch
@@ -143,6 +143,8 @@ if Options.qpsolver==-1,
     Options.mplpver = 1;
 end
 
+wstat = warning;
+warning('off');
 switch Options.mplpver
     case 1,
         [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp_ver1(Matrices,Options);
@@ -163,6 +165,7 @@ switch Options.mplpver
     otherwise
         error('mpt_mplp: unknown solver in Options.mplpver!');
 end
+warning(wstat);
 
 if Options.mplpver >= 6,
     if isfield(Options, 'nu'),
