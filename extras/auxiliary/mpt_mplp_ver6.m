@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.7 $ $Date: 2005/06/29 10:03:27 $
+% $Revision: 1.8 $ $Date: 2005/07/13 12:29:39 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -217,7 +217,7 @@ hardA            = [];      % hard constraints
 hardb            = [];      % hard constraints
 no_of_constr     = [];      % number of constraints for each region
 list_active      = {};      % list of active constraints
-degenerate       = [];
+degenerate       = -Inf;
 %
 Pn = [emptypoly];
 Hn = {};      % normalized polyhedron description
@@ -898,7 +898,7 @@ for ir = 1:nRegions,
 end
 details.Ai = Ai;
 details.nRegions = nRegions;
-details.degenerate = degenerate;
+details.degenerate = degenerate(2:end);
 adjacencyInfo = struct('adjacencyList', adjacent, ...
                        'tSetList',      tsetcon);
 details.adjacencyInfo = adjacencyInfo;
