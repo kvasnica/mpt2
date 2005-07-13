@@ -53,7 +53,7 @@ function ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options)
 %
 % see also MPT_CONTROL, MPT_OPTINFCONTROLPWA, MPT_ITERATIVEPWA
 
-% $Id: mpt_optControlPWA.m,v 1.8 2005/06/29 12:36:09 kvasnica Exp $Date: 2005/06/29 12:36:09 $
+% $Id: mpt_optControlPWA.m,v 1.9 2005/07/13 11:19:45 kvasnica Exp $Date: 2005/07/13 11:19:45 $
 %
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch
@@ -147,6 +147,14 @@ if ~isfield(sysStruct,'verified')
 end
 if ~isfield(probStruct,'verified')
     probStruct = mpt_verifyProbStruct(probStruct);
+end
+
+if isfield(sysStruct, 'noise'),
+    if isa(sysStruct.noise, 'polytope'),
+        if isfulldim(sysStruct.noise),
+            error('No optimal solution for systems with additive noise available.');
+        end
+    end
 end
 
 if isinf(probStruct.N)
@@ -857,7 +865,7 @@ ctrlStruct.details.roRunTime = roTime;
 for k = 1:horizon,
     ctrlStruct.details.Horizon{k} = ...
         Step{horizon-k+1}.mergedCtrlStruct;
-    %ctrlStruct.details.Horizon{k}.Pfinal = polytope;
+    ctrlStruct.details.Horizon{k}.Pfinal = polytope;
     for pfin_idx = 1:Step{horizon-k+1}.nPartitions,
         ctrlStruct.details.Horizon{k}.Pfinal = ...
             [ctrlStruct.details.Horizon{k}.Pfinal, ...
