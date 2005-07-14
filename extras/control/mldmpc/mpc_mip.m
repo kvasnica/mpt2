@@ -360,6 +360,7 @@ xtt = x1(:,end);
 F1eq = [];
 F2eq = [];
 F3eq = [];
+matrices = [];
 if isempty(Options.problemmatrices),
     % Build optimization matrices
     [S1, S2, S3, F1, F2, F3, c1, c2, c3, IntIndex, Ext] = mpc_buildmatFAST(horizon, ...
