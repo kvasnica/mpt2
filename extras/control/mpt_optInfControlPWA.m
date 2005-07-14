@@ -60,7 +60,7 @@ function ctrlStruct = mpt_optInfControlPWA(sysStruct, probStruct, Options)
 % see also MPT_CONTROL, MPT_OPTCONTROLPWA, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_optInfControlPWA.m,v 1.4 2005/03/16 09:44:06 kvasnica Exp $
+% $Id: mpt_optInfControlPWA.m,v 1.5 2005/07/14 10:59:26 kvasnica Exp $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -312,7 +312,7 @@ if Options.coregen,
                 tmpProbStruct.Tconstraint=0;
                 tmpProbStruct.Tset = emptypoly;
                 tmpProbStruct.N=1;
-                if nn>2,
+                if nn>2 | 1,
                     if isfield(probStruct,'Qy'),
                         tmpProbStruct.P_N=zeros(ny);
                     else
@@ -354,7 +354,7 @@ if Options.coregen,
                     tmpProbStruct.Tset = targetregion;
                     tmpProbStruct.Tconstraint=2;
                     tmpProbStruct.N=1;
-                    if nn>2,
+                    if nn>2 | 1,
                         if isfield(probStruct,'Qy'),
                             tmpProbStruct.P_N=zeros(ny);
                         else
