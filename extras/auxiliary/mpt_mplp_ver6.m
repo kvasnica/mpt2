@@ -71,7 +71,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.8 $ $Date: 2005/07/13 12:29:39 $
+% $Revision: 1.9 $ $Date: 2005/07/14 18:26:14 $
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
@@ -959,13 +959,15 @@ function [facetPoints,facetR] = getFacetPoints(P, idxUnexplored,Options)
     [H,K] = double(P);
     [nFacets,dim] = size(H);
     faceDist = K - H * xCheby;
-    facetPoints = (repmat(xCheby',nFacets,1)+repmat(faceDist,1,dim).*H)';
-    theOnes = ones(nFacets-1,1);
+    facetPoints = (repmat(xCheby',nFacets,1) + repmat(faceDist,1,dim).*H)';
+    if ( dim == 1 ),
+        % patch for 1D systems
+        facetR = zeros(nFacets,1);
+        return;
+    end
     facetR = -ones(nFacets,1);
-    acOpts = struct('x0',[],...
-                    'tol',1e-4,...
-                    'maxiter',10);
-    
+    theOnes = ones(nFacets-1,1); 
+
     for ii = idxUnexplored(:)',
         Hi0 = null(H(ii,:));
         x0  = facetPoints(:,ii);
@@ -975,7 +977,7 @@ function [facetPoints,facetR] = getFacetPoints(P, idxUnexplored,Options)
         Kother = K(idxOther);
         facetH = Hother * Hi0;
         facetK = Kother - Hother * x0;
-        
+
         [xopt,fval,lambda,exitflag,how]= ...
             mpt_solveLPi([zeros(1,dim-1) -1],[facetH theOnes],facetK,[],[],[], ...
                          Options.lpsolver,1);
@@ -993,7 +995,7 @@ function [facetPoints,facetR] = getFacetPoints(P, idxUnexplored,Options)
                 cFacet = x0;
                 rFacet = min(facetK);
             end
-            
+
         end
     end
 %
