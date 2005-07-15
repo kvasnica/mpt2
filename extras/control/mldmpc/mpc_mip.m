@@ -69,7 +69,7 @@ function [ut, dt, zt, Eflag] = mpc_mip( S, xt, r, Q, pr, co, Options )
 %                Options.bigB             infinity for bounds on variables
 %                                         (default = 1e6)
 %                Options.epsil            global softening of ax <= b
-%                                         (default = 1e-6)
+%                                         (default = 1e-7)
 %                Options.solver           MIQP solver for panmiqp
 %                                         (default = 'miqp')
 %                Options.solver.options   specific solver options
@@ -182,7 +182,7 @@ else
    bigB = Options.bigB;   
 end  
 if ~isfield(Options,'epsil')
-   epsil = 1e-6;
+   epsil = 1e-7;
 else
    epsil = Options.epsil;   
 end
