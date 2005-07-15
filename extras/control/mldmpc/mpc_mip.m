@@ -424,6 +424,8 @@ G  = S1;
 CC = (S2+xt'*S3)';
 AA = F1;
 B  = F2+F3*xt;
+AAeq = [];
+BBeq = [];
 if ~isempty(F1eq),
     AAeq = F1eq;
     BBeq = F2eq + F3eq*xt;
