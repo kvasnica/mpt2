@@ -20,7 +20,7 @@ function handle=mpt_plotU(ctrl,uind,Options)
 % Options.newfigure       - If set to 1, opens a new figure window
 % Options.verbose         - Level of verbosity
 % Options.showPn          - If set to 1, plots on polyhedral sets Pn,
-%                           (default: 1)
+%                           (default: 0)
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -33,8 +33,10 @@ function handle=mpt_plotU(ctrl,uind,Options)
 % see also MPT_PLOTPWA
 %
 
-% $Id: mpt_plotU.m,v 1.2 2005/03/21 22:34:31 kvasnica Exp $
+% $Id: mpt_plotU.m,v 1.3 2005/07/15 07:08:13 kvasnica Exp $
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2004 Arne Linder, Faculty of Electrical, Information and Media Engineering, 
@@ -131,6 +133,12 @@ else
     nu = size(ctrlStruct.sysStruct.B,2);
 end
 
+if iscell(ctrlStruct.sysStruct.A),
+    nx = size(ctrlStruct.sysStruct.A{1},2);
+else
+    nx = size(ctrlStruct.sysStruct.A,2);
+end
+
 PA = ctrlStruct.Pn;
 Fi = ctrlStruct.Fi;
 Gi = ctrlStruct.Gi;
@@ -177,78 +185,42 @@ end
 Options.fastbreak=1;
 
 
-for num_u=urange            % Addition by Arne Linder for dealing with models with multiple inputs
-    if isempty(uind),
-        subplot(nu,1,num_u);
-    end
+if nx==1 & nu==1
+    mpt_plotPWA(PA,Fi,Gi,Options);
     
-    for ii=1:maxlen
-        P=PA(ii);
-        nb=nconstr(P);       % number of constraints
-        dimP=dimension(P);   % dimension
-        if dimP~=2,
-            close
-            error('mpt_plotU: Only 2D partitions can be plotted by this function!');
-        end
-        [xc,rc]=chebyball(P);  % get chebyshev's radius
-        if rc<=Options.abs_tol
-            disp('mpt_plotU: Empty polytope detected!');
-            continue
-        end
-        axis(Options.axis);
-        
-        [V,R,PA(ii)]=extreme(P,Options);    % compute extreme points and rays of polytope P
-        if size(R,1)>0
-            error('mpt_plotU: Polytope is unbounded!'); % existence of rays means polytope is unbounded
+    title(sprintf('Value of the control action U^{*} over %d regions',length(PA)),'FontSize',14); % Modified by Arne Linder
+    xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
+    ylabel('U^{*}(x)','Fontsize',14);
+    grid on; 
+    h=gcf;
+    h1 = get(h,'CurrentAxes');
+    set(h1,'Fontname','times');
+    set(h1,'Fontsize',14);
+    
+else
+    for num_u=urange            % Addition by Arne Linder for dealing with models with multiple inputs
+        if isempty(uind),
+            subplot(nu,1,num_u);
         end
         
-        % sort vertices in a cyclic way;
-        x1=V(:,1);
-        x2=V(:,2);
-        
-        ang=angle([(x1-xc(1))+(x2-xc(2))*sqrt(-1)]);
-        [val,ind]=sort(ang);
-        x1=x1(ind);
-        x2=x2(ind);
-        x3=[];
-        for jj=1:length(x1),
-            x = [x1(jj); x2(jj)];
-            [feasible,inwhich] = isinside(ctrlStruct.Pn,x,Options);
-            inwhich=ii;
-            %[optU,feasible] = mpt_getInput(ctrlStruct,x,locOpt);
-            if ~feasible,
-                error('mpt_plotU: problem detected! Increase value of abs_tol in the file mpt_init!');
-            end
-            optU = ctrlStruct.Fi{inwhich}(num_u,:)*x + ctrlStruct.Gi{inwhich}(num_u,:); % Modified by Arne Linder
-            x3 = [x3; optU]; % the third dimension will be value of the control action, i.e. u=Fx+G
-        end
-        % x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);   
-        if min(x3)<minu,
-            minu=min(x3);
-        end
-        
-        h=patch(x1,x2,x3,x3);
-        if isfield(Options, 'LineWidth'),
-            set(h, 'LineWidth', Options.LineWidth);
-        end
-        handle=[handle;h];
-    end
-    if Options.showPn,
-        % plot the full polyhedral partition PA below
-        for ii=1:maxlen,
+        for ii=1:maxlen
             P=PA(ii);
-            nb=nconstr(P);
-            dimP=dimension(P);
-            [xc,rc]=chebyball(P);
+            nb=nconstr(P);       % number of constraints
+            dimP=dimension(P);   % dimension
+            if dimP~=2,
+                close
+                error('mpt_plotU: Only 2D partitions can be plotted by this function!');
+            end
+            [xc,rc]=chebyball(P);  % get chebyshev's radius
             if rc<=Options.abs_tol
                 disp('mpt_plotU: Empty polytope detected!');
                 continue
             end
             axis(Options.axis);
             
-            [V,R,PA(ii)]=extreme(P,Options);
+            [V,R,PA(ii)]=extreme(P,Options);    % compute extreme points and rays of polytope P
             if size(R,1)>0
-                error('mpt_plotU: Polytope is unbounded!');
+                error('mpt_plotU: Polytope is unbounded!'); % existence of rays means polytope is unbounded
             end
             
             % sort vertices in a cyclic way;
@@ -262,30 +234,80 @@ for num_u=urange            % Addition by Arne Linder for dealing with models wi
             x3=[];
             for jj=1:length(x1),
                 x = [x1(jj); x2(jj)];
-                [optU,feasible] = mpt_getInput(ctrlStruct,x,locOpt);
+                [feasible,inwhich] = isinside(ctrlStruct.Pn,x,Options);
+                inwhich=ii;
+                %[optU,feasible] = mpt_getInput(ctrlStruct,x,locOpt);
                 if ~feasible,
-                    error('mpt_plotU: problem detected! Increase value of abs_tol in mpt_init!');
+                    error('mpt_plotU: problem detected! Increase value of abs_tol in the file mpt_init!');
                 end
+                optU = ctrlStruct.Fi{inwhich}(num_u,:)*x + ctrlStruct.Gi{inwhich}(num_u,:); % Modified by Arne Linder
                 x3 = [x3; optU]; % the third dimension will be value of the control action, i.e. u=Fx+G
             end
-            %x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);  % third dimension will be value of the control action, i.e. u=Fx+G
-            if x3<minu,
-                minu=x3;
+            % x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);   
+            if min(x3)<minu,
+                minu=min(x3);
             end
-            h=patch(x1,x2,minu*ones(size(x1)),'b');
+            
+            h=patch(x1,x2,x3,x3);
+            if isfield(Options, 'LineWidth'),
+                set(h, 'LineWidth', Options.LineWidth);
+            end
             handle=[handle;h];
-        end    
+        end
+        if Options.showPn,
+            % plot the full polyhedral partition PA below
+            for ii=1:maxlen,
+                P=PA(ii);
+                nb=nconstr(P);
+                dimP=dimension(P);
+                [xc,rc]=chebyball(P);
+                if rc<=Options.abs_tol
+                    disp('mpt_plotU: Empty polytope detected!');
+                    continue
+                end
+                axis(Options.axis);
+                
+                [V,R,PA(ii)]=extreme(P,Options);
+                if size(R,1)>0
+                    error('mpt_plotU: Polytope is unbounded!');
+                end
+                
+                % sort vertices in a cyclic way;
+                x1=V(:,1);
+                x2=V(:,2);
+                
+                ang=angle([(x1-xc(1))+(x2-xc(2))*sqrt(-1)]);
+                [val,ind]=sort(ang);
+                x1=x1(ind);
+                x2=x2(ind);
+                x3=[];
+                for jj=1:length(x1),
+                    x = [x1(jj); x2(jj)];
+                    [optU,feasible] = mpt_getInput(ctrlStruct,x,locOpt);
+                    if ~feasible,
+                        error('mpt_plotU: problem detected! Increase value of abs_tol in mpt_init!');
+                    end
+                    x3 = [x3; optU]; % the third dimension will be value of the control action, i.e. u=Fx+G
+                end
+                %x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);  % third dimension will be value of the control action, i.e. u=Fx+G
+                if x3<minu,
+                    minu=x3;
+                end
+                h=patch(x1,x2,minu*ones(size(x1)),'b');
+                handle=[handle;h];
+            end    
+        end
+        view(3);
+        title(sprintf('Value of the control action U_%d over %d regions',num_u,length(PA)),'FontSize',14); % Modified by Arne Linder
+        xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
+        ylabel('x_2','Fontsize',14);
+        zlabel(sprintf('U^{*}_%d(x)',num_u),'Fontsize',14);
+        grid;
+        h=gcf;
+        h1 = get(h,'CurrentAxes');
+        set(h1,'Fontname','times');
+        set(h1,'Fontsize',14);
     end
-    view(3);
-    title(sprintf('Value of the control action U_%d over %d regions',num_u,length(PA)),'FontSize',14); % Modified by Arne Linder
-    xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
-    ylabel('x_2','Fontsize',14);
-    zlabel(sprintf('U^{*}_%d(x)',num_u),'Fontsize',14);
-    grid;
-    h=gcf;
-    h1 = get(h,'CurrentAxes');
-    set(h1,'Fontname','times');
-    set(h1,'Fontsize',14);
 end
 
 % If no outputs is asked, clear the variable.
