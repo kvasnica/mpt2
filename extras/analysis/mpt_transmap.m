@@ -29,7 +29,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.7 2005/07/06 10:11:01 kvasnica Exp $
+% $Id: mpt_transmap.m,v 1.8 2005/07/18 12:42:53 kvasnica Exp $
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch
@@ -285,7 +285,8 @@ my = size(Y,2);
 A = [X' -ones(mx,1);-Y' ones(my,1)];
 b = [-ones(mx,1);-ones(my,1)];
 f = zeros(1,nx+1);
-[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,b,[],[],[],lpsolver,0);
+[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,b,[],[],[],lpsolver);
 a = xopt(1:nx)';
 b = xopt(end);
-how = ~all(abs(xopt<1e-8)) & ~any(xopt==1e9);
+how = ~isequal(how,'infeasible');
+how = how & ~all(abs(xopt)<1e-8) & ~any(xopt==1e9);
