@@ -27,7 +27,7 @@ function [P,Vconv]=hull(V,Options)
 %
 % see also POLYTOPE/HULL, EXTREME, UNION, ENVELOPE
 
-% $Id: hull.m,v 1.5 2005/07/06 08:30:05 kvasnica Exp $
+% $Id: hull.m,v 1.6 2005/07/20 12:57:11 kvasnica Exp $
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
 %     kvasnica@control.ee.ethz.ch
@@ -383,61 +383,64 @@ elseif size(V,2)==2,               % points in 2D space
     P=set(P,'vertices',Vconv);
     return
 else
-    % general n-D case:
-    %
-    % based on
-    % Linear Programming Approaches to the Convex Hull Problem in R^n
-    % P.M.Pardalos, Y.Li, W.W.Hager
-    % Computers Math. Applic.
-    % Vol. 29, No. 7, pp. 23-29, 1995
-    %
-    % min sigma
-    % s.t.
-    % x'(V_i - V_j) <= sigma       \forall i \in I - J, j \in J
-    % x'(V_j_k - V_j_(k+1)) = 0    \forall k = 1,...,q-1,    q = |J|
-    % sigma >= -1
-    %
-    % I is a set of all points
-    % J is a set of points lying on an extreme hyperplane
-    %
-    % x is an extreme face iff sigma < 0
-
-    Vconv = convhulln(V);         % pick up only extreme points
-    nx = size(Vconv,2);           % number of extreme points
-    nv = size(V,1);               % dimension
-    I=1:nv;                       % I is a set of all extreme points
+    % general n-D case, version by Mario Vasak, FER, 20th July, 2005
+    
+    V_all=V;                
+    
+    Vconv = convhulln(V);         
+    V=V(unique(Vconv),:);       % pick up only extreme points
+    Vconv=convhulln(V);         % take the combinations of extreme points only
+    nx = size(Vconv,2);           % dimension
+    nv = size(V,1);               % number of extreme points
+    I=1:nv;                       % I is the set of all extreme points
     H=[];
     K=[];
-    for q=1:size(Vconv,1),
-        J=Vconv(q,:);             % J is a set of points lying on the same extreme hyperplane (face)
-        ImJ = setdiff(I,J);       % get indices of the set I-J
-        A=[-1 zeros(1,nx)];       % inequality constraints for the LP Ax<=B, sigma >= -1
-        B=1;                    % inequality constraints for the LP Ax<=B
-        Aeq=[];
-        Beq=[];
-        f=[1 zeros(1,nx)];
-        %             for j=1:length(J),
-        %                 A=[A; -ones(length(ImJ),1) V(ImJ,:)-repmat(V(J(j),:),length(ImJ),1)];    % x'(V_i - V_j) <= sigma, \forall i \in I-J, j \in J
-        %                 B=[B; zeros(length(ImJ),1)];                                             % x'(V_i - V_j) <= sigma, \forall i \in I-J, j \in J
-        %             end
-        for ii=1:length(ImJ),
-            for j=1:length(J),
-                A=[A; -1 (V(ImJ(ii),:) - V(J(j),:))];
-                B=[B; 0];
+    H_my=[];
+    K_my=[];
+    combinations_taken=zeros(1,size(Vconv,1));      %used to find which points are really extreme
+    not_encircled_points=zeros(1,size(V_all,1));    %for debugging, not yet used, intended to check whether ALL the points are on the one side of the facet
+    badly_computed_q={};                            %for debugging, not yet used, intended to show which of the taken facets do not contain all the points on one side
+    for k=1:size(V_all,1)
+        badly_computed_q{k}=[];        
+    end
+    for q=1:size(Vconv,1), 
+        J=Vconv(q,:);           % J is a set of points lying on the same extreme hyperplane (facet)
+        ImJ = setdiff(I,J);     % get indices of the set I-J
+        AAA=[V(J,:) -ones(length(J),1)];
+        nnn=null(AAA);          %find the null-space of AAA
+        
+        if size(nnn,2)==1       %if the null-space is one-dimensional (non-degenerated facet)....
+            V_ImJ=V(ImJ,:);
+        
+            row_norm=norm(nnn(1:end-1));
+            test=(V_ImJ*nnn(1:end-1)-nnn(end))/row_norm;
+            if all(test<=Options.abs_tol)                %...and all other extreme points lie strictly on one side of the hyperplane...
+                H_my=[H_my; (nnn(1:end-1))'/row_norm];      %...take that facet
+                K_my=[K_my; nnn(end)/row_norm];
+                combinations_taken(q)=1;
+                test_2=H_my(end,:)*V_all'-K_my(end);
+                affected_indices=find(test_2>=Options.abs_tol);
+                not_encircled_points(affected_indices)=1;
+                for k=1:length(affected_indices)
+                    badly_computed_q{affected_indices(k)}(end+1)=q;
+                end
+            elseif all(test>=-Options.abs_tol)           %...and all other extreme points lie strictly on one side of the hyperplane...
+                H_my=[H_my; (-nnn(1:end-1))'/row_norm];     %...take that facet
+                K_my=[K_my; -nnn(end)/row_norm];
+                combinations_taken(q)=1;
+                test_2=H_my(end,:)*V_all'-K_my(end);
+                affected_indices=find(test_2>=Options.abs_tol);
+                not_encircled_points(affected_indices)=1;
+                for k=1:length(affected_indices)
+                    badly_computed_q{affected_indices(k)}(end+1)=q;
+                end
             end
         end
-        for k=1:length(J)-1,
-            Aeq=[Aeq; 0 V(J(k),:)-V(J(k+1),:)];  % x'(V_j_k - V_j_(k+1)) = 0    \forall k = 1,...,q-1,    q = length(J)
-            Beq=[Beq; 0];                        % x'(V_j_k - V_j_(k+1)) = 0    \forall k = 1,...,q-1,    q = length(J)
-        end
-        %[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,[],Options.lpsolver);   % solve the LP
-        xopt=mpt_solveLPi(f,A,B,Aeq,Beq,[],Options.lpsolver);   % solve the LP
-        if xopt(1)<0,
-            % if sigma < 0, 'x' is an extreme face
-            H=[H; xopt(2:end)'];
-            K=[K; xopt(2:end)'*V(J(1),:)'];
-        end
     end
+        
+    H=H_my;
+    K=K_my;
+    
     if(~isempty(H))
         if Options.noReduce,
             P = polytope(H,K,2,2);
@@ -451,7 +454,7 @@ else
         Vconv=[];
     end
 end
-
+[H,K]=double(P);
 return
 
 
