@@ -1,5 +1,5 @@
 % Multi-Parametric Toolbox Polytope library
-% Version 2.0.1 (R14SP2) 28-Apr-2005
+% Version 2.0.2 (R14SP2) 25-Jul-2005
 %
 %
 % Constructor and data accessing methods
@@ -36,6 +36,7 @@
 %   range        - Affine transformation of a polytope
 %   regiondiff   - Region difference
 %   regiondiffXU - Computes region difference in lifted XU space
+%   slice        - Orthogonal cut through polytope(s)
 %   triangulate  - Calculates triangulation of arbitrary polytopes
 %   union        - convex union computation
 %
