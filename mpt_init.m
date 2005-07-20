@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.63 2005/07/20 12:30:05 kvasnica Exp $
+% $Id: mpt_init.m,v 1.64 2005/07/20 12:59:03 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -427,12 +427,14 @@ mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
 yalmiplocation = which('yalmip.m', '-all');
 if any(size(yalmiplocation)>1),
     disp('Warning: You have multiple occurences of YALMIP on your path! This could lead to serious consequences.');
+    yalmiplocation
 end
 
 % check if MPT is on path just once
 mptlocation = which('mpt_control.m', '-all');
 if any(size(mptlocation)>1),
     disp('Warning: You have multiple occurences of MPT on your path! This could lead to serious consequences.');
+    mptlocation
 end
 
 % list of solvers interfaced by YALMIP
