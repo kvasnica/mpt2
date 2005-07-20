@@ -13,6 +13,15 @@
 %                         the algorithm will merge polyhedra with the same color 
 %                         if color is not specified, it is assumed to be 1
 %                         for all polyhedra.
+%                 .PAdom: the set of polyhedra (the so called domain) the problem 
+%                         is defined in. If not given, the algorithm assumes the 
+%                         domain is given by the hull (or envelope if the hull 
+%                         computation fails) of PA.
+%                 .PAcompl:  polyhedral array that is within the domain and not 
+%                            in PA - it is the so called complement. If not specified, 
+%                            the algorithm assumes PAcompl is empty. Then the 
+%                            complement is filled up optimally by the merging algorithm.
+%                            Refer also to the second remark below.
 %                 .verbose: 0: silent (=default)
 %                           1: verbose only important information
 %                           2: verbose everything
@@ -69,6 +78,7 @@
 %                                   accepts now also overlapping polyhedra,
 %                                   uses hyparr to compute markings
 %               2004.06.15  2.2     requires domain
+%               2005.07.20  2.3     bug fix and improved help
 %
 % Requires:     mpt_exHyperAdv,
 %               hyparr,
@@ -124,7 +134,7 @@ if nargin < 2,
     Opt = [];
 end;
 if nargin < 1, 
-    disp('mpt_optMerge ver 2.2   Tobias Geyer 2002-2004');
+    disp('mpt_optMerge ver 2.3   Tobias Geyer 2002-2005');
     return;
 end;
 if ~isfield(Opt, 'color'), 
@@ -132,7 +142,7 @@ if ~isfield(Opt, 'color'),
 else
     color.Reg = Opt.color(:)';
 end
-color.Table = Opt.Table;
+%color.Table = Opt.Table;
 if ~isfield(Opt, 'algo'), 
     Opt.algo = 0;
 end;
