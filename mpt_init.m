@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.62 2005/07/20 12:26:58 kvasnica Exp $
+% $Id: mpt_init.m,v 1.63 2005/07/20 12:30:05 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -129,7 +129,14 @@ global mptOptions;
 
 mpt_ver = '2.0.2';
 
-matlabrelease = str2num(version('-release'));
+try
+    matlabrelease = str2num(version('-release'));
+catch
+    % matlab versionbs prior to R12 do not allow to call version with '-release'
+    % argument, therefore if an error occures, it indicates an old version of
+    % matlab
+    matlabrelease = 0;
+end
 if matlabrelease < 12,
     error('MPT only works with Matlab R12 or newer.');
 end
