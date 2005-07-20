@@ -74,7 +74,7 @@ function [dQ,dL,dC,feasible,drho,runtime]=mpt_getPWQLyapFct(ctrl,Options)
 % "Analysis of discrete-time piecewise affine and hybrid systems",
 % Ferrari-Trecate G., F.A. Cuzzola, D. Mignone and M. Morari
 
-% $Id: mpt_getPWQLyapFct.m,v 1.8 2005/07/06 11:13:10 kvasnica Exp $
+% $Id: mpt_getPWQLyapFct.m,v 1.9 2005/07/20 11:34:03 kvasnica Exp $
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -299,8 +299,11 @@ lookahead=1;            %only examine reachability for 1 step ahead
 %PWQ Lyapunov function: x'Q{i}x+x'L{i}+C{i}      if Hn{i}*x<=Kn{i}
 isinOpt = Options;
 isinOpt.fastbreak = 1;   % to allow quick escape from isinside as soon as one mathicng region is found
+temp = repmat(1,1,length(Pn));
+Q = sdpvar(n*temp,n*temp,'symmetric'); %initialize PWQ Lyapunov variables
+L = sdpvar(n*temp,temp,'full');        %initialize PWQ Lyapunov variables
+C = sdpvar(temp,temp,'full');          %initialize PWQ Lyapunov variables
 for i=1:length(Pn)
-    Q{i} = sdpvar(n,n,'symmetric'); %initialize PWQ Lyapunov variables
     if(isinside(Pn(i),zeros(n,1),isinOpt))
         containsOrigin(i)=1;%The Lyapunov function is quadratic around the origin...
         %...therefore the linear elements L{:}=0 and C{:}=0;
@@ -308,8 +311,6 @@ for i=1:length(Pn)
         C{i} = 0;  
     else
         containsOrigin(i)=0;
-        L{i} = sdpvar(n,1);  
-        C{i} = sdpvar(1,1);  
     end
 end
 rho=sdpvar(1,1);   %optimization variable for exponential stability
@@ -520,8 +521,8 @@ for dyn_ctr=1:unc_loop
                 
                 if(feasible)  
                     %transition exists from 
-                    start=i;    %subset of region i
-                    target=j; %to region j
+                    start  = i;    %subset of region i
+                    target = j;    %to region j
                     transCtr=transCtr+1; 
                     
                     if(~Options.is_invariant)
@@ -533,35 +534,47 @@ for dyn_ctr=1:unc_loop
                     veriStore{transCtr}.start=start;
                     veriStore{transCtr}.target=target;
                     veriStore{transCtr}.sys=sys;
-                    
-                    % delta_P <0
+                    veriStore{transCtr}.ABF=ABF;
+                    veriStore{transCtr}.BG =BG;
                     if (containsOrigin(start) & containsOrigin(target)) 
-                        %In region 1 the Lyapunov-function is merely quadratic and not PWQ!
-                        delta_P{transCtr} = [ ABF'*Q{target}*ABF-Q{start}-rho*eye(n)];   
-                        W{transCtr} = -delta_P{transCtr};  
-                        quadTrans(transCtr)=1;  %transition between quadratic functions
+                        quadTrans(transCtr) = 1;  %transition between quadratic functions
+                        veriStore{transCtr}.HK = [];
                     else
                         quadTrans(transCtr)=0;  %not transition between quadratic functions
-                        
-                        %compute matrix for decay rate in Lyapunov function
-                        delta_P{transCtr} = [ ABF'*Q{target}*ABF-Q{start}-rho*eye(n)            ABF'*Q{target}*BG+(ABF'*L{target}-L{start})./2 ;...
-                                BG'*Q{target}*ABF+(ABF'*L{target}-L{start})'./2    BG'*Q{target}*BG+C{target}+BG'*L{target}-C{start}];   
-                        
-                        
-                        m = nconstr(tmpP); %facets
-                        HK = double(-tmpP);             %Find Hx<=K representation of transition region 
-                        veriStore{transCtr}.HK=HK;
-                        N{transCtr} = sdpvar(m,m);     
-                        N{transCtr} = N{transCtr} - diag(diag(N{transCtr}));     
-                        ix = find(triu(ones(m),1));    %get indices for the elements in the upper block diagonal
-                        myprog = myprog + lmi('N{transCtr}(ix)>0');
-                        
-                        W{transCtr} = -delta_P{transCtr} - HK' * N{transCtr} * HK;       %Polytope based decay rate constraint 
-                        
+                        veriStore{transCtr}.HK = double(-tmpP);                                                
                     end
                     
-                    %myprog = addLmi(myprog,'W{transCtr}>0');                 %eigenvalues must be greater equal zero
-                    myprog = myprog + lmi('W{transCtr}>0');                 %eigenvalues must be greater equal zero
+%                     % delta_P <0
+%                     if (containsOrigin(start) & containsOrigin(target)) 
+%                         %In region 1 the Lyapunov-function is merely quadratic and not PWQ!
+%                         delta_P{transCtr} = [ ABF'*Q{target}*ABF-Q{start}-rho*eye(n)];   
+%                         W{transCtr} = -delta_P{transCtr};  
+%                         quadTrans(transCtr) = 1;  %transition between quadratic functions
+%                     else
+%                         quadTrans(transCtr) = 0;  %not transition between quadratic functions
+%                         
+%                         %compute matrix for decay rate in Lyapunov function
+%                         temp = ABF'*Q{target}*BG+(ABF'*L{target}-L{start})/2;
+%                         delta_P{transCtr} = [ ABF'*Q{target}*ABF-Q{start}-rho*eye(n)            temp ;...
+%                                 temp'    BG'*Q{target}*BG+C{target}+BG'*L{target}-C{start}];   
+%                         
+%                         
+%                         m = nconstr(tmpP); %facets
+%                         HK = double(-tmpP);             %Find Hx<=K representation of transition region 
+%                         veriStore{transCtr}.HK=HK;
+%                         N{transCtr} = sdpvar(m,m);     
+%                         N{transCtr} = N{transCtr} - diag(diag(N{transCtr}));     
+%                         ix = find(triu(ones(m),1));    %get indices for the elements in the upper block diagonal
+%                         myprog = myprog + lmi('N{transCtr}(ix)>0');
+%                         
+%                         W{transCtr} = -delta_P{transCtr} - HK' * N{transCtr} * HK;       %Polytope based decay rate constraint 
+%                         
+%                     end
+%                    
+%                    %myprog = addLmi(myprog,'W{transCtr}>0');                 %eigenvalues must be greater equal zero
+%                    
+%                    myprog = myprog + lmi('W{transCtr}>0');                 %eigenvalues must be greater equal zero
+                    
                 end%feasible
             end%possible_transition
         end%for j
@@ -604,6 +617,41 @@ if statusbar,
         error('Break...');
     end     
 end
+
+% Create sdpvar variable N in vectorized way
+for i = 1:length(veriStore)
+    dims(1,i) = size(veriStore{i}.HK,1);
+end
+dims(dims==0) = 1; % Dummy variables
+N = sdpvar(dims,dims);
+
+% Setup LMIs for transition deacay
+for transCtr = 1:length(veriStore)
+    start = veriStore{transCtr}.start;
+    target = veriStore{transCtr}.target;
+    HK =  veriStore{transCtr}.HK;
+    ABF = veriStore{transCtr}.ABF;
+    BG = veriStore{transCtr}.BG;
+    if quadTrans(transCtr)
+        %In region 1 the Lyapunov-function is merely quadratic and not PWQ!
+        delta_P{transCtr} = [ ABF'*Q{target}*ABF-Q{start}-rho*eye(n)];
+        W{transCtr} = -delta_P{transCtr};
+    else
+        %compute matrix for decay rate in Lyapunov function
+        temp = ABF'*Q{target}*BG+(ABF'*L{target}-L{start})/2;
+        delta_P{transCtr} = [ ABF'*Q{target}*ABF-Q{start}-rho*eye(n)  temp ;...
+            temp'    BG'*Q{target}*BG+C{target}+BG'*L{target}-C{start}];
+
+        HK = veriStore{transCtr}.HK;
+        m = size(HK,1);
+        N{transCtr} = N{transCtr} - diag(diag(N{transCtr}));
+        ix = find(triu(ones(m),1));    %get indices for the elements in the upper block diagonal
+        myprog = myprog + lmi('N{transCtr}(ix)>0');
+        W{transCtr} = -delta_P{transCtr} - HK' * N{transCtr} * HK;       %Polytope based decay rate constraint
+    end   
+    myprog = myprog + lmi('W{transCtr}>0');
+end
+
 
 %END OF ADDING CONSTRAINTS FOR LYAPUNOV DECAY
 %----------------------------------------------------------------------------------------------------
