@@ -18,18 +18,25 @@ function R = and(varargin)
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% Polytopes delimited by comma
+% Polytopes delimited by comma. If P1 (or P2, etc.) are polytope arrays,
+% then the elements of P1 are considered as seperate polytopes, i.e
+% AND(P1) is the same as AND(P1(1),P1(2),P1(3),...).
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 % R - Polytope containing the intersection of input arguments
 %
+%
+% Note: INTERSECT and AND have different functionality.
+%
 % see also INTERSECT
 %
 
-% $Id: and.m,v 1.3 2005/06/25 15:00:36 kvasnica Exp $
+% $Id: and.m,v 1.4 2005/07/20 11:33:08 kvasnica Exp $
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,

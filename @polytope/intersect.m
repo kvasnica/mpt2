@@ -1,12 +1,13 @@
 function [R,fulldim] = intersect(P1,P2,Options)
-%INTERSECT Intersection of 2 polytopes
+%INTERSECT Intersection of 2 polytopes or polytope arrays
 %
 % R = intersect(P1,P2,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Returns normalized minimal representation of intersection of input arguments
+% Returns normalized minimal representation of intersection of input
+% arguments
 %
 % USAGE:
 %   R=intersect(P1,P2)
@@ -15,18 +16,24 @@ function [R,fulldim] = intersect(P1,P2,Options)
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% P1,P2   - Polytopes or polyarrays
+% P1,P2   - Polytopes or polyarrays, where a polyarray is considered as 
+%           the union of polytopes
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 % R - Polytope containing the intersection of input polytopes
 %
+%
+% Note: INTERSECT and AND have different functionality.
+%
 % see also AND
 %
 
-% $Id: intersect.m,v 1.4 2005/06/25 15:00:56 kvasnica Exp $
+% $Id: intersect.m,v 1.5 2005/07/20 11:33:21 kvasnica Exp $
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
