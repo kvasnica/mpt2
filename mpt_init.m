@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.61 2005/07/20 12:24:02 kvasnica Exp $
+% $Id: mpt_init.m,v 1.62 2005/07/20 12:26:58 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -129,6 +129,10 @@ global mptOptions;
 
 mpt_ver = '2.0.2';
 
+matlabrelease = str2num(version('-release'));
+if matlabrelease < 12,
+    error('MPT only works with Matlab R12 or newer.');
+end
 
 % returns version of MPT
 if nargin>0,
