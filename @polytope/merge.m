@@ -30,7 +30,7 @@ function [Pm,details] = merge(Pn,Options)
 %
 % see also MPT_GREEDYMERGING, MPT_OPTMERGE
 
-% $Id: merge.m,v 1.2 2004/12/05 13:39:23 kvasnica Exp $
+% $Id: merge.m,v 1.3 2005/07/20 17:54:44 kvasnica Exp $
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
@@ -92,9 +92,21 @@ end
 if Options.greedy,
     [Pm, details] = mpt_greedyMerging(Pn, Options);
 else
-    error('Optimal merging not yet available!');
+    % compute domain and complement
+    % Note: This is slow. Usually, this step should be controlled by the
+    % user, since in most cases, the set of polyhedra is convex and thus
+    % this computation is not needed. For more details see the help in
+    % mpt_optMerge. T. Geyer July 20, 2005
+    Options.PAdom = hull(Pn);
+    Pn_diff = Options.PAdom \ Pn;
+    if ~isfulldim(Pn_diff)
+        Options.PAcompl = [];
+    else
+        Options.PAcompl = Pn_diff;
+    end
+    startt = clock;
     [Pm] = mpt_optMerge(Pn, Options);
-    details.runTime = cputime - startt;
+    details.runTime = etime(clock, startt);
     details.before = length(Pn);
     details.after = length(Pm);
     details.alg = 'mpt_optMergeDivCon';
