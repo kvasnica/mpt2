@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.60 2005/07/06 08:28:42 kvasnica Exp $
+% $Id: mpt_init.m,v 1.61 2005/07/20 12:24:02 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -411,6 +411,18 @@ mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
         'control', 'geometry', 'graphics', 'gui', 'simulink', ...
         'hys2pwa', 'mldmpc', 'optmerge', 'models', 'demos', ...
         'ballandplate', 'reachdemo', 'turbocar', 'watertanks'};
+
+% check if YALMIP is on path just once
+yalmiplocation = which('yalmip.m', '-all');
+if any(size(yalmiplocation)>1),
+    disp('Warning: You have multiple occurences of YALMIP on your path! This could lead to serious consequences.');
+end
+
+% check if MPT is on path just once
+mptlocation = which('mpt_control.m', '-all');
+if any(size(mptlocation)>1),
+    disp('Warning: You have multiple occurences of MPT on your path! This could lead to serious consequences.');
+end
 
 % list of solvers interfaced by YALMIP
 yalmip_solver_strings = {'xpress', 'mosek', 'bintprog', 'cplex-milp-cplexint', 'bnb', 'sedumi', 'ooqp'};
