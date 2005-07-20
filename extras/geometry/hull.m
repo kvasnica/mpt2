@@ -27,7 +27,7 @@ function [P,Vconv]=hull(V,Options)
 %
 % see also POLYTOPE/HULL, EXTREME, UNION, ENVELOPE
 
-% $Id: hull.m,v 1.7 2005/07/20 13:53:18 kvasnica Exp $
+% $Id: hull.m,v 1.8 2005/07/20 14:26:32 kvasnica Exp $
 %
 % (C) 2005 Mario Vasak, FER, Zagreb
 %     mario.vasak@fer.hr
@@ -451,13 +451,13 @@ else
         else
             P=polytope(H,K);
         end
-        Vconv=V(unique(Vconv),:);
+        Vconv=V(unique(Vconv(find(combinations_taken),:)),:);  %so, extreme points are only those combinations from Vconv recognized as facets
         P=set(P,'vertices',Vconv);
     else
         P=polytope;
         Vconv=[];
     end
-    %[H,K]=double(P);
+    [H,K]=double(P);
 end
 return
 
