@@ -11,6 +11,17 @@
 %               This is an integer 1,2,... The algorithm will merge
 %               polyhedra with the same color. If color is not specified, it
 %               is assumed to be 1 for all polyhedra.
+%               .PAdom: 
+%               the set of polyhedra (the so called domain) the problem is 
+%               defined in. If not given, the algorithm assumes the domain is 
+%               given by the hull (or envelope if the hull computation fails) 
+%               of PA.
+%               .PAcompl:  
+%               polyhedral array that is within the domain and not 
+%               in PA - it is the so called complement. If not specified, 
+%               the algorithm assumes PAcompl is empty. Then the 
+%               complement is filled up optimally by the merging algorithm.
+%               Refer also to the second remark below.
 %              .verbose: 
 %               0: silent (=default)
 %               1: verbose only important information
@@ -71,6 +82,7 @@
 % History:      date        ver.    subject 
 %               2004.06.16  1.0     initial version based on mpt_iterMerge
 %               2004.07.14  1.1     divide problem into subproblems using 'best' hyperplane
+%               2005.07.20  1.2     improved help 
 %
 % Requires:     mpt_exHyperAdv,
 %               espresso or merge5,
@@ -99,7 +111,7 @@ if nargin < 2,
     Opt = [];
 end;
 if nargin < 1, 
-    disp('mpt_optMergeDivCon   version 1.1   Tobias Geyer 2002-2004');
+    disp('mpt_optMergeDivCon   version 1.2   Tobias Geyer 2002-2005');
     return;
 end;
 
