@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.64 2005/07/20 12:59:03 kvasnica Exp $
+% $Id: mpt_init.m,v 1.65 2005/07/20 16:56:21 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -655,7 +655,7 @@ lp_pref = [0 9 3 15 2 8 14 7 1 13 5 10 11 12];
 qp_pref = [0 1 9 2 8 4 5 6 7 10];
 milp_pref = [0 7 6 3 2 4 5 1];
 miqp_pref = [0 5 4 2 3 1];
-extreme_pref = [3 2 0 1];
+extreme_pref = [3 0 2 1];
 
 solvers.lp = choosepreferred(solvers.lp, lp_pref);
 solvers.qp = choosepreferred(solvers.qp, qp_pref);
