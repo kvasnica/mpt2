@@ -27,8 +27,12 @@ function [P,Vconv]=hull(V,Options)
 %
 % see also POLYTOPE/HULL, EXTREME, UNION, ENVELOPE
 
-% $Id: hull.m,v 1.6 2005/07/20 12:57:11 kvasnica Exp $
+% $Id: hull.m,v 1.7 2005/07/20 13:53:18 kvasnica Exp $
 %
+% (C) 2005 Mario Vasak, FER, Zagreb
+%     mario.vasak@fer.hr
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
+%     kvasnica@control.ee.ethz.ch
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
 %     kvasnica@control.ee.ethz.ch
 
@@ -453,8 +457,8 @@ else
         P=polytope;
         Vconv=[];
     end
+    %[H,K]=double(P);
 end
-[H,K]=double(P);
 return
 
 
