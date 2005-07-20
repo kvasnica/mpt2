@@ -51,7 +51,7 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_control.m,v 1.20 2005/06/29 13:53:50 kvasnica Exp $
+% $Id: mpt_control.m,v 1.21 2005/07/20 09:40:17 kvasnica Exp $
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
@@ -245,11 +245,23 @@ else
                         % choose the fastest
                         mplpver = Inf;
                     end
-                    if mplpver < 4 | Options.qpsolver==-1,
-                        % solve the problem in one shot if:
-                        %  - older version of the MPLP solver is requested, or
-                        %  - no QP solver is available (in which case we cannot
-                        %    use newer version of MPLP solver)
+                    use optcontrol = 0;
+                    % solve the problem in one shot if:
+                    %  - older version of the MPLP solver is requested, or
+                    %  - no QP solver is available (in which case we cannot
+                    %    use newer version of MPLP solver)
+                    %  - system has uncertainty
+                    if isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
+                        useoptcontrol = 1;
+                    elseif mplpver < 4 | Options.qpsolver==-1,
+                        useoptcontrol = 1;
+                    elseif isfield(sysStruct, 'noise'),
+                        if isfulldim(sysStruct.noise),
+                            useoptcontrol = 1;
+                        end
+                    end
+                    
+                    if useoptcontrol,
                         ctrlStruct = mpt_optControl(sysStruct, probStruct, Options);
                         ctrlStruct.overlaps = 0;
                     else
