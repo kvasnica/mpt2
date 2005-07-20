@@ -33,7 +33,7 @@ function handle=mpt_plotU(ctrl,uind,Options)
 % see also MPT_PLOTPWA
 %
 
-% $Id: mpt_plotU.m,v 1.3 2005/07/15 07:08:13 kvasnica Exp $
+% $Id: mpt_plotU.m,v 1.4 2005/07/20 11:32:46 kvasnica Exp $
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
@@ -186,7 +186,7 @@ Options.fastbreak=1;
 
 
 if nx==1 & nu==1
-    mpt_plotPWA(PA,Fi,Gi,Options);
+    handle = mpt_plotPWA(PA,Fi,Gi,Options);
     
     title(sprintf('Value of the control action U^{*} over %d regions',length(PA)),'FontSize',14); % Modified by Arne Linder
     xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
