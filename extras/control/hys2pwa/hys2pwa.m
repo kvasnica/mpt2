@@ -225,51 +225,52 @@ nub_comb = 2^S.nub;
 progr.h = waitbar(0, 'Progress', 'Resize', 'off', 'Name', 'Hysdel to PWA');
 progr.t0 = clock;
 progr.d_perc = 1/(nxb_comb * nub_comb);
-%try
-
-% transform into pwa model
-pwa = {};
-k = 1;
-for i = 0:nxb_comb-1,
-   xb = (dec2bin(i,S.nxb)-'0')';
-   for j = 0:nub_comb-1,
-      ub = (dec2bin(j,S.nub)-'0')';
-      
-      if verbose
-          disp('binary state-input combination')
-          disp([xb' ub'])
-      end;
-      
-      % fix and check feasibility of the binary state-input combination (xb, ub)
-      [feas, S_XUb_fixed] = fix_XUb(S, xb, ub, 1);
-      if feas,
-         progr.perc = (k - 1) * progr.d_perc;
-         
-         % if (xb, ub) is feasible, find the PWA representation
-         pwa{k} = intern_hys2pwa(S_XUb_fixed, map, order, dom, progr, verbose, lpsolver);
-
-         % add binary state-input combination (without the aux. inputs).
-         pwa{k}.xb = xb;
-         pwa{k}.ub = ub(1:S.nub);
-         
-         % add bounds of state-input space
-         pwa{k}.dom.A = dom.H; 
-         pwa{k}.dom.B = dom.K;
-         
-         % adapt defintion of markings to Ziegler
-         for s=1:length(pwa{k}.delta)
-             pwa{k}.delta{s} = (-1)*pwa{k}.delta{s};
-         end;
-         
-         k = k+1;
-      end
-   end
+try
+    
+    % transform into pwa model
+    pwa = {};
+    k = 1;
+    for i = 0:nxb_comb-1,
+        xb = (dec2bin(i,S.nxb)-'0')';
+        for j = 0:nub_comb-1,
+            ub = (dec2bin(j,S.nub)-'0')';
+            
+            if verbose
+                disp('binary state-input combination')
+                disp([xb' ub'])
+            end;
+            
+            % fix and check feasibility of the binary state-input combination (xb, ub)
+            [feas, S_XUb_fixed] = fix_XUb(S, xb, ub, 1);
+            if feas,
+                progr.perc = (k - 1) * progr.d_perc;
+                
+                % if (xb, ub) is feasible, find the PWA representation
+                pwa{k} = intern_hys2pwa(S_XUb_fixed, map, order, dom, progr, verbose, lpsolver);
+                
+                % add binary state-input combination (without the aux. inputs).
+                pwa{k}.xb = xb;
+                pwa{k}.ub = ub(1:S.nub);
+                
+                % add bounds of state-input space
+                pwa{k}.dom.A = dom.H; 
+                pwa{k}.dom.B = dom.K;
+                
+                % adapt defintion of markings to Ziegler
+                for s=1:length(pwa{k}.delta)
+                    pwa{k}.delta{s} = (-1)*pwa{k}.delta{s};
+                end;
+                
+                k = k+1;
+            end
+        end
+    end
+catch
+    drawnow
+    close(progr.h);
+    drawnow
+    error(lasterr);
 end
-
-%catch
-%close(progr.h);
-%error(lasterr);
-%end
 drawnow
 close(progr.h);
 drawnow
