@@ -1,17 +1,20 @@
 function [P,Vconv]=hull(V,Options)
-%HULL Converts vertices into an H-representation polytope
+%HULL Converts vertices/polytope array into an H-representation polytope
 %
 % [P,Vconv]=hull(V,Options)
+% [P,Vconv]=hull(PA,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Creates convex hull of vertices and returns H-representation of the hull
+% Creates convex hull of vertices or of a polytope array and returns the 
+% H-representation of the hull
 %
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
 % V                      - matrix containing vertices of the polytope
+% PA                     - polytope array
 % Options.extreme_solver - which method to use for convex hull computation
 %                          (see help mpt_init for details)
 % Options.abs_tol        - absolute tolerance
@@ -27,8 +30,10 @@ function [P,Vconv]=hull(V,Options)
 %
 % see also POLYTOPE/HULL, EXTREME, UNION, ENVELOPE
 
-% $Id: hull.m,v 1.8 2005/07/20 14:26:32 kvasnica Exp $
+% $Id: hull.m,v 1.9 2005/07/21 09:41:10 kvasnica Exp $
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich
+%     fjc@control.ee.ethz.ch
 % (C) 2005 Mario Vasak, FER, Zagreb
 %     mario.vasak@fer.hr
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
@@ -97,6 +102,7 @@ if ~isfield(Options,'novertred')
 end
 
 P = mptOptions.emptypoly;
+Options.emptypoly = P;
 
 if isempty(V)
     Vconv=[];
@@ -129,7 +135,7 @@ else
 end
 
 if Options.debug_level>0
-    if ~isempty(H),
+    if isfulldim(P),
         % do not check hull if H is empty, otherwise an error about
         % incompatible dimensions
         % [issue91]
@@ -220,14 +226,15 @@ if Options.debug_level>0
             end
         end
         PP = polytope(Yt,ones(nvert,1),1); % form polytope in q-space {q : q y <= 1}
-        V = extreme(PP,Options);                 % enumerate it's extreme points
+        V = extreme(PP,Options);           % enumerate it's extreme points
         nvert = size(V,1);
         K = zeros(nvert,1);
         H = V;
         for iv = 1:nvert,
             K(iv) = 1 + V(iv,:)*xmid;
         end
-        P = polytope(H,K);               % convex hull is given by {x : q_i x <= 1 + q_i xmid}
+        P = polytope(H,K,0,2);               % convex hull is given by {x : q_i x <= 1 + q_i xmid}
+        [H, K] = double(P);
 
         [result,i] = checkhull(P,H,K,Vconv,Options);
         if result~=0,
@@ -237,6 +244,12 @@ if Options.debug_level>0
     end
 end
 
+if Options.noReduce==0,
+    % reduce the polytope representation if required
+    if ~isminrep(P),
+        P = reduce(P);
+    end
+end
 
 %--------------------------------------------------------------------------
 function [P,Vconv,H,K,lowdim]=hull_cddmex(V, Options)
@@ -257,7 +270,7 @@ if Options.novertred==0,
     end
     if isempty(vert.V),
         Vconv=[];
-        P = polytope;
+        P = Options.emptypoly;
         return
     end
     if size(vert.R,1)>0,
@@ -305,19 +318,21 @@ warning(wstatus);
 
 if isempty(HK),
     % return on error, other solver will be tried ([issue91])
-    P=polytope; Vconv = []; H = []; K = [];
+    P=Options.emptypoly; Vconv = []; H = []; K = [];
     return
 end
 
 H=HK.A; %needed for comparison/debug later
 K=HK.B; %needed for comparison/debug later
-if Options.noReduce,
-    P=polytope(H,K,2,2);
+if isempty(H),
+    P = Options.emptypoly;
+    Vconv = [];
 else
-    P=polytope(H,K);
+    % do not reduce the polytope yet, it will be done at the end
+    P=polytope(H,K,0,2);
+    P = set(P,'vertices',Vconv);
+    [H, K] = double(P);
 end
-P = set(P,'vertices',Vconv);
-
 return
 
 
@@ -339,13 +354,16 @@ if size(V,2)==3,                   % points in 3D space
         H=[H; h];
         K=[K; k];
     end
-    if Options.noReduce,
-        P=polytope(H,K,0,2);
+    if isempty(H),
+        P = Options.emptypoly;
     else
-        P=polytope(H,K);               % create the polytope Hx<=K
+        % do not reduce the polytope yet, it will be done at the end
+        P=polytope(H,K,0,2);
+        Vconv=V(unique(Vconv),:);      % store extreme points
+        P=set(P,'vertices',Vconv);
+        [H, K] = double(P);
     end
-    Vconv=V(unique(Vconv),:);      % store extreme points
-    P=set(P,'vertices',Vconv);
+    return
 
 elseif size(V,2)==2,               % points in 2D space
     Vconv=convhulln(V);            % identify points forming the convex hull
@@ -378,13 +396,15 @@ elseif size(V,2)==2,               % points in 2D space
         H=[H; h];
         K=[K; k];
     end
-    if Options.noReduce,
-        P = polytope(H,K,0,2);
+    if isempty(H),
+        P = Options.emptypoly;
     else
-        P=polytope(H,K);                % create the polytope Hx<=K
+        % do not reduce the polytope yet, it will be done at the end
+        P = polytope(H,K,0,2);
+        Vconv=puni;                     % store extreme points
+        P=set(P,'vertices',Vconv);
+        [H, K] = double(P);
     end
-    Vconv=puni;                     % store extreme points
-    P=set(P,'vertices',Vconv);
     return
 else
     % general n-D case, version by Mario Vasak, FER, 20th July, 2005
@@ -407,6 +427,7 @@ else
     for k=1:size(V_all,1)
         badly_computed_q{k}=[];        
     end
+    max_violation=0;                                %to find the greatest violation of constraints among all of the points
     for q=1:size(Vconv,1), 
         J=Vconv(q,:);           % J is a set of points lying on the same extreme hyperplane (facet)
         ImJ = setdiff(I,J);     % get indices of the set I-J
@@ -424,6 +445,9 @@ else
                 combinations_taken(q)=1;
                 test_2=H_my(end,:)*V_all'-K_my(end);
                 affected_indices=find(test_2>=Options.abs_tol);
+                if ~isempty(affected_indices)
+                    max_violation=max(max_violation,max(test_2));
+                end
                 not_encircled_points(affected_indices)=1;
                 for k=1:length(affected_indices)
                     badly_computed_q{affected_indices(k)}(end+1)=q;
@@ -434,6 +458,9 @@ else
                 combinations_taken(q)=1;
                 test_2=H_my(end,:)*V_all'-K_my(end);
                 affected_indices=find(test_2>=Options.abs_tol);
+                if ~isempty(affected_indices)
+                    max_violation=max(max_violation,max(test_2));
+                end
                 not_encircled_points(affected_indices)=1;
                 for k=1:length(affected_indices)
                     badly_computed_q{affected_indices(k)}(end+1)=q;
@@ -441,23 +468,26 @@ else
             end
         end
     end
-        
+
+    if Options.verbose > 0,
+        if ~isempty(find(not_encircled_points)) %display warning if some of the initially given points is left outside - 3rd change-for-Michal
+            disp(['Warning: Maximal occurring violation in H-rep of convex hull is ',num2str(max_violation/Options.abs_tol),' times the absolute tolerance.']);
+        end
+    end
+    
     H=H_my;
     K=K_my;
     
     if(~isempty(H))
-        if Options.noReduce,
-            P = polytope(H,K,2,2);
-        else
-            P=polytope(H,K);
-        end
+        % do not reduce the polytope yet, it will be done at the end
+        P = polytope(H,K,0,2);
         Vconv=V(unique(Vconv(find(combinations_taken),:)),:);  %so, extreme points are only those combinations from Vconv recognized as facets
         P=set(P,'vertices',Vconv);
     else
-        P=polytope;
+        P=Options.emptypoly;
         Vconv=[];
     end
-    [H,K]=double(P);
+    [H,K] = double(P);
 end
 return
 
@@ -487,7 +517,13 @@ ind_keep = setdiff(1:size(k, 1), ind_remove);
 H = H(ind_keep, :);
 K = ones(size(H, 1), 1);
 K = K + H*c';
-P = polytope(H, K);
+if isempty(H),
+    P = Options.emptypoly;
+else
+    % do not reduce the polytope yet, it will be done at the end
+    P = polytope(H, K, 0, 2);
+    [H, K] = double(P);
+end
 warning(w);
 
 
@@ -507,17 +543,19 @@ function [result,i]=checkhull(P,H,K,Vconv,Options)
 % result = 1 - point 'i' is not a vertex
 % result = 2 - point 'i' is not inside of convex hull
 
+abs_tol = Options.abs_tol;
 result = 0;
 i = 0;
 nx = size(Vconv,2);
 for i=1:size(Vconv,1)
-    tmp=find(abs(H*Vconv(i,:)'-K)<=Options.abs_tol); %find intersections with hyperplanes
-    if length(tmp)<nx
-        %check if each point is really a vertex
+    HVK = H*Vconv(i,:)'-K;
+    tmp=find(abs(HVK) <= abs_tol); %find intersections with hyperplanes
+    if length(tmp) < nx
+        % point is not a vertex
         result = 1;
         return
-    elseif(~isinside(P,Vconv(i,:)'))
-        %is point inside polytope, i.e. on facet            
+    elseif (any(HVK > abs_tol))
+        % point is NOT inside of the polytope
         result = 2;
         return
     end
