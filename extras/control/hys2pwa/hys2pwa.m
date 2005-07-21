@@ -272,6 +272,7 @@ end
 %end
 drawnow
 close(progr.h);
+drawnow
 fprintf('Conversion from HYSDEL to PWA form finished (%1.2f sec)\n', etime(clock,t_start))
 
 % plot and analyse the pwa partition
