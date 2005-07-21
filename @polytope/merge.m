@@ -12,12 +12,14 @@ function [Pm,details] = merge(Pn,Options)
 % INPUT
 % ---------------------------------------------------------------------------
 % Pn  - polytope array
-% Options.greedy   - if set to 1 (default), uses greedy merging. If set to
-%                    0, optimal merging will be used (may be slow, requires
-%                    espresso solver to be installed)
-% Options.verbose  - level of verbosity (0/1/2)
-% Options.trials   - for greedy merging, defines number of trials to
-%                    improve the solution (default is 1, corresponds to 1 run)
+% Options.greedy    - if set to 1 (default), uses greedy merging. If set to
+%                     0, optimal merging will be used (may be slow, requires
+%                     espresso solver to be installed)
+% Options.Pn_convex - if Pn is convex this should be set to 1 to avoid slowdown
+%                     and unnecessary increase of complexity. (default 0)
+% Options.verbose   - level of verbosity (0/1/2)
+% Options.trials    - for greedy merging, defines number of trials to
+%                     improve the solution (default is 1, corresponds to 1 run)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -30,8 +32,12 @@ function [Pm,details] = merge(Pn,Options)
 %
 % see also MPT_GREEDYMERGING, MPT_OPTMERGE
 
-% $Id: merge.m,v 1.3 2005/07/20 17:54:44 kvasnica Exp $
+% $Id: merge.m,v 1.4 2005/07/21 09:40:17 kvasnica Exp $
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
+% (C) 2005 Tobias Geyer, Automatic Control Laboratory, ETH Zurich,
+%          geyer@control.ee.ethz.ch
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 
@@ -89,27 +95,36 @@ if ~isfield(Options,'trials')
     Options.trials = 1;
 end
 
+if ~isfield(Options,'Pn_convex')
+    % number of attempts to improve solution of greedy merging
+    Options.Pn_convex = 0;
+end
+
 if Options.greedy,
     [Pm, details] = mpt_greedyMerging(Pn, Options);
 else
-    % compute domain and complement
-    % Note: This is slow. Usually, this step should be controlled by the
-    % user, since in most cases, the set of polyhedra is convex and thus
-    % this computation is not needed. For more details see the help in
-    % mpt_optMerge. T. Geyer July 20, 2005
-    Options.PAdom = hull(Pn);
-    Pn_diff = Options.PAdom \ Pn;
-    if ~isfulldim(Pn_diff)
-        Options.PAcompl = [];
+    if ~Options.Pn_convex
+        % compute domain and complement
+        % Note: This is slow. Usually, this step should be controlled by the
+        % user, since in most cases, the set of polyhedra is convex and thus
+        % this computation is not needed. For more details see the help in
+        % mpt_optMerge. T. Geyer July 20, 2005
+        Options.PAdom = hull(Pn);
+        Pn_diff = Options.PAdom \ Pn;
+        if ~isfulldim(Pn_diff)
+            Options.PAcompl = [];
+        else
+            Options.PAcompl = Pn_diff;
+        end
     else
-        Options.PAcompl = Pn_diff;
+        Options.PAcompl = [];
     end
     startt = clock;
     [Pm] = mpt_optMerge(Pn, Options);
     details.runTime = etime(clock, startt);
     details.before = length(Pn);
     details.after = length(Pm);
-    details.alg = 'mpt_optMergeDivCon';
+    details.alg = 'mpt_optMerge';
 end
 
 if nargout < 2,
