@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.65 2005/07/20 16:56:21 kvasnica Exp $
+% $Id: mpt_init.m,v 1.66 2005/07/22 13:00:46 kvasnica Exp $
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
@@ -436,6 +436,19 @@ if any(size(mptlocation)>1),
     disp('Warning: You have multiple occurences of MPT on your path! This could lead to serious consequences.');
     mptlocation
 end
+
+% check if hashtable is on path
+havehashtable = 1;
+hashtablelocation = which('hashtable.m', '-all');
+if isempty(hashtablelocation),
+    disp('Warning: "mpt/extras/auxiliary" directory not in path or "mpt/extras/auxiliary/@hashtable" missing, check your installation.');
+    havehastable = 0;
+elseif any(size(hashtablelocation)>1),
+    disp('Warning: multiple occurences of the HASHTABLE object on your path, this could lead to errors.');
+    hashtablelocation
+    havehashtable = 0;
+end
+    
 
 % list of solvers interfaced by YALMIP
 yalmip_solver_strings = {'xpress', 'mosek', 'bintprog', 'cplex-milp-cplexint', 'bnb', 'sedumi', 'ooqp'};
@@ -875,8 +888,10 @@ if nargout<1,
     clear out
 end
 
-% prepare dummy model for fast execution of YALMIP-interfaced solvers
-mptOptions.yalmipdata = sub_prepareyalmipdata(yalmip_solver_strings);
+if havehashtable,
+    % prepare dummy model for fast execution of YALMIP-interfaced solvers
+    mptOptions.yalmipdata = sub_prepareyalmipdata(yalmip_solver_strings);
+end
 
 % save version string to mptOptions
 mptOptions.version = mpt_ver;
