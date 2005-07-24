@@ -181,7 +181,6 @@ elseif isstruct(obj)
         else
             % create system structure based on MLD structure without creating
             % equivalent PWA transformation
-            fprintf('Warning: Simulations will not be available for this type of input.\n');
             S = obj;
             nx = max(S.nx, 1);
             nu = max(S.nu, 1);
