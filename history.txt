@@ -29,6 +29,13 @@ mpt_init('rehash')
 
 [NEW] polytope/slice.m - orthogonal cuts through polytope(s)
 
+[NEW] mpt_mldsim - simulates an MLD system for one time step. can be used
+from mpt_simSys if Options.usemldsim is set to true
+
+[NEW] mpt_sys now accepts a combination mpt_sys(S, 'nopwa') - i.e. it
+can be used to create a sysStruct structure based on MLD matrices stored
+in "S" without translation to equivalent PWA representation
+
 [NEW] mpt_pwa2mld - converts a PWA system into MLD representation by
 assigning 1 boolean variable per region
 
