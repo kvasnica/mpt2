@@ -1,0 +1,932 @@
+function out=mpt_init(varargin)
+%MPT_INIT Initializes the MPT toolbox
+%
+% ---------------------------------------------------------------------------
+% DESCRIPTION
+% ---------------------------------------------------------------------------
+% Any routine of the MPT toolbox can be called with user-specified values
+% of different parameters. To make usage of MPT toolbox as user-friendly as
+% possible, we provide the option to store default values of the parameters
+% in variable mptOptions, which is stored in MATLAB's workspace as a global
+% variable (i.e. it stays there unless one types 'clear all'). 
+%
+% Please have a look at the code bellow to see what are the default values
+% of the fields of mptOptions.
+%
+% Fields of mptOptions:
+%
+% lpsolver       - variable which sets the default LP solver. 
+%                  allowed values:
+%                    'nag'       - NAG LP solver (e04naf)
+%                    'e04mbf'    - NAG LP solver (e04mbf)
+%                    'cdd'       - CDD Criss-Cross
+%                    'cplex'     - CPLEX 9 LP solver
+%                    'cplex8'    - CPLEX 8 LP solver
+%                    'glpk'      - GLPK solver
+%                    'linprog'   - Matlab's linprog
+%                    'sedumi'    - SeDuMi
+%                    'qsopt'     - QSopt
+%                    'xpress'    - XPRESS
+%                    'mosek'     - MOSEK
+%                    'ooqp'      - OOQP
+%                    'clp'       - CLP
+%
+% qpsolver       - variable which sets the default QP solver
+%                  allowed values:
+%                    'nag'       - NAG QP solver
+%                    'cplex'     - CPLEX 9 QP solver
+%                    'cplex8'    - CPLEX 8 QP solver
+%                    'quadprog'  - Matlab's quadprog
+%                    'xpress'    - XPRESS
+%                    'mosek'     - MOSEK
+%                    'ooqp'      - OOQP
+%                    'clp'       - CLP
+%
+% milpsolver     - variable which sets the default MILP solver. 
+%                  allowed values:
+%                    'cplex'     - CPLEX 9 (interfaced with cplexint)
+%                    'yalmip'    - YALMIP Branch & Bound algorithm
+%                    'glpk'      - GLPK solver (interfaced with glpkmex)
+%                    'xpress'    - XPRESS
+%                    'mosek'     - MOSEK
+%                    'bintprog'  - bintprog.m
+%
+% miqpsolver     - variable which sets the default MIQP solver. 
+%                  allowed values:
+%                    'cplex'     - CPLEX 9 (interfaced with cplexint)
+%                    'yalmip'    - YALMIP Branch & Bound algorithm
+%                    'xpress'    - XPRESS
+%                    'mosek'     - MOSEK
+%
+% extreme_solver - method to use for extreme points and convex hull enumeration
+%                  allowed values:
+%                     'matlab'   - analytical enumeration
+%                     'lrs'      - LRS algorithm (matlab implementation)
+%                     'cdd'      - CDD
+%
+% details        - defines how many details about the solution should be stored
+%                  in the resulting controller structure.
+% rel_tol        - relative tolerance for computation
+% abs_tol        - absolute tolerance for computation
+% step_size      - step of a size over a facet in mpQP/mpLP
+% debug_level    - level of debugging in mpQP/mpLP
+% infbox         - the R^n polyhedra is internally converted to a box,
+%                  this option defines bounds of that box
+% newfigure      - if set to 1, each picture will be plotted in a separate
+%                  figure window
+% verbose        - level of verbosity of the algorithms
+%
+%
+% USAGE:
+%
+%   mpt_init
+%   mpt_init('Property',Value,'Property',Value,...)
+%   e.g.
+%   mpt_init('qpsolver','quadprog','lpsolver','cdd','debug_level',2)
+%
+% ---------------------------------------------------------------------------
+% INPUT
+% ---------------------------------------------------------------------------
+% Pair(s) Property, Value
+%
+% ---------------------------------------------------------------------------
+% OUTPUT                                                                                                    
+% ---------------------------------------------------------------------------
+% mptOptions structure
+%
+
+% $Id: mpt_init.m,v 1.45 2005/04/05 20:18:34 kvasnica Exp $
+%
+% (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%                kvasnica@control.ee.ethz.ch
+
+% ---------------------------------------------------------------------------
+% Legal note:
+%          This program is free software; you can redistribute it and/or
+%          modify it under the terms of the GNU General Public
+%          License as published by the Free Software Foundation; either
+%          version 2.1 of the License, or (at your option) any later version.
+%
+%          This program is distributed in the hope that it will be useful,
+%          but WITHOUT ANY WARRANTY; without even the implied warranty of
+%          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%          General Public License for more details.
+% 
+%          You should have received a copy of the GNU General Public
+%          License along with this library; if not, write to the 
+%          Free Software Foundation, Inc., 
+%          59 Temple Place, Suite 330, 
+%          Boston, MA  02111-1307  USA
+%
+% ---------------------------------------------------------------------------
+global mptOptions;
+
+mpt_ver = '2.0';
+
+
+% returns version of MPT
+if nargin>0,
+    if strcmp(varargin{1},'version'),
+        out = mpt_ver;
+        return
+    end
+end
+
+%-------------------------------------------
+% Enable/disable GUI setup availability
+%-------------------------------------------
+
+announcegui = 1;
+
+
+%-------------------------------------------
+% Enable/disable automatic check for updates
+%-------------------------------------------
+
+% MPT can automatically check the product website
+% (http://control.ee.ethz.ch/~mpt/) for updates. If new version is available for
+% download, the user will be notified. The check is run every time mpt_init is
+% called (typically at the start of new Matlab session or manually, by call to
+% mpt_update).
+
+mptOptions.checkupdates = 0;
+
+% set checkupdates to 0 if you DON'T WANT mpt_init to connect to MPT website and
+% check for new versions. No data will be send to the server (see mpt_update.m
+% for source-code)
+
+% Note: this feature is only available under Matlab 6.5 and Matlab 7
+
+
+
+%---------------
+% Path to HYSDEL
+%---------------
+
+% HYSDEL (HYbrid Systems DEscription Language) is a tool for rapid modelling of
+% hybrid systems. If you want to use this feature in MPT and you are not running
+% Windows, Linux or Solaris operating system, please provide full path to HYSDEL
+% executable in "mptOptions.hysdelpath" variable.
+
+comp = computer;
+
+if ispc,
+    mptOptions.hysdelpath = which('hysdel.exe');
+elseif strcmpi(comp, 'glnx86'),
+    mptOptions.hysdelpath = which('hysdel.linux');
+elseif strcmpi(comp, 'sol2'),
+    mptOptions.hysdelpath = which('hysdel.sol');
+else
+    % enter path to HYSDEL binary if you are not running Windows, Linux or
+    % Solaris OS
+    mptOptions.hysdelpath = '';
+end
+
+
+
+%------------------
+% Default LP Solver
+%------------------
+
+% which LP solver to use:
+%  0 - 'nag'       - NAG LP solver (e04naf)
+%  9 - 'e04mbf'    - NAG LP solver (e04mbf)
+%  3 - 'cdd'       - CDD Criss-Cross
+%  2 - 'cplex'     - CPLEX 9 LP solver
+%  8 - 'cplex8'    - CPLEX 8 LP solver
+%  4 - 'glpk'      - GLPK solver
+%  1 - 'linprog'   - Matlab's linprog
+%  6 - 'sedumi'    - SeDuMi
+%  7 - 'qsopt'     - QSopt
+% 10 - 'xpress'    - XPRESS
+% 11 - 'mosek'     - MOSEK
+% 12 - 'ooqp'      - OOQP
+% 13 - 'clp'       - CLP
+
+% fastest solver will be chosen if this field is empty (recommended)
+mptOptions.lpsolver = [];
+
+
+
+% if you set mptOptions.rescueLP to 1 and some LP is infeasible with
+% default solver, the problem will be automatically re-solved using a
+% different solver which is available on your machine (if any)
+mptOptions.rescueLP = 0;
+
+
+%------------------
+% Default QP Solver
+%------------------
+
+% which QP solver to use
+%   0 - 'nag'       - NAG QP solver
+%   2 - 'cplex'     - CPLEX 9 QP solver
+%   4 - 'cplex8'    - CPLEX 8 QP solver
+%   1 - 'quadprog'  - Matlab's quadprog
+%   5 - 'xpress'    - XPRESS
+%   6 - 'mosek'     - MOSEK
+%   7 - 'ooqp'      - OOQP
+%   3 - 'sedumi'    - SeDuMi
+%   8 - 'clp'       - CLP
+
+% fastest solver will be chosen if this field is empty (recommended)
+mptOptions.qpsolver = [];
+
+
+% if you set mptOptions.rescueQP to 1 and some QP is infeasible with
+% default solver, the problem will be automatically re-solved using a
+% different solver which is available on your machine (if any)
+mptOptions.rescueQP = 0;
+
+
+
+%--------------------
+% Default MILP Solver
+%--------------------
+
+% which MILP solver to use
+%   0 - 'cplex'     - CPLEX 9 (interfaced with cplexint)
+%   1 - 'yalmip'    - YALMIP Branch & Bound algorithm
+%   2 - 'glpk'      - GLPK solver (interfaced with glpkmex)
+%   3 - 'xpress'    - XPRESS
+%   4 - 'mosek'     - MOSEK
+%   5 - 'bintprog'  - bintprog.m
+%   6 - 'cplex8'    - CPLEX 8 (interfaced with cplexmex)
+
+% fastest solver will be chosen if this field is empty (recommended)
+mptOptions.milpsolver = [];
+
+
+
+%--------------------
+% Default MIQP Solver
+%--------------------
+
+% which MIQP solver to use
+%   0 - 'cplex'     - CPLEX 9 (interfaced with cplexint)
+%   1 - 'yalmip'    - YALMIP Branch & Bound algorithm
+%   2 - 'xpress'    - XPRESS
+%   3 - 'mosek'     - MOSEK
+%   4 - 'cplex8'    - CPLEX 8 (interfaced with cplexmex)
+
+% fastest solver will be chosen if this field is empty (recommended)
+mptOptions.miqpsolver = [];
+
+
+
+%---------------------------------------------------
+% Default solver for extreme points and convex hulls
+%---------------------------------------------------
+
+% which method to use for extreme points and convex hull computation
+%   'cdd'      - CDD
+%   'matlab'   - analytical enumeration
+%   'lrs'      - LRS algorithm (matlab implementation)
+
+% fastest solver will be chosen if this field is empty (recommended)
+mptOptions.extreme_solver = [];
+
+
+
+
+%---------------------------
+% Default absolute tolerance
+%---------------------------
+
+% absolute tolerance
+mptOptions.abs_tol = 1e-7;
+
+
+
+%---------------------------
+% Default relative tolerance
+%---------------------------
+
+% relative tolerance
+mptOptions.rel_tol = 1e-6;
+
+
+
+
+%-------------------------------------------
+% Default step size for mpQP/mpLP Algorithms
+%-------------------------------------------
+
+% step of a size over a facet in mpQP/mpLP
+mptOptions.step_size = 1e-5;
+
+
+%---------------------------------
+% Default level of double-checking
+%---------------------------------
+
+% 0 - No additional checks of results
+% 1 - Perform double-checks when necessary
+% 2 - Always double-check results
+
+mptOptions.debug_level = 1;
+
+
+
+%------------------------------------
+% Default bounds for the Infinity-box
+%------------------------------------
+
+% the R^n polyhedra is internally converted to a box, this option defines bounds
+% of that box 
+% ATTENTION: we have observed certain numerical problems when value of the
+% infbox is too big, therefore we recommend not to change the default setting
+% unless necessary 
+
+mptOptions.infbox = 10000;
+
+
+
+%--------------------------------------------
+% Default value for the "newfigure" parameter
+%--------------------------------------------
+
+% if set to 1, each picture will be plotted in a separate figure window
+
+mptOptions.newfigure = 0;
+
+
+
+%---------------------------
+% Default value of verbosity
+%---------------------------
+
+% verbosity level (0 - important results only, 1 - intermediate results
+% displayed, 2 - all results displayed) 
+
+mptOptions.verbose = 1;
+
+
+%----------------------------------
+% Details stored about the solution
+%----------------------------------
+
+% defines how many details about the solution should be stored in the resulting
+% controller structure. This can have a significant impact on the size of the
+% structure. If you want to evaluate open-loop solution for PWA systems, set
+% this to 1. Otherwise leave the default value.
+
+mptOptions.details = 0;
+
+
+
+%-------------------------------------------------------------------------------
+% DO NOT EDIT BEYOND THIS LINE!!!
+%-------------------------------------------------------------------------------
+
+
+% check if input arguments consist of pairs PropertyName, PropertyValue
+if rem(nargin, 2)~=0,
+    clear global mptOptions
+    error(['mpt_init: Input arguments following the object name must be pairs', ...
+            ' of the form PropertyName, PropertyValue']);
+end
+
+try
+    mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 'off', 'cachesolvers', 1);
+catch
+    warning('YALMIP not found, some functionality may not be accessible.');
+    mptOptions.sdpsettings = [];
+end
+
+% if set to 1, mpt_init will try to solve a problem with each solver to see
+% which solvers are actually available.
+% if set to 0, existence of a particular solver will be deduced upon existence
+% of the corresponding interface file.
+executesolver = 1;
+
+if executesolver,
+    fprintf('looking for available solvers...\n');
+end
+
+solvers.lp = [];
+allLPsolvers = setdiff(0:13, 6); % do not check SeDuMi - leads to a crash with Matlab 6.5
+for solver = allLPsolvers
+    if test_lp(solver, executesolver),
+        solvers.lp = [solvers.lp; solver];
+    end
+end
+
+solvers.qp = [];
+allQPsolvers = setdiff(0:8, 3); % do not check SeDuMi - leads to a crash with Matlab 6.5
+for solver = allQPsolvers
+    % do not check SeDuMi - leads to a crash with Matlab 6.5
+    if test_qp(solver, executesolver),
+        solvers.qp = [solvers.qp; solver];
+    end
+end
+
+solvers.milp = [];
+allMILPsolvers = 0:6;
+for solver = allMILPsolvers,
+    if test_milp(solver, executesolver),
+        solvers.milp = [solvers.milp; solver];
+    end
+end
+
+solvers.miqp = [];
+allMIQPsolvers = 0:4;
+for solver = allMIQPsolvers,
+    if test_miqp(solver, executesolver),
+        solvers.miqp = [solvers.miqp; solver];
+    end
+end
+
+if isempty(solvers.lp),
+    clear global mptOptions
+    error('mpt_init: No supported LP solver available on your system, cannot proceed!');
+end
+
+if isempty(solvers.qp)
+    solvers.qp = -1;
+    mptOptions.qpsolver = -1; % NONE
+    disp('There is no QP solver installed on your system.');
+    disp('You will not be able to solve problems with quadratic cost function.');
+    disp('Please be sure that you set ''probStruct.norm = 1'' before calling any control routine!');
+end
+
+if isempty(solvers.milp),
+    warning('mpt_init: No supported MILP solver available on your system, cannot proceed!');
+end
+
+if isempty(solvers.miqp),
+    warning('mpt_init: No supported MIQP solver available on your system, cannot proceed!');
+end
+
+
+% set preferred solvers
+lp_pref = [0 9 3 2 8 7 1 13 5 10 11 12];
+qp_pref = [0 1 2 8 4 5 6 7];
+milp_pref = [0 6 3 2 4 5 1];
+miqp_pref = [0 4 2 3 1];
+extreme_pref = [3 0 1];
+
+solvers.lp = choosepreferred(solvers.lp, lp_pref);
+solvers.qp = choosepreferred(solvers.qp, qp_pref);
+solvers.milp = choosepreferred(solvers.milp, milp_pref);
+solvers.miqp = choosepreferred(solvers.miqp, miqp_pref);
+
+
+% this takes a maximum of 3 "rescue" solvers
+% we might want to remove this limitation in the future
+% originally introduced to remove glpk from the list since it is very
+% unreliable in some cases
+solvers.lp_all = solvers.lp;
+solvers.lp = solvers.lp(1:min(length(solvers.lp),3));
+
+if isempty(mptOptions.lpsolver),
+    mptOptions.lpsolver = solvers.lp(1);
+end
+
+if isempty(mptOptions.qpsolver),
+    mptOptions.qpsolver = solvers.qp(1);
+end
+if ~isempty(solvers.milp) & isempty(mptOptions.milpsolver),
+    mptOptions.milpsolver = solvers.milp(1);
+elseif isempty(mptOptions.milpsolver),
+    mptOptions.milpsolver = -1;
+end
+
+if ~isempty(solvers.miqp) & isempty(mptOptions.miqpsolver),
+    mptOptions.miqpsolver = solvers.miqp(1);
+elseif isempty(mptOptions.miqpsolver),
+    mptOptions.miqpsolver = -1;
+end
+
+% set the appropriate fields based on input arguments
+for ii=1:2:nargin
+    if ~isfield(mptOptions,varargin{ii})
+        clear global mptOptions
+        error(['mpt_init: Non-existing property (' varargin{ii} ')']);
+    end
+    mptOptions=setfield(mptOptions,varargin{ii},varargin{ii+1});
+end
+
+if ischar(mptOptions.lpsolver),
+    str_solver = mptOptions.lpsolver;
+    [mptOptions.lpsolver, err] = mpt_solverInfo('lp', mptOptions.lpsolver);
+    if err,
+        clear global mptOptions
+        error(['mpt_init: Unknown LP solver ''' str_solver ''' !']);
+    end
+end
+
+if ischar(mptOptions.qpsolver),
+    str_solver = mptOptions.qpsolver;
+    [mptOptions.qpsolver, err] = mpt_solverInfo('qp', mptOptions.qpsolver);
+    if err,
+        clear global mptOptions
+        error(['mpt_init: Unknown QP solver ''' str_solver ''' !']);
+    end
+end
+
+if ischar(mptOptions.milpsolver),
+    str_solver = mptOptions.milpsolver;
+    [mptOptions.milpsolver, err] = mpt_solverInfo('milp', mptOptions.milpsolver);
+    if err,
+        clear global mptOptions
+        error(['mpt_init: Unknown MILP solver ''' str_solver ''' !']);
+    end
+end
+
+if ischar(mptOptions.miqpsolver),
+    str_solver = mptOptions.miqpsolver;
+    [mptOptions.miqpsolver, err] = mpt_solverInfo('miqp', mptOptions.miqpsolver);
+    if err,
+        clear global mptOptions
+        error(['mpt_init: Unknown MIQP solver ''' str_solver ''' !']);
+    end
+end
+
+if ~any(mptOptions.debug_level==[0 1 2]),
+    clear global mptOptions
+    error('mpt_init: debug_level can only have values 0, 1, or 2!');
+end
+
+if ~any(mptOptions.newfigure==[0 1]),
+    clear global mptOptions
+    error('mpt_init: newfigure can only have values 0 or 1!');
+end
+
+if ~any(mptOptions.verbose==[0 1 2]),
+    clear global mptOptions
+    error('mpt_init: verbose can only have values 0, 1, or 2!');
+end
+
+
+if ~test_lp(mptOptions.lpsolver);
+    disp('The currently selected LP solver is not installed on your system.')
+    disp('Please modify the entry "lpsolver" in "mpt_init.m"')
+    if mptOptions.lpsolver==7,
+        fprintf('\nDid you properly install QSopt?\n');
+    end
+    clear global mptOptions
+    error('Error: cannot proceed with mpt_init');
+    return
+end
+
+if mptOptions.qpsolver ~= -1,
+    if ~test_qp(mptOptions.qpsolver)
+        clear global mptOptions
+        disp('The currently selected QP solver is not installed on your system.')
+        disp('Please modify the entry "qpsolver" in "mpt_init.m"')
+        error('Error: cannot proceed with mpt_init');
+    end
+else
+    disp('There is no QP solver installed on your system.');
+    disp('You will not be able to solve problems with quadratic cost function.');
+    disp('Please be sure that you set ''probStruct.norm = 1'' before calling any control routine!');
+end
+
+mptOptions.emptypoly = polytope;
+
+solvers.extreme = [];
+for solver = [0 1 3],
+    if test_extreme(solver),
+        solvers.extreme = [solvers.extreme; solver];
+    end
+end
+solvers.extreme = choosepreferred(solvers.extreme, extreme_pref);
+cddpos = find(solvers.extreme==3);
+if ~isempty(cddpos),
+    extsol1 = solvers.extreme(1:cddpos);
+    extsol2 = solvers.extreme(cddpos+1:end);
+    solvers.extreme = [extsol1 4 extsol2];
+end
+
+if ischar(mptOptions.extreme_solver),
+    str_solver = mptOptions.extreme_solver;
+    [mptOptions.extreme_solver, err] = mpt_solverInfo('extreme', mptOptions.extreme_solver);
+    if err,
+        clear global mptOptions
+        error(['mpt_init: Unknown extreme point method ''' str_solver ''' !']);
+    end
+end
+
+if isempty(mptOptions.extreme_solver)
+    if ~isempty(solvers.extreme),
+        mptOptions.extreme_solver = solvers.extreme(1);
+    else
+        error('mpt_init: No supported extreme point enumeration method found!');
+        mptOptions.extreme_solver = -1;
+    end
+end
+
+if ~test_extreme(mptOptions.extreme_solver)
+    clear global mptOptions
+    disp('The currently selected method for vertex enumeration failed.')
+    disp('Please modify the entry "extreme_solver" in "mpt_init.m"')
+    error('Error: cannot proceed with mpt_init');
+end
+
+solvers = fixpreferred(solvers, mptOptions); 
+
+mptOptions.solvers = solvers;
+
+fprintf('\n');
+disp(['MPT toolbox ' mpt_ver ' initialized...']);
+disp('Copyright (C) 2003-2005 by M. Kvasnica, P. Grieder and M. Baotic');
+fprintf('\nSend bug reports, questions or comments to mpt@control.ee.ethz.ch\n');
+disp('For news, visit the MPT web page at http://control.ee.ethz.ch/~mpt/');
+fprintf('\n');
+
+if mptOptions.lpsolver==1,
+    disp('WARNING: you have chosen linprog as a default LP solver.');
+    disp('This solver is very slow and numerically not robust!');
+    disp('We strongly advice you to use some other alternative if possible.');
+    fprintf('\n');
+end
+
+out=mptOptions;
+
+s_lpsolver = mpt_solverInfo('lp', mptOptions.lpsolver);
+s_qpsolver = mpt_solverInfo('qp', mptOptions.qpsolver);
+s_milpsolver = mpt_solverInfo('milp', mptOptions.milpsolver);
+s_miqpsolver = mpt_solverInfo('miqp', mptOptions.miqpsolver);
+s_exsolver = mpt_solverInfo('extreme', mptOptions.extreme_solver);
+
+if mptOptions.newfigure==1,
+    s_newfigure = 'Yes';
+else
+    s_newfigure = 'No';
+end
+
+disp(['         LP solver: ' s_lpsolver]);
+disp(['         QP solver: ' s_qpsolver]);
+disp(['       MILP solver: ' s_milpsolver]);
+disp(['       MIQP solver: ' s_miqpsolver]);
+disp(['Vertex enumeration: ', s_exsolver]);
+fprintf('\n');
+
+% check the MPT web-page for updates if desired
+% only available in Matlab 6.5 and Matlab 7
+if mptOptions.checkupdates & exist('urlread','file'),
+    disp('Checking for updates (can be disabled by modifying mpt_init.m)...');
+    mpt_update;
+elseif mptOptions.checkupdates
+    disp('Automatic update works only with Matlab 6.5 and newer.');
+end
+
+if announcegui,
+    fprintf(' Run ''mpt_studio'' to start the GUI. Run ''mpt_setup'' to set global parameters.\n\n');
+end
+
+% check if path is set properly
+p = path;
+mptpath = {'extras', 'examples', 'solvers', 'analysis', 'auxiliary', ...
+        'control', 'geometry', 'graphics', 'gui', 'simulink', ...
+        'hys2pwa', 'mldmpc', 'optmerge', 'models', 'demos', ...
+        'ballandplate', 'reachdemo', 'turbocar', 'watertanks'};
+
+for ii = 1:length(mptpath),
+    if isempty(findstr(p, mptpath{ii})),
+        % one of the necessary directories is not included in matlab path. this
+        % can lead to missing and/or corrupted functionality. be sure to add the
+        % whole MPT directory along with all subfolders to your matlab path.
+        warning('It appears that path to MPT is not set properly, make sure to add the whole MPT directory to your path!');
+        break
+    end
+end
+
+if exist('mpt_verifySolution', 'file'),
+    % "mpt_verifySolution.m" was removed in MPT 2.0 final, if it still exists,
+    % something is wrong. before installing any version of MPT, you must first
+    % remove any previous installation from your disk.
+    warning('It appears that previous version of MPT was not removed from your computer. This can lead to serious problems! Please remove all previous versions of MPT from your disk and install latest version.');
+end
+
+if nargout<1,
+    clear out
+end
+
+
+%------------------------------------------------------------------------
+function success=test_lp(solver, execute)
+
+if nargin<2,
+    % execute the solver by default
+    execute = 1;
+end
+
+switch solver
+    case 0, fname = 'e04naf';
+    case 1, fname = 'linprog';
+    case 2, fname = 'cplexint';
+    case 3, fname = 'cddmex';
+    case 4, fname = 'glpkmex';
+    case 5, fname = 'cddmex';
+    case 6, fname = 'solvesdp';
+    case 7, fname = 'mexqsopt';
+    case 8, fname = 'lp_cplex';
+    case 9, fname = 'e04mbf';
+    case 10, fname = 'mexpress';
+    case 11, fname = 'mosekopt';
+    case 12, fname = 'ooqp.m';
+    case 13, fname = 'mexclp';
+    otherwise, fname = '';
+end
+
+if ~exist(fname,'file'),
+    success = 0;
+    return
+end
+if ~execute,
+    % don't run the solver
+    success = 1;
+    return
+end
+
+success = 0;
+try
+    cmd='[xopt,fval,lambda,exitflag,how]=mpt_solveLP(1,[1;-1],[1;1],[],[],[],solver);';
+    T = evalc(cmd);
+    if isnan(xopt),
+        return
+    end
+    if strcmpi(how,'ok')
+        success = 1;
+    end
+end
+
+
+%------------------------------------------------------------------------
+function success=test_qp(solver, execute)
+
+if nargin<2,
+    % execute the solver by default
+    execute = 1;
+end
+
+switch solver
+    case 0, fname = 'e04naf';
+    case 1, fname = 'quadprog';
+    case 2, fname = 'cplexint';
+    case 3, fname = 'solvesdp';
+    case 4, fname = 'qp_cplex';
+    case 5, fname = 'mexpress';
+    case 6, fname = 'mosekopt';
+    case 7, fname = 'ooqp.m';
+    case 8, fname = 'mexclp';
+    otherwise, fname = '';
+end
+
+if ~exist(fname,'file'),
+    success = 0;
+    return
+end
+if ~execute,
+    % don't run the solver
+    success = 1;
+    return
+end
+
+success = 0;
+try
+    cmd='[xopt,lambda,how,exitflag,objqp]=mpt_solveQP(1,1,[1;-1],[1;1],[],[],[],solver);';
+    T = evalc(cmd);
+    if isnan(xopt),
+        return
+    end
+    if exitflag==1,
+        success = 1;
+    end
+end
+
+
+%------------------------------------------------------------------------
+function success=test_milp(solver, execute)
+
+if nargin<2,
+    % execute the solver by default
+    execute = 1;
+end
+
+switch solver
+    case 0, fname = 'cplexint';
+    case 1, fname = 'solvesdp';
+    case 2, fname = 'glpkmex';
+    case 3, fname = 'mexpress';
+    case 4, fname = 'mosekopt';
+    case 5, fname = 'bintprog';
+    case 6, fname = 'milp_cplex';
+    otherwise, fname = '';
+end
+
+if ~exist(fname,'file'),
+    success = 0;
+    return
+end
+if ~execute,
+    % don't run the solver
+    success = 1;
+    return
+end
+
+success = 0;
+try
+    cmd='[xmin,fmin,how,exitflag]=mpt_solveMILP(1,[1;-1],[1;1],[],[],0,1,''B'',[],[],solver);';
+    T = evalc(cmd);
+    if isnan(xmin),
+        return
+    end
+    if exitflag==1 | exitflag==-1,
+        success = 1;
+    end
+end
+
+
+%------------------------------------------------------------------------
+function success=test_miqp(solver, execute)
+
+if nargin<2,
+    % execute the solver by default
+    execute = 1;
+end
+
+switch solver
+    case 0, fname = 'cplexint';
+    case 1, fname = 'solvesdp';
+    case 2, fname = 'mexpress';
+    case 3, fname = 'mosekopt';
+    case 4, fname = 'miqp_cplex';
+    otherwise, fname = '';
+end
+
+if ~exist(fname,'file'),
+    success = 0;
+    return
+end
+if ~execute,
+    % don't run the solver
+    success = 1;
+    return
+end
+
+success = 0;
+try
+    cmd='[xmin,fmin,how,exitflag]=mpt_solveMIQP(1,1,[1;-1],[1;1],[],[],0,1,''B'',[],[],solver);';
+    T = evalc(cmd);
+    if isnan(xmin),
+        return
+    end
+    if exitflag==1 | exitflag==-1,
+        success = 1;
+    end
+end
+
+
+%------------------------------------------------------------------------
+function success=test_extreme(solver)
+
+options.extreme_solver = solver;
+if ~exist('cddmex', 'file') & solver==3,
+    success = 0;
+    return
+end
+success = 0;
+try
+    P = hull([-1 -1; -1 1; 1 -1; 1 1],options);
+    success = 1;
+end
+
+
+%------------------------------------------------------------------------
+function selected = choosepreferred(available, prefs)
+
+installed = ismember(prefs, available);
+selected = prefs(installed);
+
+
+
+%------------------------------------------------------------------------
+function solvers = fixpreferred(solvers,mptOptions)
+
+if ~isempty(solvers.lp),
+    solvers.lp(find(solvers.lp==mptOptions.lpsolver)) = [];
+end
+solvers.lp = [mptOptions.lpsolver solvers.lp];
+
+if ~isempty(solvers.qp),
+    solvers.qp(find(solvers.qp==mptOptions.qpsolver)) = [];
+end
+solvers.qp = [mptOptions.qpsolver solvers.qp];
+
+if ~isempty(solvers.milp),
+    solvers.milp(find(solvers.milp==mptOptions.milpsolver)) = [];
+end
+solvers.milp = [mptOptions.milpsolver solvers.milp];
+
+if ~isempty(solvers.miqp),
+    solvers.miqp(find(solvers.miqp==mptOptions.miqpsolver)) = [];
+end
+solvers.miqp = [mptOptions.miqpsolver solvers.miqp];
+
+if ~isempty(solvers.extreme),
+    solvers.extreme(find(solvers.extreme==mptOptions.extreme_solver)) = [];
+end
+solvers.extreme = [mptOptions.extreme_solver solvers.extreme];

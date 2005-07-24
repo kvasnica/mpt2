@@ -1,0 +1,278 @@
+function handle=mpt_plotPWA(PA,Fi,Gi,Options)
+%MPT_PLOTPWA Plots a PWA function defined over a given polyhedral partition
+%
+% handle=mpt_plotPWA(Pn,L,C,Options)
+%
+% ---------------------------------------------------------------------------
+% DESCRIPTION
+% ---------------------------------------------------------------------------
+% Plots a PWA function (L*x + C) defined over a given polyhedral partition.
+%
+% This function could be used either to plot value of control moves (Fi,Gi) or
+% to plot the piece-wise linear cost over polyhedral partition (Ai,Bi)
+%
+% USAGE:
+%   mpt_plotPWA(Pn,Fi,Gi)   to plot value of control moves
+%   mpt_plotPWA(Pn,Bi,Ci)   to plot linear cost index
+%
+% ---------------------------------------------------------------------------
+% INPUT
+% ---------------------------------------------------------------------------
+% Pn                      - Polyhedral partition of the state-space
+% L,C                     - cell arrays containing a PWA function
+% Options.extreme_solver  - Which method to use for vertex enumeration 
+%                           (see help extreme)
+% Options.lpsolver        - LP solver to be used
+% Options.abs_tol         - absolute tolerance
+% Options.newfigure       - If set to 1, opens a new figure window
+% Options.showPn          - If set to 1, plots on polyhedral sets Pn,
+%                           (default: 1)
+% Options.samecolors      - If set to 1, pieces of PWA function will be plotted
+%                           in the same colors as the partition below
+%                           (default: 0)
+%
+% Note: If Options is missing or some of the fields are not defined, the default
+%       values from mptOptions will be used
+%
+% ---------------------------------------------------------------------------
+% OUTPUT                                                                                                    
+% ---------------------------------------------------------------------------
+% handle  - handle of the plot object
+%
+% see also MPT_PLOTPWQ, MPT_PLOTU
+
+% $Id: mpt_plotPWA.m,v 1.1 2005/02/23 12:34:19 kvasnica Exp $
+%
+% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
+% (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
+%          baotic@control.ee.ethz.ch
+
+% ---------------------------------------------------------------------------
+% Legal note:
+%          This program is free software; you can redistribute it and/or
+%          modify it under the terms of the GNU General Public
+%          License as published by the Free Software Foundation; either
+%          version 2.1 of the License, or (at your option) any later version.
+%
+%          This program is distributed in the hope that it will be useful,
+%          but WITHOUT ANY WARRANTY; without even the implied warranty of
+%          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+%          General Public License for more details.
+% 
+%          You should have received a copy of the GNU General Public
+%          License along with this library; if not, write to the 
+%          Free Software Foundation, Inc., 
+%          59 Temple Place, Suite 330, 
+%          Boston, MA  02111-1307  USA
+%
+% ---------------------------------------------------------------------------
+
+error(nargchk(3,4,nargin));
+
+if ~isa(PA,'polytope')
+    error('mpt_plotPWA: First input argument MUST be a polytope');
+end
+
+if nargin<4,
+    Options=[];
+end
+
+if ~iscell(Fi),
+    error('mpt_plotPWA: Second argument must be a cell array!');
+end
+
+if ~iscell(Fi),
+    error('mpt_plotPWA: Third argument must be a cell array!');
+end
+
+if length(PA)~=length(Fi) | length(PA)~=length(Gi)
+    error('mpt_plotPWA: All input arguments must have same length!');
+end
+
+global mptOptions;
+if ~isstruct(mptOptions),
+    mpt_error;
+end
+
+if ~isfield(Options,'abs_tol')
+    Options.abs_tol=mptOptions.abs_tol;  % absolute tolerance
+end
+if ~isfield(Options, 'axis')        % axis for plot
+    Options.axis='auto';
+end
+if ~isfield(Options, 'lpsolver')        % axis for plot
+    Options.lpsolver=mptOptions.lpsolver;
+end
+if ~isfield(Options, 'extreme_solver')        % axis for plot
+    Options.extreme_solver=mptOptions.extreme_solver;
+end
+if ~isfield(Options, 'showPn')
+    Options.showPn=0;
+end
+if ~isfield(Options,'newfigure')
+    Options.newfigure=mptOptions.newfigure;
+end
+if ~isfield(Options,'samecolors')
+    Options.samecolors = 0;
+end
+
+index=0;
+
+% if size(Fi{1},2)~=2,
+%     disp('mpt_plotPWA: Only two-dimensional functions can be plotted!');
+%     return
+% end
+
+if Options.newfigure,
+   figure;  % open new figure window
+else
+   newplot; % get current figure (or create new figure)
+end
+
+handle=[];
+
+
+maxlen=length(PA);
+
+if Options.samecolors,
+    auxcolors=hsv(maxlen);
+    multiplier=7;
+    if mod(size(auxcolors,1),multiplier)==0,
+        multiplier=multiplier+1;
+    end
+    for i=1:maxlen,
+        jj=mod(i*multiplier,size(auxcolors,1))+1; % prepare enough colors for all polytopes, cycle through a given color map
+        colors(i,:)=auxcolors(jj,:);
+    end
+end
+
+minu=Inf;
+
+if dimension(PA)==1,
+    if Options.showPn,
+        handle=plot(PA);
+    end
+    for ii=1:maxlen,
+        [xc,rc]=chebyball(PA(ii));  % get chebyshev's radius
+        if rc<=Options.abs_tol
+            disp('mpt_plotPWA: Empty polytope detected!');
+            continue
+        end
+        axis(Options.axis);
+        [V,R,PA(ii)]=extreme(PA(ii),Options);    % compute extreme points and rays of polytope P
+        V = sort(V);
+        x1=V(1); x2=V(2);
+        xv1 = x1*Fi{ii} + Gi{ii};
+        xv2 = x2*Fi{ii} + Gi{ii};
+        h = line([x1;x2],[xv1;xv2],'LineWidth',3);
+        handle = [handle; h];
+    end
+    title(sprintf('PWA function over %d regions',length(PA)),'FontSize',18);
+    xlabel('x','Fontsize',16); % LaTeX math symbols are directly supported!
+    ylabel('f','Fontsize',16);
+    grid;
+    h=gcf;
+    h1 = get(h,'CurrentAxes');
+    set(h1,'Fontname','times');
+    set(h1,'Fontsize',14);
+    axis tight
+
+    
+elseif dimension(PA)==2,
+    
+    for ii=1:maxlen
+        P=PA(ii);
+        nb=nconstr(P);       % number of constraints
+        dimP=dimension(P);   % dimension
+        if dimP~=2,
+            close
+            error('mpt_plotPWA: Only 2D partitions can be plotted with this function!');
+        end
+        [xc,rc]=chebyball(P);  % get chebyshev's radius
+        if rc<=Options.abs_tol
+            disp('mpt_plotPWA: Empty polytope detected!');
+            continue
+        end
+        axis(Options.axis);
+
+        [V,R,PA(ii)]=extreme(P,Options);    % compute extreme points and rays of polytope P
+        if size(R,1)>0
+            error('mpt_plotPWA: Polytope is unbounded!'); % existence of rays means polytope is unbounded
+        end
+
+        % sort vertices in a cyclic way;
+        x1=V(:,1);
+        x2=V(:,2);
+
+        ang=angle([(x1-xc(1))+(x2-xc(2))*sqrt(-1)]);
+        [val,ind]=sort(ang);
+        x1=x1(ind);
+        x2=x2(ind);
+        x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);   % the third dimension will be value of the control action, i.e. u=Fx+G
+        if min(x3)<minu,
+            minu=min(x3);
+        end
+        if Options.samecolors,
+            h=patch(x1,x2,x3,colors(ii,:));
+        else
+            h=patch(x1,x2,x3,x3);
+        end
+        handle=[handle;h];
+    end
+    if Options.showPn,
+        % we are going to plot the polyhedral partition PA below
+        for ii=1:maxlen,
+            P=PA(ii);
+            nb=nconstr(P);
+            dimP=dimension(P);
+            [xc,rc]=chebyball(P);
+            if rc<=Options.abs_tol
+                disp('mpt_plotPWA: Empty polytope detected!');
+                continue
+            end
+            axis(Options.axis);
+
+            [V,R,PA(ii)]=extreme(P,Options);
+            if size(R,1)>0
+                error('mpt_plotPWA: Polytope is unbounded!');
+            end
+
+            % sort vertices in a cyclic way;
+            x1=V(:,1);
+            x2=V(:,2);
+
+            ang=angle([(x1-xc(1))+(x2-xc(2))*sqrt(-1)]);
+            [val,ind]=sort(ang);
+            x1=x1(ind);
+            x2=x2(ind);
+            x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);  % third dimension will be value of the control action, i.e. u=Fx+G
+            if x3<minu,
+                minu=x3;
+            end
+            if Options.samecolors,
+                h=patch(x1,x2,minu*ones(size(x1)),colors(ii,:));
+            else
+                h=patch(x1,x2,minu*ones(size(x1)),'b');
+            end
+            handle=[handle;h];
+        end
+    end
+    view(3);
+    title(sprintf('PWA function over %d regions',length(PA)),'FontSize',18);
+    xlabel('x_1','Fontsize',16); % LaTeX math symbols are directly supported!
+    ylabel('x_2','Fontsize',16);
+    zlabel('f','Fontsize',16);
+    grid;
+    h=gcf;
+    set(h, 'Renderer', 'painters');
+    h1 = get(h,'CurrentAxes');
+    set(h1,'Fontname','times');
+    set(h1,'Fontsize',14);
+    axis tight
+end
+
+% If no outputs is asked, clear the variable.
+if nargout == 0;
+    clear('handle');
+end
