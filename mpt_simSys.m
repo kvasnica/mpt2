@@ -15,7 +15,9 @@ function [X,U,Y,mode]=mpt_simSys(sysStruct,x0,inU,Options)
 % sysStruct   - system structure in sysStruct format
 % x0          - initial state
 % inU         - inputs to apply to the system (one row per time step)
-% Options.abs_tol - absolute tolerance
+% Options.usemldsim - if set to true, uses mpt_mldsim to simulate MLD system
+%                     (default is off - uses hysdel simulator)
+% Options.abs_tol   - absolute tolerance
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -27,10 +29,10 @@ function [X,U,Y,mode]=mpt_simSys(sysStruct,x0,inU,Options)
 %
 % see also MPT_COMPUTETRAJECTORY
 
-% $Id: mpt_simSys.m,v 1.5 2005/05/03 13:07:46 kvasnica Exp $
+% $Id: mpt_simSys.m,v 1.6 2005/07/24 15:41:34 kvasnica Exp $
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%         kvasnica@control.ee.ethz.ch
+%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%              kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -73,6 +75,9 @@ end
 if ~isfield(Options, 'dynamics')
     Options.dynamics = 0;
 end
+if ~isfield(Options, 'usemldsim'),
+    Options.usemldsim = 0;
+end
 
 Options.manualU = inU;
 Options.noCScheck = 1;
@@ -109,7 +114,16 @@ for ii=1:size(inU,1),
         % run the simulator obtained by HYSDEL and stored in sysStruct for
         % systems for which no equivalent PWA representation was created
         simcode = sysStruct.data.SIM.code;
-        [xnext, y] = sub_getMLDupdate(simcode, x0, U);
+        if isempty(simcode) | Options.usemldsim,
+            % simulator not available, use mpt_mldsim
+            [xnext, y, d, z, feasible] = mpt_mldsim(sysStruct.data.MLD, x0, U);
+            if ~feasible,
+                xnext = [];
+            end
+        else
+            % use the simulator
+            [xnext, y] = sub_getMLDupdate(simcode, x0, U);
+        end
         if isempty(xnext)
             error(['mpt_simSys: no dynamics associated to state ' mat2str(x0') ' and input ' mat2str(U') ' !']);
         end
