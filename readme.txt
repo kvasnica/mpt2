@@ -1,5 +1,5 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0 13-Apr-2004
+% Version 2.0.2 25-Jul-2004
 %
 % http://control.ee.ethz.ch/~mpt/
 %
@@ -106,7 +106,7 @@ points of polytopes, calculating projections, etc.
 A pre-compiled version of the Matlab interface to CDD is included in this
 release of the MPT toolbox. The interface is available for Windows, Solaris and
 Linux. You can download the source code of the interface from:
-http://control.ee.ethz.ch/~hybrid/cdd.msql
+http://control.ee.ethz.ch/~hybrid/cdd.php
 
 and compile it on your own for other platforms. Please consult Section 3 on how
 to make CDD a default LP solver for the MPT toolbox.
@@ -115,7 +115,7 @@ An another supported possibility is the commercial CPLEX solver from ILOG. The
 authors provide an interface to call CPLEX directly from Matlab, you can
 download source codes and pre-compiled libraries for Windows, Solaris and Linux
 from
-http://control.ee.ethz.ch/~hybrid/cplexint.msql
+http://control.ee.ethz.ch/~hybrid/cplexint.php
 
 Please note that you need to be in possession of a valid CPLEX license in order
 to use CPLEX solvers.
@@ -134,12 +134,12 @@ Semi-definite optimization packages:
 Some routines of the MPT toolbox rely on Linear Matrix Inequalities (LMI)
 theory. Certain functions therefore require solving a semidefinite optimization
 problem. The YALMIP interface by Johan Lofberg
-http://control.ee.ethz.ch/~joloef/
+http://control.ee.ethz.ch/~joloef/yalmip.php
 
 is included in this release of MPT toolbox. Since the interface is a wrapper and
 calls external LMI solver, we strongly recommend to install one of the solvers
 supported by YALMIP. You can obtain a list of free LMI solvers here:
-http://www.control.isy.liu.se/~johanl/yalmip.html
+http://control.ee.ethz.ch/~joloef/manual/htmldata/solvers.htm
 
 YALMIP supports a large variety of Semi-Definite Programming packages. One of
 them, namely the SeDuMi solver written by Jos Sturm, comes along with MPT.

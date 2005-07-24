@@ -1,13 +1,127 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.1 28-Apr-2005
+% Version 2.0.2 25-Jul-2005
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
 
+
+Version 2.0.2 (25-Jul-2005)
+---------------------------
+
+[NEW] mpt_init can now permanently save list of available solvers, such
+that consequent runs of mpt_init are performed much faster. to utilize
+the new feature, call:
+
+mpt_init('save')
+
+if you want to set some default options, e.g. if you want to use CDD as
+default LP solver and change value of absolute tolerance to 1e-8, call:
+
+mpt_init('lpsolver', 'cdd', 'abs_tol', 1e-8, 'save');
+
+Note! if you install some new solvers _after_ you save the settings,
+this change will not be reflected by MPT. in order to tell MPT to find
+your new solver, call:
+
+mpt_init('rehash')
+
+[NEW] polytope/slice.m - orthogonal cuts through polytope(s)
+
+[NEW] mpt_pwa2mld - converts a PWA system into MLD representation by
+assigning 1 boolean variable per region
+
+[NEW] 2 new mpLP solvers - mpt_mplp_ver6, mpt_mplp_ver7
+
+[NEW] major speedup of Lyapunov functions computation by exploting
+transtions map
+
+[NEW] major speedup of invariant set computation by exploiting
+transitions map
+
+[NEW] use bounding boxes for fast detection of intersections of
+polytopes (also used in eq.m, le.m and lt.m)
+
+[NEW] allow to pass guess of feasible solution to MILP/MIQP solvers
+
+[NEW] allow penalties on "z" and "d" variables in on-line MPC for MLD
+systems (probStruct.Qz, probStruct.Qd)
+
+[NEW] support terminal set constraints (probStruct.Tset) for on-line MPC
+for MLD systems
+
+[NEW] mpt_plotLyapunov - plots a Lyapunov function stored in controller
+objects
+
+[NEW] store matrices of MPC problem for MLD systems directly in
+controller object
+
+[NEW] mpt_transmap - computes transition maps
+
+[NEW] assign modified polytope object in caller's workspace in extreme.m
+
+[NEW] assign modified  controller object in caller's workspace in
+mpt_lyapunov.m, mpt_invariantSet, mpt_searchTree
+
+[NEW] mpt_verify now allows to solve a verification problem using a
+feasibility test (see "help mpt_verify", Options.usereachsets)
+
+[PATCH] hull.m - improved analytical computation for dimensions above 3
+by Mario Vasak
+
+[PATCH] use proper solver for 1/Inf-norm problems for LTI systems with
+uncertainties
+
+[PATCH] properly close progress bar in hys2pwa.m
+
+[PATCH] merge.m now allows to use optimal merging (by Tobias Geyer)
+
+[PATCH] mpt_optMerge, mpt_optMergeDivCon - documentation update
+
+[PATCH] allow to pass initial guess of xopt and return full optimizers
+
+[PATCH] vectorize code to improve set-up speed when looking for PWP
+Lyapunov functions
+
+[PATCH] use sparse matrices when constructing MPC problem for MLD systems
+
+[PATCH] handle hard final state constraints in on-line MPC problems for
+MLD systems (probStruct.xN)
+
+[PATCH] allow time-varying penalties for on-line MPC controllers for MLD
+systems
+
+[PATCH] do not reduce constraints in on-line MPC for LTI systems (leads
+to significant speedup)
+
+[PATCH] support permament saving of options in mpt_init
+
+[PATCH] compute proper mapping in domain.m if horizon > 1
+
+[PATCH] fixed propblem with persistent variables, which caused craches
+if 2 or more PWA2MLD translations are performed after each other
+
+[PATCH] fixed a problem where information about bounding boxes has been
+lost if a polytope object was loaded from disk
+
+[PATCH] must faster setup of MILP/MIQP problems for solvers interfaced
+by YALMIP
+
+[PATCH] automatically switch to fastest LP solver in mpt_getPWALyapFct
+(significant speedup)
+
+[PATCH] fixed problems which caused annoying warnings under Matlab R12.1
+
+[PATCH] handle time-varying penalty on outputs in explicit solution for
+LTI systems
+
+[PATCH] feasibility flag in mpt_solveMPC was not set properly for 1- and
+Inf-norm problems
+
+
 Version 2.0.1 (28-Apr-2005)
--------------------------------
+---------------------------
 
 [new] included latest release of YALMIP which fixes some issues with MILP/MIQP and
 sum-of-squares computation
