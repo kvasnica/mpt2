@@ -87,7 +87,7 @@ function [Matrices]=mpt_blockingMatrices(Matrices,sysStruct,probStruct,Options)
 %
 % see also MPT_CONSTRUCTMATRICES
 %
-% $Id: mpt_blockingMatrices.m,v 1.2 2005/03/14 12:33:44 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Raphael Cagienard, Automatic Control Laboratory, ETH Zurich,
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,

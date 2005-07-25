@@ -23,7 +23,7 @@ function result = isstabilizable(ctrl)
 %          can be given
 %
 
-% $Id: isstabilizable.m,v 1.2 2005/03/21 22:44:08 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

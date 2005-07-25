@@ -24,7 +24,7 @@ function mpt_plotJ(ctrl,gridpoints,Options)
 % see also MPT_PLOTU, MPT_PLOTPWA, MPT_PLOTPWQ
 %
 
-% $Id: mpt_plotJ.m,v 1.1 2005/02/23 12:34:19 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

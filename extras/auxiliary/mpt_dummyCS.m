@@ -22,7 +22,7 @@ function ctrlStruct=mpt_dummyCS(Pn,Pfinal)
 % ctrlStruct - valid controller structure with ctrlStruct.Pn = Pn
 %
 
-% $Id: mpt_dummyCS.m,v 1.1 2005/02/23 14:01:26 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

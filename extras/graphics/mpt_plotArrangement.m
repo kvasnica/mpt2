@@ -37,7 +37,7 @@ function P=mpt_plotArrangement(H,K,BBox,Options)
 % see also PLOT
 %
 
-% $Id: mpt_plotArrangement.m,v 1.2 2005/03/04 15:00:04 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

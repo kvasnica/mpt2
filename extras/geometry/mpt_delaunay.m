@@ -25,7 +25,7 @@ function [Pn]=mpt_delaunay(P,Options)
 %
 % Pn            -   Delaunay triangulation
 
-% $Id: mpt_delaunay.m,v 1.1 2005/02/23 12:34:52 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %     grieder@control.ee.ethz.ch

@@ -55,7 +55,7 @@ function [handle,titlehandle]=plot(varargin)
 % see also POLYTOPE
 %
 
-% $Id: plot.m,v 1.8 2005/04/11 09:03:28 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -29,7 +29,7 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % explus      - extreme points of the affine transformation A*x+f
 %
 
-% $Id: mpt_transmap.m,v 1.8 2005/07/18 12:42:53 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
 %          joloef@control.ee.ethz.ch

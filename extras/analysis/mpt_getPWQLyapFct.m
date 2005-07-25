@@ -74,7 +74,7 @@ function [dQ,dL,dC,feasible,drho,runtime]=mpt_getPWQLyapFct(ctrl,Options)
 % "Analysis of discrete-time piecewise affine and hybrid systems",
 % Ferrari-Trecate G., F.A. Cuzzola, D. Mignone and M. Morari
 
-% $Id: mpt_getPWQLyapFct.m,v 1.9 2005/07/20 11:34:03 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

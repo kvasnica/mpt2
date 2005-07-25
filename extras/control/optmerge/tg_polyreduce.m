@@ -14,7 +14,7 @@ function [At,Bt,isemptypoly,keptrows]=tg_polyreduce(At,Bt,tolerance,lpsolver,che
 % keptrows     = rows of (A,B) kept in (At,Bt)
 %
 
-% $Id: tg_polyreduce.m,v 1.2 2005/02/23 15:13:16 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

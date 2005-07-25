@@ -55,7 +55,7 @@ function ctrlStruct = mpt_iterative(sysStruct,probStruct,Options)
 % see also MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_iterative.m,v 1.5 2005/07/12 09:37:23 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

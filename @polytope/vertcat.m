@@ -27,7 +27,7 @@ function P = vertcat(varargin)
 % see also HORZCAT, SUBSREF, SUBSASGN
 %
 
-% $Id: vertcat.m,v 1.2 2005/03/10 12:35:21 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

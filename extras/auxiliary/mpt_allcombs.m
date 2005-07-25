@@ -20,7 +20,7 @@ function Ucombs = mpt_allcombs(U)
 % Ucombs  - combinations of inputs (row-wise)
 %
 
-% $Id: mpt_allcombs.m,v 1.3 2005/04/04 20:32:47 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

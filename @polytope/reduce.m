@@ -34,7 +34,7 @@ function [P,keptrows]=reduce(P,Options,lambda)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: reduce.m,v 1.4 2005/06/13 11:49:40 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Raphael Suard, Automatic Control Laboratory, ETH Zurich,
 %          suardr@control.ee.ethz.ch

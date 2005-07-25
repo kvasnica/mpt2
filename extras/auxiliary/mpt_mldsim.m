@@ -26,7 +26,7 @@ function [xn,y,z,d,feasible]=mpt_mldsim(S, x0, u)
 %
 % see also MPT_SIMSYS
 
-% $Id: mpt_mldsim.m,v 1.1 2005/07/24 15:42:53 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

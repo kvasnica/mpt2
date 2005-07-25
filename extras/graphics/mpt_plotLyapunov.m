@@ -21,7 +21,7 @@ function mpt_plotLyapunov(ctrl)
 % see also MPT_PLOTPWA, MPT_PLOTPWQ
 %
 
-% $Id: mpt_plotLyapunov.m,v 1.1 2005/06/24 13:26:06 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

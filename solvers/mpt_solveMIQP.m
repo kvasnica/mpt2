@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,pa
 %
 % see also MPT_SOLVEQP, MPT_SOLVEMILP
 
-% $Id: mpt_solveMIQP.m,v 1.11 2005/06/23 11:57:18 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

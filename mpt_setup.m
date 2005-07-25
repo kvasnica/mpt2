@@ -1,7 +1,7 @@
 function mpt_setup
 %MPT_SETUP Main setup function
 
-% $Id: mpt_setup.m,v 1.3 2005/04/04 20:49:55 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -29,7 +29,7 @@ function [xc,R,lambda] = chebyball_f(H,K,Options)
 % see also CHEBYBALL
 %
 
-% $Id: chebyball_f.m,v 1.3 2004/12/04 17:55:50 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

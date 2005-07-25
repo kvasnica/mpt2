@@ -36,7 +36,7 @@ function [U,feasible,fval,sysStruct,probStruct,Matrices,X]=mpt_solveMPC(x0,sysSt
 %
 % see also mpt_mplp, mpt_mpqp for explicit feedback solutions 
 
-% $Id: mpt_solveMPC.m,v 1.4 2005/07/11 22:21:02 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

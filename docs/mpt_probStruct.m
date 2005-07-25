@@ -179,7 +179,7 @@
 %     specified here. If it is not given, it is assumed to be zero. 
 %
 
-% $Id: mpt_probStruct.m,v 1.3 2005/04/11 13:38:54 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

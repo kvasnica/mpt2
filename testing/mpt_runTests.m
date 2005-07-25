@@ -43,7 +43,7 @@ function mpt_runTests(systemdeffile,whichblock,modifier,prefix)
 %                               computation
 %
 
-% $Id: mpt_runTests.m,v 1.2 2004/12/10 20:59:03 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

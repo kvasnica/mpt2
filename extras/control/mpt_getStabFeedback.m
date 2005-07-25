@@ -27,7 +27,7 @@ function [F,P,feasible] = mpt_getStabFeedback(A,B,Q1,R,Options)
 %
 % see also MPT_GETCOMMONLYAPFCT, MPT_GETPWQLYAPFCT
 
-% $Id: mpt_getStabFeedback.m,v 1.3 2005/05/10 13:12:13 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

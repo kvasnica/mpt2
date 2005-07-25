@@ -58,7 +58,7 @@ function [Psets, Vsets, PreachN, VreachN] = mpt_reachSets(structure, X0, U0, N, 
 % see also POLYTOPE/RANGE, MPT_REACHXU, MPT_VERIFY
 %
 
-% $Id: mpt_reachSets.m,v 1.12 2005/06/27 19:26:34 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

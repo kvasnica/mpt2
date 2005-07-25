@@ -19,7 +19,7 @@ function sysStruct = mpt_lti2pwa(sysStruct)
 % sysStruct  - PWA system
 %
 
-% $Id: mpt_lti2pwa.m,v 1.1 2005/02/23 14:01:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

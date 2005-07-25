@@ -32,7 +32,7 @@ function [Pm,details] = merge(Pn,Options)
 %
 % see also MPT_GREEDYMERGING, MPT_OPTMERGE
 
-% $Id: merge.m,v 1.4 2005/07/21 09:40:17 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

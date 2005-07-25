@@ -1,7 +1,7 @@
 function [X,U,Y,D,cost,trajectory,feasible,dyns,details] = sub_computeTrajectory(ctrl, x0, N, Options)
 %computeTrajectory(ctrl, x0, N, Options)
 
-% $Id: sub_computeTrajectory.m,v 1.8 2005/05/03 15:13:20 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

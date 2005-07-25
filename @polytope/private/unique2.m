@@ -20,7 +20,7 @@ function MU = uniquerows1(M)
 % ind - indices of unique rows in M
 %
 
-% $Id: unique2.m,v 1.1.1.1 2004/11/24 10:09:57 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

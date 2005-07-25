@@ -46,7 +46,7 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 % see also MPT_INFSETPWA
 %
 
-% $Id: mpt_invariantSet.m,v 1.7 2005/07/06 10:14:06 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

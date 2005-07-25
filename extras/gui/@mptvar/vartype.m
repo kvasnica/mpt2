@@ -1,7 +1,7 @@
 function type = vartype(var)
 %VARTYPE Returns type of a given MPTVAR object
 
-% $Id: vartype.m,v 1.1 2005/02/23 12:41:41 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

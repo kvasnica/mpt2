@@ -55,7 +55,7 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 %
 % see also MPT_PLOTPWA, MPT_GETPWQLYAPFCT, MPT_GETCOMMONLYAPFCT
 
-% $Id: mpt_plotPWQ.m,v 1.1 2005/02/23 12:34:19 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch

@@ -17,7 +17,7 @@ function slide=mpt_demo1
 % none
 %
 
-% $Id: mpt_demo1.m,v 1.1 2005/02/23 14:13:42 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

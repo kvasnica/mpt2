@@ -33,7 +33,7 @@ function handle=mpt_plotU(ctrl,uind,Options)
 % see also MPT_PLOTPWA
 %
 
-% $Id: mpt_plotU.m,v 1.4 2005/07/20 11:32:46 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

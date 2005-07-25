@@ -12,7 +12,7 @@ function identfyRegion(P)
 % see also POLYTOPE/PLOT
 %
 
-% $Id: identifyRegion.m,v 1.2 2005/04/04 20:34:23 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Frank J. Christophersen, Automatic Control Lab., ETH Zurich,
 %          fjc@control.ee.ethz.ch

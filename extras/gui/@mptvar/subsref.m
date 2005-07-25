@@ -1,7 +1,7 @@
 function newvar = subsref(var, X)
 %SUBSREF Indexed referencing for MPTVAR objects
 
-% $Id: subsref.m,v 1.2 2005/02/25 12:52:49 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

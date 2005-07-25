@@ -48,7 +48,7 @@ function [lP,feasible]=mpt_getCommonLyapFct(Fi,Ain,Bin,Options)
 %
 % see also MPT_GETPWQLYAPFCT, MPT_GETSTABFEEDBACK
 
-% $Id: mpt_getCommonLyapFct.m,v 1.2 2005/03/04 21:39:16 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

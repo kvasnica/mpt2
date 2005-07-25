@@ -57,7 +57,7 @@ function ctrlStruct=mpt_mixedMinTime(sysStruct,probStruct,Options)
 % see also MPT_CONTROL, MPT_ITERATIVE
 %
 
-% $Id: mpt_mixedMinTime.m,v 1.2 2005/03/21 22:47:57 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

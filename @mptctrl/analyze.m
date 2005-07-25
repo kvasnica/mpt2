@@ -18,7 +18,7 @@ function analyze(ctrl)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: analyze.m,v 1.2 2005/02/28 19:26:57 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -37,7 +37,7 @@ function [Pret,keptrows,feasible] = mpt_getReachSubset(P,Pfin,A,B,F,G,horizon,Op
 %
 % see also DOMAIN, RANGE
 
-% $Id: mpt_getReachSubset.m,v 1.1 2005/02/23 12:35:39 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

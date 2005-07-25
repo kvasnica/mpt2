@@ -53,7 +53,7 @@ function [V,R,P,adjV,adjf] = extreme(P,Options)
 % see also HULL
 %
 
-% $Id: extreme.m,v 1.12 2005/07/06 08:28:15 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

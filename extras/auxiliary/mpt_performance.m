@@ -44,7 +44,7 @@ function [cost,XC,X0] = mpt_performance(ctrl,gridpoints,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_performance.m,v 1.1 2005/02/23 14:01:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

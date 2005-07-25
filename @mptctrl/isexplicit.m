@@ -20,7 +20,7 @@ function result = isexplicit(ctrl)
 % result - 1 if the controller is explicit, 0 otherwise
 %
 
-% $Id: isexplicit.m,v 1.1 2005/02/23 12:32:12 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

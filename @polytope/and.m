@@ -33,7 +33,7 @@ function R = and(varargin)
 % see also INTERSECT
 %
 
-% $Id: and.m,v 1.4 2005/07/20 11:33:08 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

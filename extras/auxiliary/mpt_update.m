@@ -25,7 +25,7 @@ function mpt_update
 %
 % see also MPT_INIT, MPT_VERSION
 
-% $Id: mpt_update.m,v 1.2 2005/02/28 19:06:46 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

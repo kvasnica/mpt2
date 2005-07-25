@@ -23,7 +23,7 @@ function fval = subsref(ctrl, X)
 % see also SUBSASGN, END
 %
 
-% $Id: subsref.m,v 1.1 2005/02/23 12:30:38 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

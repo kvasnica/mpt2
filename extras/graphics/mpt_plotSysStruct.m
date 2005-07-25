@@ -11,7 +11,7 @@ function mpt_plotSysStruct(sysStruct,Options)
 %
 % see also PLOT, MPT_PLOTPARTITION, MPT_PLOTJ, MPT_PLOTPWA, MPT_PLOTPWQ
 
-% $Id: mpt_plotSysStruct.m,v 1.1 2005/02/23 12:34:19 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -23,7 +23,7 @@ function [K, P, E] = mpt_dlqr(A, B, Q, R)
 % E        - E = EIG(A - B*K)
 %
 
-% $Id: mpt_dlqr.m,v 1.1 2005/04/28 07:40:11 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

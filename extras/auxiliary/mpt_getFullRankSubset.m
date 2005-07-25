@@ -22,7 +22,7 @@ function [Gret, keptrows]=mpt_getFullRankSubset(Gt,AllSubsets)
 % keptrows  - indices of the rows that were NOT eliminated
 %
 
-% $Id: mpt_getFullRankSubset.m,v 1.2 2005/03/14 09:51:46 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

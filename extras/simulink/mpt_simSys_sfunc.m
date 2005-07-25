@@ -29,7 +29,7 @@ function [sys,x0,str,ts] = mpt_simSys_sfunc(t,x,u,flag,sysStruct,X0,Ts,nx,nu,ny,
 %
 % see also MPT_SIMSYS
 
-% $Id: mpt_simSys_sfunc.m,v 1.2 2005/03/17 11:29:19 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

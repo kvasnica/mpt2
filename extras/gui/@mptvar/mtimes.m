@@ -1,7 +1,7 @@
 function var = mtimes(var1, var2)
 %MTIMES Multiplication operator for MPTVAR objects
 
-% $Id: mtimes.m,v 1.1 2005/02/23 12:41:41 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

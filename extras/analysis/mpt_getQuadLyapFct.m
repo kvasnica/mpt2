@@ -61,7 +61,7 @@ function [lyapP,decay,feasible,details]=mpt_getQuadLyapFct(ctrl,Options)
 %
 % see also MPT_GETPWQLYAPFCT, MPT_GETSTABFEEDBACK, MPT_GETCOMMONLYAPFCT
 
-% $Id: mpt_getQuadLyapFct.m,v 1.5 2005/06/09 11:53:40 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

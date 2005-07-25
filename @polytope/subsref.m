@@ -22,7 +22,7 @@ function Q = subsref(P, X)
 % see also SUBSASGN, END
 %
 
-% $Id: subsref.m,v 1.3 2005/06/24 17:42:15 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

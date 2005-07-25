@@ -53,7 +53,7 @@ function ctrlStruct = mpt_optMixedCtrl(sysStruct, probStruct, Options)
 % see also MPT_CONTROL, MPT_OPTBOOLCTRL, MPT_OPTCONTROLPWA
 %
 
-% $Id: mpt_optMixedCtrl.m,v 1.4 2005/03/05 09:57:20 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -29,7 +29,7 @@ function x = analyticCenter(P,Options)
 % see also CHEBYBALL
 %
 
-% $Id: analyticCenter.m,v 1.3 2005/05/12 09:25:34 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

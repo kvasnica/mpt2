@@ -23,7 +23,7 @@ function mpt_exportc(ctrl, fname)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_exportc.m,v 1.1 2005/03/17 11:23:12 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

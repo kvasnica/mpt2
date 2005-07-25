@@ -41,7 +41,7 @@ function handle=mpt_plotPWA(PA,Fi,Gi,Options)
 %
 % see also MPT_PLOTPWQ, MPT_PLOTU
 
-% $Id: mpt_plotPWA.m,v 1.1 2005/02/23 12:34:19 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

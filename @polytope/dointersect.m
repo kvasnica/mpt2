@@ -24,7 +24,7 @@ function answer = dointersect(P1,P2)
 % see also AND
 %
 
-% $Id: dointersect.m,v 1.2 2005/06/24 08:28:04 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

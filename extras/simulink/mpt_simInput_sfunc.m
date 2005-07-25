@@ -35,7 +35,7 @@ function [sys,x0,str,ts] = mpt_simInput_sfunc(t,x,u,flag,ctrl,Ts,infbreak)
 % see also MPT_GETINPUT
 %
 
-% $Id: mpt_simInput_sfunc.m,v 1.5 2005/04/11 09:15:22 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

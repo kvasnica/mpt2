@@ -52,7 +52,7 @@ function [lyapunovL,lyapunovC,feasible,drho]=mpt_getPWALyapFct(ctrl,Options)
 %-----------------------------------
 % Based on results by Mikael Johanson in his book "Stability of PWA Systems"
 
-% $Id: mpt_getPWALyapFct.m,v 1.6 2005/07/06 11:11:58 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
 %          kvasnica@control.ee.ethz.ch

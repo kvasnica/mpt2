@@ -1,7 +1,7 @@
 function expr = mrdivide(expr1, expr2)
 %MRDIVIDE Division operator for MPTAFFEXPR objects
 
-% $Id: mrdivide.m,v 1.1 2005/02/23 12:41:22 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

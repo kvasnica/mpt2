@@ -20,7 +20,7 @@ function mpt_ss2mld(sysStruct, fname)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_ss2mld.m,v 1.2 2005/02/25 10:47:57 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

@@ -96,7 +96,7 @@ function ctrl = mptctrl(varargin)
 % see also MPTCTRL/ANALYZE, MPTCTRL/ISEXPLICIT, MPTCTRL/LENGTH, MPTCTRL/PLOT
 %
 
-% $Id: mptctrl.m,v 1.18 2005/07/13 18:47:54 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

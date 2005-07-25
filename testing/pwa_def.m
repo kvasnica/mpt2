@@ -23,7 +23,7 @@ function masterblock=pwa_def;
 % ---------------------------------------------------------------------------
 %
 
-% $Id: pwa_def.m,v 1.2 2004/12/11 10:52:31 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

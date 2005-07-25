@@ -80,7 +80,7 @@ function ctrlStruct=mpt_optInfControl(sysStruct,probStruct,Options)
 %
 % see also MPT_CONTROL, MPT_OPTCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
 
-% $Id: mpt_optInfControl.m,v 1.3 2005/04/28 07:40:25 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

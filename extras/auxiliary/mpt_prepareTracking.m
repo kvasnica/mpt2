@@ -25,7 +25,7 @@ function [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct)
 %                 by default, this is identical to the weight on u;
 %
 
-% $Id: mpt_prepareTracking.m,v 1.4 2005/07/11 21:47:17 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

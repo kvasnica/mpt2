@@ -55,7 +55,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
 %
 % see also MPT_SOLVEQP, MPT_MPLP, MPT_MPQP
 
-% $Id: mpt_solveLP.m,v 1.4 2005/04/21 20:26:44 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

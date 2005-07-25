@@ -26,7 +26,7 @@ function P = subsasgn(P, X, Q)
 % see also SUBSREF, HORZCAT
 %
 
-% $Id: subsasgn.m,v 1.2 2005/03/10 12:35:13 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

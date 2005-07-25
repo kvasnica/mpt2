@@ -41,7 +41,7 @@ function [P,Pn]=hull(Pn,Options)
 % see also ENVELOPE, UNION, EXTREME
 %
 
-% $Id: hull.m,v 1.2 2004/12/05 19:42:32 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

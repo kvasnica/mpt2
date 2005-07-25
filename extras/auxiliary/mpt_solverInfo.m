@@ -16,7 +16,7 @@ function [out,err]=mpt_solverInfo(sclass, stype)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_solverInfo.m,v 1.5 2005/07/06 08:29:22 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

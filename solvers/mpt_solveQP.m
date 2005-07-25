@@ -49,7 +49,7 @@ function [xopt,lambda,how,exitflag,objqp]=mpt_solveQP(H,f,A,B,Aeq,Beq,x0,solver,
 %
 % see also MPT_SOLVELP, MPT_MPQP
 
-% $Id: mpt_solveQP.m,v 1.5 2005/04/22 12:21:24 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

@@ -32,7 +32,7 @@ function status = isfulldim(P,Options)
 % see also ISBOUNDED
 %
 
-% $Id: isfulldim.m,v 1.3 2005/06/26 12:46:36 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

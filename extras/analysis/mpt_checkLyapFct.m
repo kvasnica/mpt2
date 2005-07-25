@@ -42,7 +42,7 @@ function [islyapfun,XC,decayrate] = mpt_checkLyapFct(varargin)
 % see also MPT_GETPWQLYAPFCT. MPT_GETPWALYAPFCT
 %
 
-% $Id: mpt_checkLyapFct.m,v 1.1 2005/02/23 12:35:39 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %         grieder@control.ee.ethz.ch

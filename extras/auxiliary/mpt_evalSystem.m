@@ -25,7 +25,7 @@ function [A,B,C,D,Q,R,ymin,ymax,umin,umax,dumin,dumax,bndA,bndb]=mpt_evalSystem(
 % bndA, bndb     - region of exploration bndA*x<=bndb
 %
 
-% $Id: mpt_evalSystem.m,v 1.1 2005/02/23 14:01:26 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

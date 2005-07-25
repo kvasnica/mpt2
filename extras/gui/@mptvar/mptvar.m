@@ -1,7 +1,7 @@
 function obj = mptvar(vartype, varlength, varname, varindex, fromvar)
 %MPTVAR Constructor of MPTVAR objects
 
-% $Id: mptvar.m,v 1.1 2005/02/23 12:41:41 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

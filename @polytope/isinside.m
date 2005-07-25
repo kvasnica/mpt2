@@ -35,7 +35,7 @@ function [isin, inwhich, closest] = isinside(P,x0,Options)
 % see also POLYTOPE
 %
 
-% $Id: isinside.m,v 1.2 2005/06/24 08:37:38 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

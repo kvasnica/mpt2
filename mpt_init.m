@@ -101,7 +101,7 @@ function out=mpt_init(varargin)
 % mptOptions structure
 %
 
-% $Id: mpt_init.m,v 1.66 2005/07/22 13:00:46 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch

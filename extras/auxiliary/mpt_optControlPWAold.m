@@ -55,7 +55,7 @@ function ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options)
 % see also MPT_CONTROL, MPT_OPTINFCONTROLPWA, MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_optControlPWAold.m,v 1.1 2005/02/23 14:01:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

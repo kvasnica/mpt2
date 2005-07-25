@@ -78,7 +78,7 @@ function [xmin,fmin,how,exitflag]=mpt_solveMILP(f,A,B,Aeq,Beq,lb,ub,vartype,para
 %
 % see also MPT_SOLVELP, MPT_SOLVEMIQP
 
-% $Id: mpt_solveMILP.m,v 1.12 2005/06/27 13:33:56 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch

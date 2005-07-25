@@ -1,7 +1,7 @@
 function res = isinput(var)
 %ISINPUT Returns true if an MPTVAR object is an input variable
 
-% $Id: isinput.m,v 1.1 2005/02/23 12:41:41 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

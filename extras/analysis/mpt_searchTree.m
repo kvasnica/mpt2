@@ -41,7 +41,7 @@ function ctrlST=mpt_searchTree(ctrl,Options)
 % T. A. Johansen and A. Bemporad; Automatica, Vol. 39, No. 5, pp. 945-950
 %
 
-% $Id: mpt_searchTree.m,v 1.2 2005/05/10 20:18:09 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -56,7 +56,7 @@ function ctrl = mpt_lyapunov(ctrl, funtype, ndeg, Options)
 % see also MPT_GETQUADLYAPFCT, MPT_GETPWQLYAPFCT, MPT_GETPWALYAPFCT
 %
 
-% $Id: mpt_lyapunov.m,v 1.8 2005/07/06 11:14:35 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

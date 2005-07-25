@@ -17,7 +17,7 @@ function sysStruct = mpt_pwa2sys(PWA, MLD)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_pwa2sys.m,v 1.8 2005/04/27 21:40:21 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

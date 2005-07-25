@@ -39,7 +39,7 @@ function [simpleCtrl,details] = mpt_simplify(ctrl, how, Options)
 % see also MERGE
 %
 
-% $Id: mpt_simplify.m,v 1.9 2005/06/09 14:32:55 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

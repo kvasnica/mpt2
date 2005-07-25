@@ -22,7 +22,7 @@ function secs = runtime(ctrl)
 %        on-line controller.
 %
 
-% $Id: runtime.m,v 1.1 2005/02/23 12:30:52 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

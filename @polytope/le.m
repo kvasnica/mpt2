@@ -36,7 +36,7 @@ function status = le(P,Q,Options)
 % see also GE, EQ, NE, LT, GT
 %
 
-% $Id: le.m,v 1.7 2005/06/29 11:01:16 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

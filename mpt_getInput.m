@@ -45,7 +45,7 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_getInput.m,v 1.16 2005/06/24 11:40:48 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

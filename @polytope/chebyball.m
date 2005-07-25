@@ -42,7 +42,7 @@ function [xc,R,lambda] = chebyball(P,Options,force)
 %
 % see also POLYTOPE
 
-% $Id: chebyball.m,v 1.2 2004/12/04 13:03:04 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

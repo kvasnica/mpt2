@@ -27,7 +27,7 @@ function handle=mpt_plotPartition(ctrl,Options)
 % see also MPT_PLOTTRAJECTORY, MPT_PLOTPWA, MPT_PLOTPWQ, MPT_CONTROL
 %
 
-% $Id: mpt_plotPartition.m,v 1.2 2005/03/14 09:53:08 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

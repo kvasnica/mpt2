@@ -52,7 +52,7 @@ function [invSet,iterations] = mpt_maxCtrlSet(sysStruct,Options)
 %
 % see also MPT_ONESTEPCTRL
 
-% $Id: mpt_maxCtrlSet.m,v 1.2 2005/05/27 11:02:02 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

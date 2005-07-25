@@ -50,7 +50,7 @@ function [X,U,Y,D,cost,trajectory,feasible,dyns,reason,details]=mpt_computeTraje
 %
 % see also MPT_GETINPUT, MPT_PLOTTRAJECTORY, MPT_PLOTTIMETRAJECTORY
 
-% $Id: mpt_computeTrajectory.m,v 1.14 2005/04/28 07:38:39 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

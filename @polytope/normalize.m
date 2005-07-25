@@ -37,7 +37,7 @@ function [P] = normalize(P,Options)
 % see also REDUCE, POLYTOPE
 %
 
-% $Id: normalize.m,v 1.3 2005/03/10 12:34:11 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

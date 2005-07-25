@@ -42,7 +42,7 @@ function ctrlStruct = mpt_boolMinTime(sysStruct, probStruct, Options)
 % see also MPT_CONTROL, MPT_OPTCONROLPWA
 %
 
-% $Id: mpt_boolMinTime.m,v 1.1 2005/02/23 12:37:04 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

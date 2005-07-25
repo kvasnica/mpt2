@@ -20,7 +20,7 @@ function out = loadobj(obj)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: loadobj.m,v 1.3 2005/06/22 08:42:11 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

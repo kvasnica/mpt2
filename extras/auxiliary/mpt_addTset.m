@@ -25,7 +25,7 @@ function [Matrices, feasible] = mpt_addTset(sysStruct,Matrices,Tset,nx,nu,dyn)
 % feasible  - boolean flag (1/0) if the problem is feasible
 %
 
-% $Id: mpt_addTset.m,v 1.2 2005/06/01 12:36:41 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

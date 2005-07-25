@@ -60,7 +60,7 @@ function [ctrlStruct,feasibleN,loopCtr] = mpt_oneStepCtrl(sysStruct,probStruct,O
 % see also MPT_ITERATIVEPWA
 %
 
-% $Id: mpt_oneStepCtrl.m,v 1.4 2005/05/27 11:03:01 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

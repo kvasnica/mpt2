@@ -33,7 +33,7 @@ function [sysStruct, probStruct] = mpt_prepareDU(sysStruct, probStruct)
 %               by default, this is identical to the weight on u;
 %
 
-% $Id: mpt_prepareDU.m,v 1.5 2005/03/06 20:55:23 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

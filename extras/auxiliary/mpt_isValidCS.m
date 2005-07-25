@@ -21,7 +21,7 @@ function status=mpt_isValidCS(ctrlStruct,Options)
 % status      - 1 if input is a valid controller structure, 0 otherwise
 %
 
-% $Id: mpt_isValidCS.m,v 1.3 2005/07/12 15:54:20 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

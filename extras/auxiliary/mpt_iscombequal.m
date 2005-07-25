@@ -20,7 +20,7 @@ function [isequal] = mpt_iscombequal(vector1,vector2)
 % isequal  - 1 if vectors are combinatorially equal, 0 otherwise
 %
 
-% $Id: mpt_iscombequal.m,v 1.1 2005/02/23 14:01:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch

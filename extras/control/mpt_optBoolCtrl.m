@@ -59,7 +59,7 @@ function ctrlStruct = mpt_optBoolCtrl(sysStruct, probStruct, Options)
 % see also MPT_CONTROL, MPT_OPTCONROLPWA
 %
 
-% $Id: mpt_optBoolCtrl.m,v 1.4 2005/03/05 09:57:20 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

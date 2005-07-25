@@ -25,7 +25,7 @@ function Pcut = slice(PA,cut_dim,cut_value)
 % Pcut            - polytope array
 %
 
-% $Id: slice.m,v 1.1 2005/07/20 13:27:40 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

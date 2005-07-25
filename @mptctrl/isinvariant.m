@@ -20,7 +20,7 @@ function result = isinvariant(ctrl)
 % result - 1 if the controller is invariant, 0 otherwise
 %
 
-% $Id: isinvariant.m,v 1.3 2005/06/09 13:06:41 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

@@ -52,7 +52,7 @@ function [X,U,cost,trajectory]=mpt_plotTrajectory(ctrl,Options)
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
-% $Id: mpt_plotTrajectory.m,v 1.2 2005/06/23 14:45:59 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch

@@ -41,7 +41,7 @@ function [flag, N, Vreach] = mpt_verify(object, X0, Xf, N, U0, Options)
 % see also MPT_REACHSETS, MPT_REACHXU
 %
 
-% $Id: mpt_verify.m,v 1.4 2005/06/29 12:37:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

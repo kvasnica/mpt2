@@ -78,7 +78,7 @@ function [dQ,feasible,drho,runtime]=mpt_getPWPLyapFct(ctrl,ndeg,Options)
 % P. Biswas, P. Grieder, J. Loefberg, M. Morari
 % Also available from: http://control.ee.ethz.ch
 
-% $Id: mpt_getPWPLyapFct.m,v 1.7 2005/07/06 11:11:58 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

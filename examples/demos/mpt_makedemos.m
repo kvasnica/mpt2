@@ -2,7 +2,7 @@ function mpt_makedemos
 %MPT_MAKEDEMOS creates MAT files with data needed to run demos
 %
 
-% $Id: mpt_makedemos.m,v 1.2 2005/03/03 14:39:04 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

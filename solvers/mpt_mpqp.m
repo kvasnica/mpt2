@@ -69,7 +69,7 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mpqp(Matrices,Options)
 %
 % see also MPT_OPTCONTROL, MPT_CONSTRUCTMATRICES, MPT_MPLP
 
-% $Id: mpt_mpqp.m,v 1.5 2005/04/11 09:06:40 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %     baotic@control.ee.ethz.ch

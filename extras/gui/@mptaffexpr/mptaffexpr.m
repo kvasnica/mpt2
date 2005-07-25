@@ -1,7 +1,7 @@
 function expr = mptaffexpr(nx, nu, gX, gU, gC)
 %MPTAFFEXPR Constructor of MPTAFFEXPR objects
 
-% $Id: mptaffexpr.m,v 1.1 2005/02/23 12:41:22 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

@@ -28,7 +28,7 @@ function [Xn, V] = mpt_reachXU(X0, U0, A, B, f, Options)
 % see also POLYTOPE/RANGE, MPT_REACHSETS
 %
 
-% $Id: mpt_reachXU.m,v 1.5 2005/04/21 10:53:30 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

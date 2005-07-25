@@ -46,7 +46,7 @@ function [V,R,H,K] = mpt_lrs(method,VP,Options)
 % Preprint Number 03–26
 %
 
-% $Id: mpt_lrs.m,v 1.2 2005/04/04 20:36:32 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

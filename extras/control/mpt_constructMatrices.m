@@ -108,7 +108,7 @@ function [G,W,E,H,F,Y,Cf,Cx,Cc,symmetric,bndA,bndb,Pinvset]=mpt_constructMatrice
 %	     (no. Inputs * prediction Horzion) elemenst correspond to the input
 %            
 
-% $Id: mpt_constructMatrices.m,v 1.5 2005/07/06 08:29:40 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,

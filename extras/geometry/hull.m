@@ -30,7 +30,7 @@ function [P,Vconv]=hull(V,Options)
 %
 % see also POLYTOPE/HULL, EXTREME, UNION, ENVELOPE
 
-% $Id: hull.m,v 1.9 2005/07/21 09:41:10 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich
 %     fjc@control.ee.ethz.ch

@@ -30,7 +30,7 @@ function [A, B, Aeq, Beq] = mpt_ineq2eq(A, B)
 % Aeq,Beq     - system of equalities
 %
 
-% $Id: mpt_ineq2eq.m,v 1.1 2005/07/09 20:51:08 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

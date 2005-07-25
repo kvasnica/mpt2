@@ -33,7 +33,7 @@ function status = isbounded(P,Options)
 % see also ISFULLDIM
 %
 
-% $Id: isbounded.m,v 1.2 2005/04/04 09:22:21 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch

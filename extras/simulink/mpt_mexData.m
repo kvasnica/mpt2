@@ -19,7 +19,7 @@ function data = mpt_mexData(ctrl)
 % data   - Structure containing data of a given explicit controller
 %
 
-% $Id: mpt_mexData.m,v 1.1 2005/03/21 22:36:39 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

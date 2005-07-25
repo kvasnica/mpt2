@@ -27,7 +27,7 @@ function handle=plot(ctrl,Options)
 % see also MPT_PLOTTRAJECTORY, MPT_PLOTPWA, MPT_PLOTPWQ, MPT_CONTROL
 %
 
-% $Id: plot.m,v 1.1 2005/02/23 12:31:07 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

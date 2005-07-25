@@ -17,7 +17,7 @@ function statbar = mpt_statusbar(statbar, progress, smin, smax)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_statusbar.m,v 1.2 2005/02/28 19:27:35 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

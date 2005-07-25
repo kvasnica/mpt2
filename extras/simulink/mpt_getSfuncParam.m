@@ -18,7 +18,7 @@ function [H, K, F, G, nc, nr, nx, nu, ny, nxt, nref, Ts, dumode, tracking, absto
 % ---------------------------------------------------------------------------
 %
 
-% $Id: mpt_getSfuncParam.m,v 1.3 2005/04/11 09:15:02 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

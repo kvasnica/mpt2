@@ -44,7 +44,7 @@ function [R,keptrows,feasible]=domain(P,A,f,Q,horizon,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: domain.m,v 1.12 2005/06/26 12:47:10 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

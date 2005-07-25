@@ -33,7 +33,7 @@ function [x,R]=facetcircle(P,ind,Options)
 %
 
 % ---------------------------------------------------------------------------
-% $Id: facetcircle.m,v 1.3 2005/05/12 09:26:34 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch  

@@ -1,7 +1,7 @@
 function S = addMLDconstraints(S, sysStruct)
 %ADDMLDCONSTRAINTS Adds state and output constraints to MLD matrices
 
-% $Id: addMLDconstraints.m,v 1.2 2005/05/14 20:19:04 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

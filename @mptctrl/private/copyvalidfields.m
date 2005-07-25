@@ -1,7 +1,7 @@
 function ctrl = copyvalidfields(ctrlStruct, allowedfields)
 %COPYVALIDFIELDS copies only fields listed in 'allowedfields' from ctrlStruct to ctrl
 
-% $Id: copyvalidfields.m,v 1.1 2005/02/23 12:29:34 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

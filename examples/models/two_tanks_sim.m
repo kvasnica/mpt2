@@ -16,7 +16,7 @@ function  [sys,x0,str,ts] = two_tanks_sim(t,x,u,flag,xinit)
 % ---------------------------------------------------------------------------
 %
 
-% $Id: two_tanks_sim.m,v 1.1 2005/03/22 08:22:53 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

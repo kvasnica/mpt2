@@ -33,7 +33,7 @@ function [U,feasible,region]=mpt_getOptimizer(Pn,Fi,Gi,x0,Options)
 %
 % see also MPT_MPLP, MPT_MPQP, MPT_GETINPUT
 
-% $Id: mpt_getOptimizer.m,v 1.1 2005/02/23 14:01:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 %(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch

@@ -37,7 +37,7 @@ function [Pn,Fi,Gi,dynamics,probStruct]=mpt_computePWATset(sysStruct,probStruct,
 %
 % see also MPT_INFSETPWA, MPT_GETSTABFEEDBACK
 
-% $Id: mpt_computePWATset.m,v 1.1 2005/02/23 12:35:39 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch

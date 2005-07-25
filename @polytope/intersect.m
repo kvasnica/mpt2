@@ -30,7 +30,7 @@ function [R,fulldim] = intersect(P1,P2,Options)
 % see also AND
 %
 
-% $Id: intersect.m,v 1.5 2005/07/20 11:33:21 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch

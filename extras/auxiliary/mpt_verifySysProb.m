@@ -29,7 +29,7 @@ function [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,Options)
 % see also MPT_VERIFYSYSSTRUCT, MPT_VERIFYPROBSTRUCT
 %
 
-% $Id: mpt_verifySysProb.m,v 1.5 2005/07/06 08:29:11 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

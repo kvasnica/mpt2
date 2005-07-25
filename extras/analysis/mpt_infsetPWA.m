@@ -61,7 +61,7 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 % see also MPT_INFSET
 %
 
-% $Id: mpt_infsetPWA.m,v 1.18 2005/07/06 10:37:40 kvasnica Exp $
+% Copyright is with the following author(s):
 %
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch

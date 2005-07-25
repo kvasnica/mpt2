@@ -90,7 +90,7 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver4(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Id: mpt_mplp_ver4.m,v 1.2 2005/06/29 10:03:27 kvasnica Exp $
+% Copyright is with the following author(s):
 %    
 % (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
