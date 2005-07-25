@@ -84,7 +84,7 @@ if length(cut_dim(:)) ~= length(cut_value(:)),
 end
 
 tokeep = [setdiff([1:nx]',cut_dim(:))]';
-tokick = sort([cut_dim(:)';cut_value(:)'],2);
+tokick = sortrows([cut_dim(:)';cut_value(:)']',1)';
 
 lenPA = length(PA.Array);
 if lenPA==0,
