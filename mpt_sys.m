@@ -202,6 +202,24 @@ elseif isstruct(obj)
             sysStruct.data.hysdel.code = inputname(1);
             sysStruct.data.SIM.code = '';
             sysStruct.data.SIM.params = {};
+            if ~isfield(S, 'nub'),
+                % make sure that S.nub exists
+                S.nub = 0;
+            end
+            if S.nub > 0,
+                % mark inputs as real / boolean
+                nur = S.nur;
+                nub = S.nub;
+                sysStruct.Uset = cell(1,nu);
+                for iu = 1:nur,
+                    % mark 'nur' inputs as real
+                    sysStruct.Uset{iu} = [-Inf Inf];
+                end
+                for iu = 1:nub,
+                    % mark 'nub' inputs as boolean
+                    sysStruct.Uset{nur+iu} = [0 1];
+                end
+            end
         end
         itype = 'mld';
         
@@ -395,6 +413,24 @@ elseif isa(obj, 'char')
                     sysStruct.xmin = S.xl;
                     sysStruct.xmax = S.xu;
                 end
+            end
+        end
+        if ~isfield(S, 'nub'),
+            % make sure that S.nub exists
+            S.nub = 0;
+        end
+        if S.nub > 0,
+            % mark inputs as real / boolean
+            nur = S.nur;
+            nub = S.nub;
+            sysStruct.Uset = cell(1,nu);
+            for iu = 1:nur,
+                % mark 'nur' inputs as real
+                sysStruct.Uset{iu} = [-Inf Inf];
+            end
+            for iu = 1:nub,
+                % mark 'nub' inputs as boolean
+                sysStruct.Uset{nur+iu} = [0 1];
             end
         end
         
