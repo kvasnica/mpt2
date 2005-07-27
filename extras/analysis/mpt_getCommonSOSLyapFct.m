@@ -828,7 +828,7 @@ if isfield(ctrlStruct.probStruct, 'FBgain'),
     % handle pre-stabilization with feedback
     FBgain = ctrlStruct.probStruct.FBgain;
 else
-    FBgain = zeros(ctrlStruct.Fi{1});
+    FBgain = zeros(size(ctrlStruct.Fi{1}));
 end
 
 isPWASystem = 0;

@@ -301,6 +301,7 @@ for i=1:length(Hn)
     HK = [-Hn{i} Kn{i}];
     F=Fi{i}(1:nu,:);
     G=Gi{i}(1:nu,:);
+    fbgain = FBgain(1:nu,:);
     
     for j=1:length(Acell)
         for k=1:size(noiseVertex,1)
@@ -313,7 +314,7 @@ for i=1:length(Hn)
             else
                 A=Acell{j};
                 B=Bcell{j};
-                ABF = A + B*(F + FBgain);
+                ABF = A + B*(F + fbgain);
                 BG = B*G;
             end
             
