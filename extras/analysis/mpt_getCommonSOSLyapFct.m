@@ -46,14 +46,19 @@ function [solution]=mpt_getCommonSOSLyapFct(ctrl,ndeg,Options)
 % ---------------------------------------------------------------------------
 %   LITERATURE:
 % ---------------------------------------------------------------------------
-% $Version: 1.1 $ $Date: 2005/04/06 09:30:34 $
-% (C) 2004 Miroslav Baric     
-%          baric@control.ee.ethz.ch
 %
 % Proceedings of the American Control Conference (ACC), Denver, CO. 2003.
 % "Analysis of Switched and Hybrid Systems - Beyond Piecewise Quadratic
 % Methods",
 % S. Prajna, A. Papachristodoulou. 
+
+% Copyright is with the following author(s):
+%
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
+% (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
+%          baric@control.ee.ethz.ch
+
 %
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -819,6 +824,13 @@ Fi        = ctrlStruct.Fi;
 Gi        = ctrlStruct.Gi;
 Pfinal    = ctrlStruct.Pfinal;
 
+if isfield(ctrlStruct.probStruct, 'FBgain'),
+    % handle pre-stabilization with feedback
+    FBgain = ctrlStruct.probStruct.FBgain;
+else
+    FBgain = zeros(ctrlStruct.Fi{1});
+end
+
 isPWASystem = 0;
 if ( iscell(sysStruct.A) ),
     %
@@ -842,7 +854,7 @@ if ( iscell(sysStruct.A) ),
                 guardX = sysStruct.guardX{jj};
                 guardU = sysStruct.guardU{jj};
                 guardC = sysStruct.guardC{jj};
-                uu = Fi{ii}(1:noU,:)*xC + Gi{ii}(1:noU,:);
+                uu = (FBgain(1:noU,:) + Fi{ii}(1:noU,:))*xC + Gi{ii}(1:noU,:);
                 if ( max(guardX*xC+guardU*uu - guardC) < Options.abs_tol ),    
                     % check which dynamics is active in the region  
                     %
@@ -913,7 +925,7 @@ for ii = 1:nRegions,
         auxB = Bcell{ii};
         auxf = fcell{ii};
     end
-    bigABF(rowRange,:) = bigABF(rowRange,:) +  auxB * Fi{ii}(1:nu,:);
+    bigABF(rowRange,:) = bigABF(rowRange,:) +  auxB * (Fi{ii}(1:nu,:) + FBgain(1:nu,:));
     bigBG(rowRange,:)  = auxB * Gi{ii}(1:nu) + auxf;
     
     % check if the origin is inside the closure of the current

@@ -105,14 +105,13 @@ end
 
 if isinvariant(ctrl)
     % exit if controller is already invariant
-%     if Options.verbose>0
-%         disp('Controller is already invariant, nothing to do here...');
-%     end
-%     invCtrl = ctrl;
-%     return
+    if Options.verbose>0
+        disp('Controller is already invariant...');
+    end
 end
 
 sysStruct = ctrl.sysStruct;
+probStruct = ctrl.probStruct;
 Wnoise = sysStruct.noise;
 
 nR = length(ctrl);
@@ -121,6 +120,12 @@ Fi = ctrl.Fi;
 Gi = ctrl.Gi;
 Acell=cell(1, nR);
 Fcell=cell(1, nR);
+if isfield(probStruct, 'FBgain'),
+    % handle pre-stabilization with feedback
+    FBgain = probStruct.FBgain;
+else
+    FBgain = zeros(size(Fi{1}));
+end
 
 if (iscell(sysStruct.A))
     if Options.verbose>0,
@@ -129,8 +134,8 @@ if (iscell(sysStruct.A))
     for ii=1:nR
         [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
         for jj=1:length(sysStruct.A)          % go through all dynamics description
-            if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*(Fi{ii}*x+Gi{ii})-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
-                Acell{ii}=sysStruct.A{jj}+sysStruct.B{jj}*Fi{ii};
+            if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ii}+FBgain)*x+Gi{ii})-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
+                Acell{ii}=sysStruct.A{jj}+sysStruct.B{jj}*(Fi{ii} + FBgain);
                 Fcell{ii}=sysStruct.B{jj}*Gi{ii}+sysStruct.f{jj};
             end
         end
@@ -142,7 +147,7 @@ else
     hasaffine = isfield(sysStruct, 'f');
     nu = ctrl.details.dims.nu;
     for ii=1:length(Pn)
-        Acell{ii} = sysStruct.A + sysStruct.B*Fi{ii}(1:nu,:);
+        Acell{ii} = sysStruct.A + sysStruct.B*(Fi{ii}(1:nu,:) + FBgain(1:nu,:));
         Fcell{ii} = sysStruct.B*Gi{ii}(1:nu);
         if hasaffine,
             Fcell{ii} = Fcell{ii} + sysStruct.f;

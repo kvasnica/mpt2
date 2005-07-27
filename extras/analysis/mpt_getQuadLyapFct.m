@@ -176,6 +176,13 @@ if ~isfield(sysStruct,'verified')
     sysStruct = mpt_verifySysStruct(sysStruct, verOptions);
 end
 
+if isfield(ctrlStruct.probStruct, 'FBgain'),
+    % handle pre-stabilization with feedback
+    FBgain = ctrlStruct.probStruct.FBgain;
+else
+    FBgain = zeros(size(Fi{1}));
+end
+
 if (iscell(sysStruct.A))
     if(isfield(sysStruct,'Aunc') & ~isempty(sysStruct.Aunc))
         error('Cannot handle PWA systems with polytopic uncertainty')
@@ -193,8 +200,8 @@ if (iscell(sysStruct.A))
         for ii=1:length(Pn)
             [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
             for jj=1:length(sysStruct.A)          % go through all dynamics description
-                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*(Fi{ii}(1:nu,:)*x+Gi{ii}(1:nu,:))-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
-                    ABFcell{ii} = sysStruct.A{jj}+sysStruct.B{jj}*Fi{ii}(1:nu,:);
+                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ii}(1:nu,:)+FBgain(1:nu,:))*x+Gi{ii}(1:nu,:))-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
+                    ABFcell{ii} = sysStruct.A{jj}+sysStruct.B{jj}*(Fi{ii}(1:nu,:) + FBgain(1:nu,:));
                     BGcell{ii} = sysStruct.B{jj}*Gi{ii}(1:nu,:) + sysStruct.f{jj};
                 end
             end
@@ -247,7 +254,7 @@ if(~isempty(Hnoise))
             if(isinside(Pn(j),zeros(nx,1)))
                 index=[index j];
                 ctr=ctr+1;
-                AA{ctr}=Acell{i}+Bcell{i}*ctrlStruct.Fi{j}(1:nu,:);
+                AA{ctr}=Acell{i}+Bcell{i}*(ctrlStruct.Fi{j}(1:nu,:) + FBgain(1:nu,:));
             else
                 [HH,KK]=double(Pn(j));
                 Hn{end+1}=HH;
@@ -304,9 +311,9 @@ for i=1:length(Hn)
                 ABF = ABFcell{i};
                 BG = BGcell{i};
             else
-            A=Acell{j};
-            B=Bcell{j};
-                ABF = A + B*F;
+                A=Acell{j};
+                B=Bcell{j};
+                ABF = A + B*(F + FBgain);
                 BG = B*G;
             end
             
@@ -383,7 +390,7 @@ decay=-double(rho);
 
 if(infeasible==0 & decay<=0)
     feasible=1;
-    disp(['The decay rate is is:  ' num2str(decay)])
+    disp(['The decay rate is:  ' num2str(decay) ' (should be negative)'])
 else 
     feasible=0;
 end

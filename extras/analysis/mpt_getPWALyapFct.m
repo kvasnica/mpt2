@@ -169,6 +169,13 @@ if statusbar,
     Options.verbose = -1;
 end
 
+if isfield(ctrlStruct.probStruct, 'FBgain'),
+    % handle pre-stabilization with feedback
+    FBgain = ctrlStruct.probStruct.FBgain;
+else
+    FBgain = zeros(size(Fi{1}));
+end
+
 if iscell(sysStruct.A),
     nu = size(sysStruct.B{1},2);
 else
@@ -195,10 +202,10 @@ if iscell(sysStruct.A)
         for ii=1:length(Pn)
             [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
             for jj=1:length(sysStruct.A)          % go through all dynamics description
-                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*(Fi{ii}(1:noU,:)*x+Gi{ii}(1:noU,:))-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
+                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ii}(1:noU,:)+FBgain(1:noU,:))*x+Gi{ii}(1:noU,:))-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
                     Acell{ii} = sysStruct.A{jj};
                     Bcell{ii} = sysStruct.B{jj};
-                    ABFcell{ii} = sysStruct.A{jj}+sysStruct.B{jj}*Fi{ii}(1:noU,:);
+                    ABFcell{ii} = sysStruct.A{jj}+sysStruct.B{jj}*(Fi{ii}(1:noU,:) + FBgain(1:noU,:));
                     BGcell{ii} = sysStruct.B{jj}*Gi{ii}(1:noU,:) + sysStruct.f{jj};
                 end
             end
@@ -336,7 +343,7 @@ for dyn_ctr=1:unc_loop
             Fcell = BGcell;
         else
             for ii = 1:lenP,
-                Acell{ii} = A+B*Fi{ii}(1:nu,:);
+                Acell{ii} = A+B*(Fi{ii}(1:nu,:) + FBgain(1:nu,:));
                 Fcell{ii} = B*Gi{ii}(1:nu,:);
             end
         end
@@ -378,7 +385,7 @@ for dyn_ctr=1:unc_loop
             BG = BGcell{i};
             sys = i;
         else
-            ABF=A+B*Fi{i}(1:nu,:);
+            ABF=A+B*(Fi{i}(1:nu,:) + FBgain(1:nu,:));
             BG =B*Gi{i}(1:nu,:);
         end
 

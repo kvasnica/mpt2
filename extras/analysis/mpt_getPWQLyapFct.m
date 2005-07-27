@@ -218,6 +218,13 @@ if isfulldim(sysStruct.noise)
     error('Cannot compute PWQ Lyapunov function for systems with additive disturbances.');
 end    
 
+if isfield(ctrlStruct.probStruct, 'FBgain'),
+    % handle pre-stabilization with feedback
+    FBgain = ctrlStruct.probStruct.FBgain;
+else
+    FBgain = zeros(size(Fi{1}));
+end
+
 if (iscell(sysStruct.A))
     if(isfield(sysStruct,'Aunc') & ~isempty(sysStruct.Aunc))
         error('Cannot handLe PWA systems with polytopic uncertainty')
@@ -240,10 +247,10 @@ if (iscell(sysStruct.A))
             [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
             Acell{ii}=[];
             for jj=1:length(sysStruct.A)          % go through all dynamics description
-                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*(Fi{ii}(1:noU,:)*x+Gi{ii}(1:noU,:))-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
+                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ii}(1:noU,:)+FBgain(1:noU,:))*x+Gi{ii}(1:noU,:))-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
                     Acell{ii} = sysStruct.A{jj};
                     Bcell{ii} = sysStruct.B{jj};
-                    ABFcell{ii} = sysStruct.A{jj}+sysStruct.B{jj}*Fi{ii}(1:nu,:);
+                    ABFcell{ii} = sysStruct.A{jj}+sysStruct.B{jj}*(Fi{ii}(1:nu,:) + FBgain(1:nu, :));
                     BGcell{ii} = sysStruct.B{jj}*Gi{ii}(1:nu,:) + sysStruct.f{jj};
                 end
             end
@@ -406,7 +413,7 @@ for dyn_ctr=1:unc_loop
             Fcell = BGcell;
         else
             for ii = 1:lenP,
-                Acell{ii} = A+B*Fi{ii}(1:nu,:);
+                Acell{ii} = A+B*(Fi{ii}(1:nu,:) + FBgain(1:nu,:));
                 Fcell{ii} = B*Gi{ii}(1:nu,:);
             end
         end
@@ -446,7 +453,7 @@ for dyn_ctr=1:unc_loop
             BG = BGcell{i};
             sys = i;
         else
-            ABF=A+B*Fi{i}(1:nu,:);
+            ABF=A+B*(Fi{i}(1:nu,:) + FBgain(1:nu,:));
             BG =B*Gi{i}(1:nu,:);
         end
         
@@ -943,7 +950,7 @@ if(infeasible<2)
                 ABF = ABFcell{start};
                 BG  = BGcell{start};
             else
-                ABF = A+B*Fi{start}(1:noU,:);
+                ABF = A+B*(Fi{start}(1:noU,:) + FBgain(1:noU,:));
                 BG  = B*Gi{start}(1:noU,:);
             end
             
