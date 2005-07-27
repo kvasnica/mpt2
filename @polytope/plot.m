@@ -482,6 +482,10 @@ while index<nii
                     end
                 end
                 if Options.wire
+                    if any(isnan(f(border,1:npoints))),
+                        % line can't handle NaNs, but patch can, strange...
+                        continue
+                    end
                     h(border)=line([tempV.V(f(border,1:npoints),1); tempV.V(f(border,1),1)],...
                         [tempV.V(f(border,1:npoints),2); tempV.V(f(border,1),2)],...
                         [tempV.V(f(border,1:npoints),3); tempV.V(f(border,1),3)]);
