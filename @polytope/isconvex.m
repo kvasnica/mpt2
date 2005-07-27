@@ -1,8 +1,8 @@
-function status = isconvex(P,Options)
+function [status, Pconv] = isconvex(P,Options)
 %ISCONVEX Checks if a polytope array forms a convex union
 %
-% status = isconvex(P)
-% status = isconvex(P,Options)
+% [status, Pconv] = isconvex(P)
+% [status, Pconv] = isconvex(P,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -23,10 +23,14 @@ function status = isconvex(P,Options)
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 % status           - Logical statement
+% Pconv            - if P is convex it returns the convex set, otherwise 
+%                    an empty polytope
 %
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 
@@ -80,6 +84,7 @@ end
 if isempty(P.Array),
     % single polytope, it is for sure convex
     status = 1;
+    Pconv  = P;
     return
 end
 
@@ -100,6 +105,7 @@ if any(abs(bboxP(:,1) - bboxO(:,1)) > bbox_tol) | any(abs(bboxP(:,2) - bboxO(:,2
     % bounding boxes differ by more than bbox_tol => polytopes cannot be equal
     % therefore P is not convex
     status = 0;
+    Pconv = mptOptions.emptypoly;
     return
 end
 % we cannot reach any conclusion based solely on the fact that bounding
@@ -111,7 +117,9 @@ if isfulldim(mldivide(outer, P, mldivideOpt)),
     % if set difference between the envelope (hull) and P is fully dimensional,
     % it means that P is not convex
     status = 0;
+    Pconv = mptOptions.emptypoly;
 else
     % set difference is empty => P is convex
     status = 1;
+    Pconv = outer;
 end
