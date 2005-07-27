@@ -489,7 +489,12 @@ while index<nii
                     h(border)=line([tempV.V(f(border,1:npoints),1); tempV.V(f(border,1),1)],...
                         [tempV.V(f(border,1:npoints),2); tempV.V(f(border,1),2)],...
                         [tempV.V(f(border,1:npoints),3); tempV.V(f(border,1),3)]);
-                    set(h(border),'Color',color);
+                    if iswirecolor==0,
+                        wcolor=color(1,:);
+                    else
+                        wcolor=Options.wirecolor;
+                    end
+                    set(h(border),'Color',wcolor);
                 else
                     h(border)=patch('Vertices',tempV.V,'Faces',f(border,1:npoints),...
                         'FaceVertexCData',tempV.V(:,3),'FaceColor',color,'FaceAlpha',...
