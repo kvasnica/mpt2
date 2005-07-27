@@ -8,6 +8,7 @@
 %   display      - Displays details about the given polytope
 %                
 %   isbounded    - Checks if a polytope is bounded
+%   isconvex     - Checks if a polytope array forms a convex union
 %   isfulldim    - Checks if a polytope is full dimensional
 %   isinside     - Checks if a given point lies in the interior of a given polytope
 %   isminrep     - Checks if a given polytope is in minimal representation
