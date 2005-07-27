@@ -132,7 +132,7 @@ if lenP>0,
         % we don't need the bounding box as a polytope object
         R = [];
     else
-        R=polytope([eye(n); -eye(n)],[u;-l]);
+        R=polytope([eye(dimP); -eye(dimP)],[u;-l]);
     end
     return
 end
