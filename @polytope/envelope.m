@@ -138,10 +138,10 @@ end
 
 if ~isempty(Ae) & ~isempty(Be),
     % envelope may be unbounded, in that case we intersect it with the infinity box
+    dimbox = size(Ae, 2);
+    Ae = [Ae; eye(dimbox); -eye(dimbox)];
+    Be = [Be; ones(dimbox*2, 1) * Options.infbox];
     R=polytope(Ae,Be);
-    dimbox=dimension(P.Array{1});
-    Pbox=polytope([eye(dimbox); -eye(dimbox)],ones(dimbox*2,1)*Options.infbox);   % infinity box description
-    R=R&Pbox;   % make the intersection
 else
     R=polytope(1,Inf,1,1,0,Inf);    % envelope is R^n
 end
