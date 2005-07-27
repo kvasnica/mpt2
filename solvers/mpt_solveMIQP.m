@@ -147,6 +147,10 @@ elseif nargin <= 10,
 elseif nargin <= 11,
     solver = mptOptions.miqpsolver;
 end
+f = f(:);
+lb = lb(:);
+ub = ub(:);
+vartype = vartype(:);
 
 if solver==0
     % use cplex 9
@@ -166,7 +170,7 @@ if solver==0
         B = [B; Beq];
         indeq = (nc+1:size(A,1))';
     end
-    [xmin,fmin,status,details]=cplexint(H, f(:), A, B, indeq, [], lb, ub, vartype, param, options);
+    [xmin,fmin,status,details]=cplexint(H, f, A, B, indeq, [], lb, ub, vartype, param, options);
     how = lower(details.statstring);
     exitflag = -1;
     if strcmp(how, 'optimal') | strcmp(how, 'optimaltol') | ...
@@ -216,7 +220,7 @@ elseif solver==5,
     end
 
     sense = 1; % minimization
-    [xmin,fmin,status,details]=cplexmex(sense, H, f(:), A, B, ctype, lb, ub, vartype, x0, param, save);
+    [xmin,fmin,status,details]=cplexmex(sense, H, f, A, B, ctype, lb, ub, vartype, x0, param, save);
     
     switch status
         case {1,101,102}
@@ -307,7 +311,7 @@ if isfield(mptOptions, 'yalmipdata'),
 end
         
 [nc,nx] = size(A);
-f = f(:);
+f = f;
 x = sdpvar(nx,1);
 F = set(A*x <= B);
 if ~isempty(Aeq),

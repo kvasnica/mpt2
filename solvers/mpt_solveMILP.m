@@ -147,6 +147,10 @@ elseif nargin <= 9,
 elseif nargin <= 10,
     solver = mptOptions.milpsolver;
 end
+f = f(:);
+lb = lb(:);
+ub = ub(:);
+vartype = vartype(:);
 
 if solver==0
     % use cplex 9
@@ -166,7 +170,7 @@ if solver==0
         B = [B; Beq];
         indeq = (nc+1:size(A,1))';
     end
-    [xmin,fmin,status,details]=cplexint([], f(:), A, B, indeq, [], lb, ub, vartype, param, options);
+    [xmin,fmin,status,details]=cplexint([], f, A, B, indeq, [], lb, ub, vartype, param, options);
     how = lower(details.statstring);
     exitflag = -1;
     if strcmp(how, 'optimal') | strcmp(how, 'optimaltol') | ...
@@ -177,7 +181,7 @@ if solver==0
     
 elseif solver==1
     % YALMIP / BNB
-    [xmin,fmin,how,exitflag]=yalmipMILP(f(:),A,B,Aeq,Beq,lb,ub,vartype,param,options,'bnb');
+    [xmin,fmin,how,exitflag]=yalmipMILP(f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'bnb');
     
 elseif solver==2,
     % use glpk
@@ -211,10 +215,10 @@ elseif solver==2,
     param.msglev = 0;
     if isfield(options,'glpk_solver'),
         lpsolver = options.glpk_solver;
-        [xmin,fmin,status,details]=glpkmex(SENSE, f(:), A, B, CTYPE, lb, ub, ...
+        [xmin,fmin,status,details]=glpkmex(SENSE, f, A, B, CTYPE, lb, ub, ...
             vartype, param, lpsolver);
     else
-        [xmin,fmin,status,details]=glpkmex(SENSE, f(:), A, B, CTYPE, lb, ub, ...
+        [xmin,fmin,status,details]=glpkmex(SENSE, f, A, B, CTYPE, lb, ub, ...
             vartype);
     end
     
@@ -268,7 +272,7 @@ elseif solver==7,
     end
 
     sense = 1; % minimization
-    [xmin,fmin,status,details]=cplexmex(sense, [], f(:), A, B, ctype, lb, ub, vartype, x0, param, save);
+    [xmin,fmin,status,details]=cplexmex(sense, [], f, A, B, ctype, lb, ub, vartype, x0, param, save);
     switch status
         case {1,101,102}
             exitflag = 1;
@@ -367,7 +371,7 @@ end
 
 nx = size(A,2);
 
-f = f(:);
+f = f;
 x = sdpvar(nx,1);
 F = set(A*x <= B);
 if ~isempty(Aeq),
