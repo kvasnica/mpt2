@@ -79,6 +79,7 @@ end
 if ~isfulldim(P),
     % non-fully dimensional polytopes are assumed to be convex
     status = 1;
+    Pconv  = P;
     return
 end
 if isempty(P.Array),
@@ -117,9 +118,9 @@ if isfulldim(mldivide(outer, P, mldivideOpt)),
     % if set difference between the envelope (hull) and P is fully dimensional,
     % it means that P is not convex
     status = 0;
-    Pconv = mptOptions.emptypoly;
+    Pconv  = mptOptions.emptypoly;
 else
     % set difference is empty => P is convex
     status = 1;
-    Pconv = outer;
+    Pconv  = outer;
 end
