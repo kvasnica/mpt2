@@ -434,6 +434,13 @@ elseif isfield(structure, 'Pn')
         error('mpt_reachSets: overlapping controllers not supported.');
     end
     sysStruct = ctrlStruct.sysStruct;
+    probStruct = ctrlStruct.probStruct;
+    % handle feedback prestabilization:
+    if isfield(probStruct, 'FBgain'),
+        FBgain = probStruct.FBgain;
+    else
+        FBgain = zeros(size(ctrlStruct.Fi{1}));
+    end
     [nx,nu,ny,ndyn] = mpt_sysStructInfo(sysStruct);
     Pn = ctrlStruct.Pn;
     for ireg = 1:length(Pn),
@@ -458,7 +465,7 @@ elseif isfield(structure, 'Pn')
             
             % autonomuos system dynamics:
             % x+ = (A+B*Fi)*x + (B*Gi + f)
-            ACL{ireg} = A + B*Fi(1:nu,:);
+            ACL{ireg} = A + B*(Fi(1:nu,:) + FBgain(1:nu,:));
             FCL{ireg} = f + B*Gi(1:nu,:);
             
         elseif ~iscell(sysStruct.A),
@@ -475,19 +482,22 @@ elseif isfield(structure, 'Pn')
             
             % autonomuos system dynamics:
             % x+ = (A+B*Fi)*x + (B*Gi + f)
-            ACL{ireg} = A + B*Fi(1:nu,:);
+            ACL{ireg} = A + B*(Fi(1:nu,:) + FBgain(1:nu,:));
             FCL{ireg} = f + B*Gi(1:nu,:);
 
         else
             % PWA system, link dynamics to regions...
+            Fi = ctrlStruct.Fi{ireg};
+            Gi = ctrlStruct.Gi{ireg};
+
             [x,R] = chebyball(Pn(ireg));            % compute center of the chebyshev's ball
             Acell = [];
             Fcell = [];
             for jj=1:length(sysStruct.A)          % go through all dynamics description
-                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*(Fi{ireg}(1:nu,:)*x+Gi{ireg}(1:nu,:))-sysStruct.guardC{jj})<abs_tol, 
+                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ireg}(1:nu,:)+FBgain(1:nu,:))*x+Gi{ireg}(1:nu,:))-sysStruct.guardC{jj})<abs_tol, 
                     % check which dynamics is active in the region
-                    ACL{ireg}=sysStruct.A{jj};
-                    FCL{ireg}=sysStruct.f{jj};
+                    ACL{ireg}=sysStruct.A{jj} + sysStruct.B{jj}*(Fi{ireg}(1:nu,:) + FBgain(1:nu,:));
+                    FCL{ireg}=sysStruct.f{jj} + sysStruct.B{jj}*Gi{ireg}(1:nu,:);
                 end
             end
             if isempty(ACL{ireg}) | isempty(FCL{ireg}),
