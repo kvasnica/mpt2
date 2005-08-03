@@ -562,7 +562,8 @@ vartype(IntIndex) = 'B';
 
 if isfield(Options, 'dumax')
     % include deltaU constraints
-    % WARNING: these constraints will only be satisfied in open-loop solution!!!
+    % WARNING: these constraints will only be satisfied in open-loop solution if
+    %          Options.Uprev is not given!!!
     dumin = Options.dumin;
     dumax = Options.dumax;
     ndu = length(dumax);
@@ -574,6 +575,19 @@ if isfield(Options, 'dumax')
         AA = [AA; aa zeros(2*ndu, nAc-size(aa,2))];
         B = [B; bb];
         nlin = nlin+2*ndu;
+    end
+    if isfield(Options, 'Uprev'),
+        % include deltaU constraints using previous input, such that we
+        % guarantee satisfaction of deltaU constraints in closed loop
+        if length(Options.Uprev) ~= length(dumax),
+            error('Wrong dimension of Options.Uprev');
+        end
+        aa = [eye(ndu) zeros(ndu, nAc - ndu)];
+        AA = [AA; aa; -aa];
+        B = [B; dumax+Options.Uprev; -(dumin + Options.Uprev)];
+        nlin = nlin + 2*ndu;
+    else
+        fprintf('Warning: No "Options.Uprev" specified, deltaU constraints will only be satisfied in open-loop solution!\n');
     end
 end
 

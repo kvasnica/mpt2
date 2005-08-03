@@ -183,19 +183,30 @@ end
 xm = u(1:nx);
 ref = u(nx+1:nx+dimref);
 
-if tracking==0 & dumode,
-    x0 = [xm; Uprev];
-elseif tracking==2,
-    x0 = [xm; ref];
-elseif tracking==1,
-    x0 = [xm; Uprev; ref];
-else
+isMLD = ~isexplicit(ctrl) & iscell(ctrl.sysStruct.A);
+
+if isMLD,
+    % MPC for MLD systems does NOT work with extended state vector. we just need
+    % to provide previous input in Options.Uprev, in order to satisfy deltaU
+    % constraints in closed-loop.
     x0 = xm;
+    opt.Uprev = Uprev;
+else
+    % augment state vector to include previous input and/or reference
+    if tracking==0 & dumode,
+        x0 = [xm; Uprev];
+    elseif tracking==2,
+        x0 = [xm; ref];
+    elseif tracking==1,
+        x0 = [xm; Uprev; ref];
+    else
+        x0 = xm;
+    end
 end
- 
+
 opt.verbose = -1;
 [U,feasible,region,cost]=mpt_getInput(ctrl,x0, opt);
-if isempty(U),
+if isempty(U) | ~feasible,
     if infbreak,
         error(sprintf('No feasible control law found for state %s', mat2str(x0(:)')));
         U = 0;

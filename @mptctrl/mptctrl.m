@@ -299,8 +299,8 @@ elseif nargin==2 | nargin==3
         ctrl.sysStruct.data.MLD = MLD;
         sysStruct.data.MLD = MLD;
         
-        if Options.verbose>-1 & (any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin)))
-            fprintf('\nWARNING: deltaU constraints will only be satisfied in open-loop solutions!\n\n');
+        if isfield(probStruct, 'Rdu'),
+            fprintf('Warning: Penalties on deltaU not supported for this type of controllers.\n');
         end
         [nx,nu,ny] = mpt_sysStructInfo(sysStruct);
         sysStruct.dims = struct('nx', nx, 'nu', nu, 'ny', ny);

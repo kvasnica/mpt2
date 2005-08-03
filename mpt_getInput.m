@@ -120,17 +120,13 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     sysStruct = ctrl.sysStruct;
     probStruct = ctrl.probStruct;
     
-    if ctrl.details.dims.nx~=length(x0),
-        if ctrl.probStruct.tracking==1,
-            disp('For tracking==1, the state vector x0 must be in form [x; u; ref] !');
-        elseif ctrl.probStruct.tracking==2,
-            disp('For tracking==2, the state vector x0 must be in form [x; ref] !');
-        end
-        error(sprintf('MPT_GETINPUT: state x0 should be a column vector with %d elements!',ctrl.details.dims.nx));
-    end
-    
     if iscell(sysStruct.A),
         % PWA system
+        
+        if ctrl.details.dims.nx~=length(x0),
+            error(sprintf('MPT_GETINPUT: state x0 should be a column vector with %d elements!',ctrl.details.dims.nx));
+        end
+        
         if Options.verbose<=1,
             Options.verbose=0;
         end
@@ -248,6 +244,26 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         runtime = Eflag.runtime;
     else
         % LTI system
+        isycost = isfield(probStruct, 'Qy');
+        if isycost,
+            reflength = ctrl.details.dims.ny;
+        else
+            reflength = ctrl.details.dims.nx;
+        end
+        if ctrl.details.dims.nx~=length(x0),
+            if ctrl.probStruct.tracking==1,
+                if length(x0) ~= (ctrl.details.dims.nx + ctrl.details.dims.nu + reflength),
+                    disp('For tracking==1, the state vector x0 must be in form [x; u; ref] !');
+                end
+            elseif ctrl.probStruct.tracking==2,
+                if length(x0) ~= (ctrl.details.dims.nx + reflength)
+                    disp('For tracking==2, the state vector x0 must be in form [x; ref] !');
+                end
+            else
+                error(sprintf('MPT_GETINPUT: state x0 should be a column vector with %d elements!',ctrl.details.dims.nx));
+            end
+        end
+        
         Matrices = ctrl.details.Matrices;
         [U, feasible, cost] = mpt_solveMPC(x0, sysStruct, probStruct, Matrices);
     end
