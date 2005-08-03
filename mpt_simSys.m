@@ -122,7 +122,14 @@ for ii=1:size(inU,1),
             end
         else
             % use the simulator
-            [xnext, y] = sub_getMLDupdate(simcode, x0, U);
+            [xnext, y, err] = sub_getMLDupdate(simcode, x0, U);
+            if ~isempty(err),
+                % an error occured in simulator, recalculate using mpt_mldsim
+                [xnext, y, d, z, feasible] = mpt_mldsim(sysStruct.data.MLD, x0, U);
+                if ~feasible,
+                    xnext = [];
+                end
+            end
         end
         if isempty(xnext)
             error(['mpt_simSys: no dynamics associated to state ' mat2str(x0') ' and input ' mat2str(U') ' !']);
@@ -171,11 +178,13 @@ end
 U = inU;
 
 %-----------------------------------------------------
-function [xn, y] = sub_getMLDupdate(simcode, x, u)
+function [xn, y, err] = sub_getMLDupdate(simcode, x, u)
 
+err = [];
 try
     eval(simcode);
 catch
     xn = [];
     y = [];
+    err = lasterr;
 end
