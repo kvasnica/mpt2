@@ -67,10 +67,13 @@ for ii=length(varargin):-1:1
 end
 
 if length(varargin)>0,
-    if ischar(varargin{1}),
-        if strcmpi(varargin{1}, 'mld') | strcmpi(varargin{1}, 'nopwa'),
-            Options.dohys2pwa = 0;
-            Options.dummydyns = 1;
+    for ii = 1:length(varargin),
+        if ischar(varargin{ii}),
+            if strcmpi(varargin{ii}, 'mld') | strcmpi(varargin{ii}, 'nopwa'),
+                Options.dohys2pwa = 0;
+                Options.dummydyns = 1;
+                break
+            end
         end
     end
 end
