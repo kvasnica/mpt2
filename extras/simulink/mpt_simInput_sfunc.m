@@ -191,6 +191,9 @@ if isMLD,
     % constraints in closed-loop.
     x0 = xm;
     opt.Uprev = Uprev;
+    if tracking > 0,
+        opt.reference = ref;
+    end
 else
     % augment state vector to include previous input and/or reference
     if tracking==0 & dumode,
