@@ -135,6 +135,14 @@ if ~isfield(Options, 'reduceSlacks')
     % penalized
     Options.reduceSlacks = 1;
 end
+if ~isfield(Options, 'allxconstrained'),
+    % if set to true, state constraints will be added on every state x(k). if
+    % set to false, state constraints are imposed only on the final state x(N).
+    % note that by default we add state constraints in
+    % @mptctrl/addMLDconstraints, so we do not need to set this flag to true
+    % ever...
+    Options.allxconstrained = 0;
+end
 
 % NT = sum of all horizons (if there are more than 1)
 NT=sum(horizon);
@@ -514,6 +522,14 @@ if isfield(Options, 'Tset'),
         nR = nR + nconstr(Options.Tset);
     end
 end
+if isfield(Options, 'xmax'),
+    % increase space to include state constraints
+    if Options.allxconstrained,
+        nR = nR + 2*nx*(NT+1);
+    else
+        nR = nR + 2*nx;
+    end
+end
 
 cR = 1;                                 % pointer to the current row
 if Options.useSparse,
@@ -764,6 +780,42 @@ if Options.TerminalConstraint
     F2(cR:cR+nx-1,:) = -f;
     F3(cR:cR+nx-1,:) = -A;
     cR = cR + nx;
+end
+
+if isfield(Options, 'xmax')
+    % state constraints on final state x(NT)
+    %=======================================
+    
+    if Options.allxconstrained,
+        % add state constraints on every state
+        Chorizon = 1:NT+1;
+    else
+        % otherwise just add constraints on final state
+        Chorizon = NT+1;
+    end
+    for iN = Chorizon,
+        % x(k) <= xmax
+        %-------------
+        A = Ax{iN};
+        B = Bx{iN};
+        f = fx{iN} - Options.xmax;
+        
+        F1(cR:cR+nx-1,:) = B;
+        F2(cR:cR+nx-1,:) = -f;
+        F3(cR:cR+nx-1,:) = -A;
+        cR = cR + nx;
+        
+        % x(NT) >= xmin
+        %--------------
+        A = -Ax{iN};
+        B = -Bx{iN};
+        f = -fx{iN} + Options.xmin;
+        
+        F1(cR:cR+nx-1,:) = B;
+        F2(cR:cR+nx-1,:) = -f;
+        F3(cR:cR+nx-1,:) = -A;
+        cR = cR + nx;
+    end
 end
 
 if isfield(Options, 'Tset')
