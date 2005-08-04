@@ -36,26 +36,34 @@ if isfield(sysStruct, 'xmax') & S.nx > 0,
     % add state constraints
     xmax = sysStruct.xmax;
     xmin = sysStruct.xmin;
-    nx = length(xmin);
-    S.E4 = [S.E4; -eye(nx); eye(nx)];
-    S.E5 = [S.E5; xmax; -xmin];
-    S.E1 = [S.E1; zeros(2*nx, size(S.E1,2))];
-    S.E2 = [S.E2; zeros(2*nx, size(S.E2,2))];
-    S.E3 = [S.E3; zeros(2*nx, size(S.E3,2))];
-    % we have added 2*nx inequality constraints, update global counter
-    S.ne = S.ne + 2*nx;
+    if (all(isinf(xmax)) & any(isinf(xmin))),
+        % do not add +/- Inf constraints
+    else    
+        nx = length(xmin);
+        S.E4 = [S.E4; -eye(nx); eye(nx)];
+        S.E5 = [S.E5; xmax; -xmin];
+        S.E1 = [S.E1; zeros(2*nx, size(S.E1,2))];
+        S.E2 = [S.E2; zeros(2*nx, size(S.E2,2))];
+        S.E3 = [S.E3; zeros(2*nx, size(S.E3,2))];
+        % we have added 2*nx inequality constraints, update global counter
+        S.ne = S.ne + 2*nx;
+    end
 end
 
 if isfield(sysStruct, 'ymax') & S.ny > 0,
     ymax = sysStruct.ymax;
     ymin = sysStruct.ymin;
-    ny = length(ymax);
-    S.E1 = [S.E1; -S.D1; S.D1];
-    S.E2 = [S.E2; S.D2; -S.D2];
-    S.E3 = [S.E3; S.D3; -S.D3];
-    S.E4 = [S.E4; -S.C; S.C];
-    S.E5 = [S.E5; ymax; -ymin];
-    % we have added 2*ny inequality constraints, update global counter
-    S.ne = S.ne + 2*ny;
+    if (all(isinf(ymax)) & any(isinf(ymin))),
+        % do not add +/- Inf constraints
+    else
+        ny = length(ymax);
+        S.E1 = [S.E1; -S.D1; S.D1];
+        S.E2 = [S.E2; S.D2; -S.D2];
+        S.E3 = [S.E3; S.D3; -S.D3];
+        S.E4 = [S.E4; -S.C; S.C];
+        S.E5 = [S.E5; ymax; -ymin];
+        % we have added 2*ny inequality constraints, update global counter
+        S.ne = S.ne + 2*ny;
+    end
 end
 
