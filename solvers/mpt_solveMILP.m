@@ -194,7 +194,7 @@ elseif solver==2,
         nc = size(A,1);
     end
     if isempty(lb),
-        lb = repmat(1e-9, nx, 1);
+        lb = repmat(-1e9, nx, 1);
     end
     if isempty(ub),
         ub = repmat(1e9, nx, 1);
