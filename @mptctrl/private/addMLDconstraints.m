@@ -36,7 +36,7 @@ if isfield(sysStruct, 'xmax') & S.nx > 0,
     % add state constraints
     xmax = sysStruct.xmax;
     xmin = sysStruct.xmin;
-    if (all(isinf(xmax)) & any(isinf(xmin))),
+    if (all(isinf(xmax)) & all(isinf(xmin))),
         % do not add +/- Inf constraints
     else    
         nx = length(xmin);
@@ -53,7 +53,7 @@ end
 if isfield(sysStruct, 'ymax') & S.ny > 0,
     ymax = sysStruct.ymax;
     ymin = sysStruct.ymin;
-    if (all(isinf(ymax)) & any(isinf(ymin))),
+    if (all(isinf(ymax)) & all(isinf(ymin))),
         % do not add +/- Inf constraints
     else
         ny = length(ymax);
