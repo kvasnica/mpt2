@@ -116,6 +116,9 @@ function [ut, dt, zt, Eflag] = mpc_mip( S, xt, r, Q, pr, co, Options )
 %                                         form z <= Inf and replaces +/- Inf
 %                                         bounds on variables by +/- Options.bigB.
 %                                         (default = 0)
+%                Options.bounds2ineq      if true, converts bounds of variables
+%                                         into inequality constraints
+%                                         (default = 0)
 %
 %
 % Outputs:     ut    : current input to be applied to the system
@@ -142,6 +145,7 @@ function [ut, dt, zt, Eflag] = mpc_mip( S, xt, r, Q, pr, co, Options )
 %
 % Contact:     Mato Baotic, baotic@control.ee.ethz.ch
 %              Tobias Geyer, geyer@control.ee.ethz.ch
+%              Michal Kvasnica, kvasnica@control.ee.ethz.ch
 %
 %              Automatic Control Laboratory
 %              ETH Zentrum,
@@ -249,6 +253,12 @@ if ~isfield(Options, 'removeInfBounds'),
     % bounds on variables by +/- 1e9, respectively
     Options.removeInfBounds = 0;
 end
+if ~isfield(Options, 'bounds2ineq'),
+    % if true, converts bounds of variables ( bl <= z <= bu) into inequality
+    % constraints
+    Options.bounds2ineq = 0;
+end
+
 
 % check dimensions and turn S and Q into cell structures
 % ---------------------------------------------------------------------
@@ -657,6 +667,18 @@ if Options.removeInfBounds,
         if ~isempty(infbu),
             bu(infbu) = bigB;
         end
+    end
+end
+
+if Options.bounds2ineq
+    % convert bounds to constraints
+    if ~isempty(bl) & ~isempty(bu),
+        nvar = size(AA, 2);
+        AA = [AA; eye(nvar); -eye(nvar)];
+        B = [B; bu; -bl];
+        bu = [];
+        bl = [];
+        nlin = nlin + 2*nvar;
     end
 end
 
