@@ -574,9 +574,9 @@ if isfield(Options, 'dumax')
     dumax = Options.dumax;
     ndu = length(dumax);
     [nAr, nAc] = size(AA);
-    for ipr = 1:pr-1,
+    for ipr = 1:sum(horizon)-1,
         aa = [zeros(2*ndu, ndu*(ipr-1)) [-eye(ndu) eye(ndu); eye(ndu) -eye(ndu)] ...
-                zeros(2*ndu, ndu*(pr-ipr-1))];
+                zeros(2*ndu, ndu*(sum(horizon)-ipr-1))];
         bb = [dumax; -dumin];
         AA = [AA; aa zeros(2*ndu, nAc-size(aa,2))];
         B = [B; bb];
