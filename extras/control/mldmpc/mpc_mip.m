@@ -193,7 +193,7 @@ else
    bigB = Options.bigB;   
 end  
 if ~isfield(Options,'epsil')
-   epsil = 1e-7;
+   epsil = 1e-10;
 else
    epsil = Options.epsil;   
 end
