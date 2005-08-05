@@ -112,6 +112,11 @@ function [ut, dt, zt, Eflag] = mpc_mip( S, xt, r, Q, pr, co, Options )
 %                                         (default = 2)
 %                Options.verbose          display additional information
 %                                         (default = 0)
+%                Options.removeInfBounds  if true, removes constraints of the
+%                                         form z <= Inf and replaces +/- Inf
+%                                         bounds on variables by +/- Options.bigB.
+%                                         (default = 0)
+%
 %
 % Outputs:     ut    : current input to be applied to the system
 %              dt    : current value of the variable delta
@@ -238,6 +243,11 @@ end
 if ~isfield(Options, 'convert2eq'),
     % if true, detects inequality constraints which form equality constraints
     Options.convert2eq = 0;
+end
+if ~isfield(Options, 'removeInfBounds'),
+    % if true, removes constraints of the form z <= Inf and replaces +/- Inf
+    % bounds on variables by +/- 1e9, respectively
+    Options.removeInfBounds = 0;
 end
 
 % check dimensions and turn S and Q into cell structures
@@ -622,6 +632,31 @@ if isfield(Options, 'nocost'),
             G = zeros(size(G));
         end
         CC = zeros(size(CC));
+    end
+end
+
+if Options.removeInfBounds,
+    % remove constraints of the form z <= Inf
+    infB = find(B==Inf);
+    if ~isempty(infB),
+        AA(infB, :) = [];
+        B(infB) = [];
+    end
+
+    % replace all lower bounds equal to -Inf by -Options.bigB
+    if ~isempty(bl),
+        infbl = find(bl==-Inf);
+        if ~isempty(infbl),
+            bl(infbl) = -bigB;
+        end
+    end
+    
+    % replace all upper bounds equal to Inf by Options.bigB
+    if ~isempty(bu),
+        infbu = find(bu==Inf);
+        if ~isempty(infbu),
+            bu(infbu) = bigB;
+        end
     end
 end
 
