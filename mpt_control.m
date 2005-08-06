@@ -136,6 +136,18 @@ if ~isfield(Options, 'qpsolver'),
     Options.qpsolver = mptOptions.qpsolver;
 end
 
+if isfield(sysStruct, 'data'),
+    if isfield(sysStruct.data, 'onlymld'),
+        if sysStruct.data.onlymld,
+            % cannot compute an explicit controller if PWA model is not
+            % available
+            fprintf('\nPWA representation of the hybrid system must be available in order to compute explicit solutions.\n');
+            fprintf('Call "%s = mpt_sys(%s.data.MLD)" to get the PWA representation.\n\n', Options.sysstructname, Options.sysstructname);
+            error('Cannot compute explicit solution if PWA representation is not available in sysStruct.');
+        end
+    end
+end
+
 origSysStruct = sysStruct;
 origProbStruct = probStruct;
 
