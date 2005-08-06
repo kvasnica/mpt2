@@ -188,8 +188,12 @@ if isfield(varargin{1}, 'Pn') & isfield(varargin{1}, 'Fi')
     else
         error('MPTCTRL: first input is not a valid controller structure!');
     end
-    
-    ctrl.type = 'explicit';
+
+    if isfield(varargin{1}, 'type'),
+        ctrl.type = varargin{1}.type;
+    else
+        ctrl.type = 'explicit';
+    end
     
 elseif nargin==2 | nargin==3
     
