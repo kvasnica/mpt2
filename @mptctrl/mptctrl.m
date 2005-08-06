@@ -304,7 +304,7 @@ elseif nargin==2 | nargin==3
         sysStruct.dims = struct('nx', nx, 'nu', nu, 'ny', ny);
         
         % try to construct matrices of the MPC problem
-        % NOTE! not possible if probStruct.tracking > 1, in this case the
+        % NOTE! not possible if probStruct.tracking > 0, in this case the
         % subfunction will return an empty matrix, which is fine (see
         % mpt_getInput and mpt_mip)
         if Options.verbose > 0,
