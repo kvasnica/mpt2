@@ -296,12 +296,6 @@ elseif nargin==2 | nargin==3
             sysStruct.data.MLD = S;
             ctrl.sysStruct.data.MLD = S;
         end
-        % =========================================================================
-        % add state and output constraints as defined in
-        % sysStruct.{xmax|xmin|ymax|ymin}
-        MLD = addMLDconstraints(ctrl.sysStruct.data.MLD, sysStruct);
-        ctrl.sysStruct.data.MLD = MLD;
-        sysStruct.data.MLD = MLD;
         
         if isfield(probStruct, 'Rdu'),
             fprintf('Warning: Penalties on deltaU not supported for this type of controllers.\n');

@@ -135,13 +135,10 @@ if ~isfield(Options, 'reduceSlacks')
     % penalized
     Options.reduceSlacks = 1;
 end
-if ~isfield(Options, 'allxconstrained'),
+if ~isfield(Options, 'allXconstrained'),
     % if set to true, state constraints will be added on every state x(k). if
     % set to false, state constraints are imposed only on the final state x(N).
-    % note that by default we add state constraints in
-    % @mptctrl/addMLDconstraints, so we do not need to set this flag to true
-    % ever...
-    Options.allxconstrained = 0;
+    Options.allXconstrained = 1;
 end
 
 % NT = sum of all horizons (if there are more than 1)
@@ -522,12 +519,33 @@ if isfield(Options, 'Tset'),
         nR = nR + nconstr(Options.Tset);
     end
 end
+
+addXconstraints = 0;
 if isfield(Options, 'xmax'),
     % increase space to include state constraints
-    if Options.allxconstrained,
-        nR = nR + 2*nx*(NT+1);
+    if all(isinf(Options.xmax)) & all(isinf(Options.xmin)),
+        % do not include +/- Inf constraints
     else
-        nR = nR + 2*nx;
+        if Options.allXconstrained,
+            % add constraints on x(k), k = 0..NT
+            nR = nR + 2*nx*(NT+1);
+        else
+            % add constraints only on x(NT)
+            nR = nR + 2*nx;
+        end
+        addXconstraints = 1;
+    end
+end
+
+addYconstraints = 0;
+if isfield(Options, 'ymax'),
+    % increase space to include output constraints
+    if all(isinf(Options.ymax)) & all(isinf(Options.ymin)),
+        % do not include +/- Inf constraints
+    else
+        % add constraints on y(k), k = 0..NT-1
+        nR = nR + 2*ny*NT;
+        addYconstraints = 1;
     end
 end
 
@@ -782,18 +800,18 @@ if Options.TerminalConstraint
     cR = cR + nx;
 end
 
-if isfield(Options, 'xmax')
-    % state constraints on final state x(NT)
-    %=======================================
+if addXconstraints,
+    % state constraints
+    %==================
     
-    if Options.allxconstrained,
+    if Options.allXconstrained,
         % add state constraints on every state
-        Chorizon = 1:NT+1;
+        C_horizon = 1:NT+1;
     else
         % otherwise just add constraints on final state
-        Chorizon = NT+1;
+        C_horizon = NT+1;
     end
-    for iN = Chorizon,
+    for iN = C_horizon,
         % x(k) <= xmax
         %-------------
         A = Ax{iN};
@@ -805,7 +823,7 @@ if isfield(Options, 'xmax')
         F3(cR:cR+nx-1,:) = -A;
         cR = cR + nx;
         
-        % x(NT) >= xmin
+        % x(k) >= xmin
         %--------------
         A = -Ax{iN};
         B = -Bx{iN};
@@ -815,6 +833,35 @@ if isfield(Options, 'xmax')
         F2(cR:cR+nx-1,:) = -f;
         F3(cR:cR+nx-1,:) = -A;
         cR = cR + nx;
+    end
+end
+
+if addYconstraints,
+    % output constraints
+    %===================
+    
+    for iN = 1:NT,
+        % y(k) <= ymax
+        %-------------
+        A = Ay{iN};
+        B = By{iN};
+        f = fy{iN} - Options.ymax;
+        
+        F1(cR:cR+ny-1,:) = B;
+        F2(cR:cR+ny-1,:) = -f;
+        F3(cR:cR+ny-1,:) = -A;
+        cR = cR + ny;
+        
+        % y(k) >= ymin
+        %--------------
+        A = -Ay{iN};
+        B = -By{iN};
+        f = -fy{iN} + Options.ymin;
+        
+        F1(cR:cR+ny-1,:) = B;
+        F2(cR:cR+ny-1,:) = -f;
+        F3(cR:cR+ny-1,:) = -A;
+        cR = cR + ny;
     end
 end
 

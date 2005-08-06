@@ -175,6 +175,10 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             Options.xmax = sysStruct.xmax;
             Options.xmin = sysStruct.xmin;
         end
+        if isfield(sysStruct, 'ymax') & isfield(sysStruct, 'ymin'),
+            Options.ymax = sysStruct.ymax;
+            Options.ymin = sysStruct.ymin;
+        end
         
         Options.TerminalConstraint = 0;
         if probStruct.Tconstraint==2 & isfield(probStruct, 'Tset'),
