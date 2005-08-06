@@ -27,10 +27,10 @@ function [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct)
 
 % Copyright is with the following author(s):
 %
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -51,6 +51,8 @@ function [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct)
 %          Boston, MA  02111-1307  USA
 %
 % ---------------------------------------------------------------------------
+
+global mptOptions
 
 if ~isfield(sysStruct,'verified'),
     verOpt.verbose=1;
@@ -396,12 +398,46 @@ if isfield(probStruct, 'P_N')
     probStruct.P_N = P;
 end
 
-if probStruct.tracking==2,
-    ymaxn = [sysStruct.ymax; sysStruct.ymax];
-    yminn = [sysStruct.ymin; sysStruct.ymin];
+% use given bounds on references, or use state/output constraints
+if isfield(sysStruct, 'yrefmax'),
+    yrefmax = sysStruct.yrefmax;
 else
-    ymaxn = [sysStruct.ymax; sysStruct.umax; sysStruct.ymax];
-    yminn = [sysStruct.ymin; sysStruct.umin; sysStruct.ymin];
+    yrefmax = sysStruct.ymax;
+    yrefmax(find(yrefmax==Inf)) = mptOptions.infbox;
+end
+
+% use given bounds on references, or use state/output constraints
+if isfield(sysStruct, 'yrefmin'),
+    yrefmin = sysStruct.yrefmin;
+else
+    yrefmin = sysStruct.ymin;
+    yrefmin(find(yrefmin==-Inf)) = -mptOptions.infbox;
+end
+
+if isfield(sysStruct, 'xmax'),
+    % use given bounds on references, or use state/output constraints
+    if isfield(sysStruct, 'xrefmax'),
+        xrefmax = sysStruct.xrefmax;
+    else
+        xrefmax = sysStruct.xmax;
+        xrefmax(find(xrefmax==Inf)) = mptOptions.infbox;
+    end
+
+    % use given bounds on references, or use state/output constraints
+    if isfield(sysStruct, 'xrefmin'),
+        xrefmin = sysStruct.xrefmin;
+    else
+        xrefmin = sysStruct.xmin;
+        xrefmin(find(xrefmin==-Inf)) = -mptOptions.infbox;
+    end
+end
+
+if probStruct.tracking==2,
+    ymaxn = [sysStruct.ymax; yrefmax];
+    yminn = [sysStruct.ymin; yrefmin];
+else
+    ymaxn = [sysStruct.ymax; sysStruct.umax; yrefmax];
+    yminn = [sysStruct.ymin; sysStruct.umin; yrefmin];
 end
 
 if isfield(sysStruct, 'xmax')
@@ -411,22 +447,22 @@ if isfield(sysStruct, 'xmax')
     if probStruct.tracking==2
         if ycost
             % state vector has dimension nx+ny
-            xmaxn = [sysStruct.xmax; sysStruct.ymax];
-            xminn = [sysStruct.xmin; sysStruct.ymin];
+            xmaxn = [sysStruct.xmax; yrefmax];
+            xminn = [sysStruct.xmin; yrefmin];
         else
             % state vector has dimension nx+nx
-            xmaxn = [sysStruct.xmax; sysStruct.xmax];
-            xminn = [sysStruct.xmin; sysStruct.xmin];
+            xmaxn = [sysStruct.xmax; xrefmax];
+            xminn = [sysStruct.xmin; xrefmin];
         end
     else
         if ycost
             % state vector has dimension nx+nu+ny
-            xmaxn = [sysStruct.xmax; sysStruct.umax; sysStruct.ymax];
-            xminn = [sysStruct.xmin; sysStruct.umin; sysStruct.ymin];
+            xmaxn = [sysStruct.xmax; sysStruct.umax; yrefmax];
+            xminn = [sysStruct.xmin; sysStruct.umin; yrefmin];
         else
             % state vector has dimension 2*nx+nu
-            xmaxn = [sysStruct.xmax; sysStruct.umax; sysStruct.xmax];
-            xminn = [sysStruct.xmin; sysStruct.umin; sysStruct.xmin];
+            xmaxn = [sysStruct.xmax; sysStruct.umax; xrefmax];
+            xminn = [sysStruct.xmin; sysStruct.umin; xrefmin];
         end
     end
     sysStruct.xmax = xmaxn;

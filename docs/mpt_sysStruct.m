@@ -61,6 +61,12 @@
 %
 % NOTE: If no constraints are present on certain inputs/states, set the associated values to Inf.
 %
+% It is also possible to specify bounds on reference signals (for tracking
+% problems) in:
+% 
+%    sysStruct.yrefmax, sysStruct.yrefmin
+%    sysStruct.xrefmax, sysStruct.xrefmin
+%
 % An uncertain LTI system is driven by the following set of relations:
 %
 %    x(k+1) = Aunc x(k) + Bunc u(k) + w(k)
@@ -129,6 +135,12 @@
 %   sysStruct.dumin = dumin;
 %
 % Constraints on slew rate are optional and can be omitted.
+%
+% It is also possible to specify bounds on reference signals (for tracking
+% problems) in:
+% 
+%    sysStruct.yrefmax, sysStruct.yrefmin
+%    sysStruct.xrefmax, sysStruct.xrefmin
 %
 % MPT is able to deal also with PWA systems which are affected by bounded
 % additive disturbances:
