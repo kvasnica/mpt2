@@ -106,9 +106,16 @@ elseif nargin==4 & ~isstruct(Options)
     error('MPT_CONTROL: Fourth input argument must be an Options structure!');
 end
 
-Options.sysstructname = inputname(1);
-Options.probstructname = inputname(2);
-
+if isempty(inputname(1)),
+    Options.sysstructname = 'sysStruct';
+else
+    Options.sysstructname = inputname(1);
+end
+if isempty(inputname(2)),
+    Options.probstructname = 'probStruct';
+else
+    Options.probstructname = inputname(2);
+end
 
 if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt.verbose=1;
