@@ -219,7 +219,7 @@ elseif solver==2,
             vartype, param, lpsolver);
     else
         [xmin,fmin,status,details]=glpkmex(SENSE, f, A, B, CTYPE, lb, ub, ...
-            vartype);
+            vartype, param);
     end
     
     switch status
