@@ -213,6 +213,7 @@ elseif solver==2,
     CTYPE = repmat('U',nc,1); % all constraints <=
     CTYPE(indeq) = 'S';       % change requested constraints to equality
     param.msglev = 0;
+    param.itlim = -1;
     if isfield(options,'glpk_solver'),
         lpsolver = options.glpk_solver;
         [xmin,fmin,status,details]=glpkmex(SENSE, f, A, B, CTYPE, lb, ub, ...
