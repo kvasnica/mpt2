@@ -121,7 +121,7 @@ end
 
 
 hhPoly=polytope;
-if(Options.noHPoly==0)
+if(Options.noHPoly==0) | nargout > 2,
     ctr=0;
     %compute H representation of simplices
     index=[];
