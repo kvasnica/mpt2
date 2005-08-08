@@ -796,7 +796,7 @@ while region <= nRegions & nRegions <= MAXREGIONS,
                         disp ('Skipping duplicate region.');
                     end
                     continue;
-                elseif ( cr.type == 0 )
+                elseif ( cr.type == 0 | ~isfulldim(cr.P) )
                     %
                     % flat region
                     %
