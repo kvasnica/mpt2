@@ -76,7 +76,7 @@ if ~isfield(Options, 'dynamics')
     Options.dynamics = 0;
 end
 if ~isfield(Options, 'usemldsim'),
-    Options.usemldsim = 0;
+    Options.usemldsim = 1;
 end
 
 Options.manualU = inU;
@@ -114,6 +114,10 @@ for ii=1:size(inU,1),
         % run the simulator obtained by HYSDEL and stored in sysStruct for
         % systems for which no equivalent PWA representation was created
         simcode = sysStruct.data.SIM.code;
+        params = [];
+        if isfield(sysStruct.data.SIM, 'params'),
+            params = sysStruct.data.SIM.params;
+        end
         if isempty(simcode) | Options.usemldsim,
             % simulator not available, use mpt_mldsim
             [xnext, y, d, z, feasible] = mpt_mldsim(sysStruct.data.MLD, x0, U);
@@ -122,7 +126,7 @@ for ii=1:size(inU,1),
             end
         else
             % use the simulator
-            [xnext, y, err] = sub_getMLDupdate(simcode, x0, U);
+            [xnext, y, err] = sub_getMLDupdate(simcode, params, x0, U);
             if ~isempty(err),
                 % an error occured in simulator, recalculate using mpt_mldsim
                 [xnext, y, d, z, feasible] = mpt_mldsim(sysStruct.data.MLD, x0, U);
@@ -178,9 +182,34 @@ end
 U = inU;
 
 %-----------------------------------------------------
-function [xn, y, err] = sub_getMLDupdate(simcode, x, u)
+function [xn, y, err] = sub_getMLDupdate(simcode, parameters, x, u)
 
 err = [];
+params = [];
+if ~isempty(parameters),
+    % parameters are required by simulator, try to load them from workspace
+
+    % first try to load the "params" structure from workspace
+    try
+        params = evalin('base', 'params');
+    end
+    if isempty(params),
+        % the "params" structure does not exist, try to evaluate every parameter
+        for ip = 1:length(parameters),
+            try
+                param_value = evalin('base', parameters{ip});
+            catch
+                error(sprintf('MPT_SYS: parameter ''%s'' not defined in global workspace!', ...
+                    parameters{ip}));
+            end
+            if ~isa(param_value, 'double')
+                error(sprintf('MPT_SYS: parameter ''%s'' must be a double!', paramater{ip}));
+            end
+            params = setfield(params, parameters{ip}, param_value);
+        end
+    end
+end
+
 try
     eval(simcode);
 catch
