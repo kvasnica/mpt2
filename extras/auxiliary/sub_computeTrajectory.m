@@ -420,6 +420,17 @@ else
             disp('COMPUTETRAJECTORY: maximum number of iterations reached!');
         end
     end
+
+    if nargout > 4,
+        % compute also closed-loop cost
+        try
+            cost = sub_computeCost(X, U, Y, sysStruct, probStruct, Options);
+        catch
+            % cost computation failed, please report such case to
+            % mpt@control.ee.ethz.ch
+            cost = -Inf;
+        end
+    end
     
 end %end Options.openloop==0
 
@@ -463,4 +474,168 @@ if ~(iscell(ctrl.sysStruct.A) & ~isEXPctrl)
         % probStruct.tracking=2 -> no deltaU formulation
         x0 = [x0; reference(:)];
     end
+end
+
+%==========================================================================
+function cost = sub_computeCost(X, U, Y, sysStruct, probStruct, Options)
+% computes closed-loop cost
+
+if isfield(sysStruct, 'dims'),
+    nx = sysStruct.dims.nx;
+    nu = sysStruct.dims.nu;
+    ny = sysStruct.dims.ny;
+else
+    [nx,nu,ny] = mpt_sysStructInfo(sysStruct);
+end
+
+if isfield(probStruct, 'Qy'),
+    ycost = 1;
+    Qy = probStruct.Qy;
+    Qy = Qy(1:min(size(Qy, 1), ny), 1:min(size(Qy, 2), ny));
+else
+    ycost = 0;
+end
+
+Q = probStruct.Q;
+Q = Q(1:min(size(Q, 1), nx), 1:min(size(Q, 2), nx));
+R = probStruct.R;
+
+if isfield(probStruct, 'Rdu'),
+    Rdu = probStruct.Rdu;
+else
+    Rdu = probStruct.R;
+end
+dumode = 0;
+if isfield(sysStruct, 'dumode'),
+    dumode = sysStruct.dumode;
+end
+norm = probStruct.norm;
+
+deltaU = diff(U);
+if dumode | probStruct.tracking == 1,
+    N = size(deltaU, 1);
+else
+    N = size(U, 1);
+end
+
+cost = 0;
+
+switch probStruct.tracking
+    case 0,
+        % regulation problem
+
+        if ycost,
+            if isfield(probStruct, 'yref'),
+                reference = probStruct.yref;
+            else
+                reference = zeros(ny, 1);
+            end
+        else
+            if isfield(probStruct, 'xref'),
+                reference = probStruct.xref;
+            else
+                reference = zeros(nx, 1);
+            end
+            if isfield(probStruct, 'uref'),
+                uref = probStruct.uref;
+            else
+                uref = zeros(nu, 1);
+            end
+        end
+        
+        if ycost 
+            if dumode,
+                % || Qy * (y - ref) || + || Rdu * deltaU ||
+                
+                for iN = 1:N,
+                    cost = cost + sub_norm(Qy, Y(iN, :)' - reference, norm) + ...
+                        sub_norm(Rdu, deltaU(iN, :)', norm);
+                end
+                
+            else
+                % || Qy * (y - ref) || + || R * u ||
+                
+                for iN = 1:N,
+                    cost = cost + sub_norm(Qy, Y(iN, :)' - reference, norm) + ...
+                        sub_norm(R, U(iN, :)', norm);
+                end
+                
+            end
+            
+        else
+            if dumode,
+                % || Q * (x - ref) || + || Rdu * deltaU ||
+                
+                for iN = 1:N,
+                    cost = cost + sub_norm(Q, X(iN, :)' - reference, norm) + ...
+                        sub_norm(Rdu, deltaU(iN, :)', norm);
+                end
+                
+            else
+                % || Q * (x - ref) || + || R * (u - uref) ||
+                
+                for iN = 1:N,
+                    cost = cost + sub_norm(Q, X(iN, :)' - reference, norm) + ...
+                        sub_norm(R, U(iN, :)' - uref, norm);
+                end
+                
+            end
+        end
+        
+    case 1,
+        % tracking with deltaU formulation
+        reference = Options.reference;
+        if ycost,
+            % || Qy * (y - ref) || + || Rdu * deltaU ||
+            
+            for iN = 1:N,
+                cost = cost + sub_norm(Qy, Y(iN, :)' - reference, norm) + ...
+                    sub_norm(Rdu, deltaU(iN, :)', norm);
+            end
+            
+        else
+            % || Q * (x - ref) || + || Rdu * deltaU ||
+        
+            for iN = 1:N,
+                cost = cost + sub_norm(Q, X(iN, :)' - reference, norm) + ...
+                    sub_norm(Rdu, deltaU(iN, :)', norm);
+            end
+            
+        end
+        
+    case 2,
+        % tracking without deltaU formulation
+        reference = Options.reference;
+        
+        if ycost,
+            % || Qy * (y - ref) || + || R * u ||
+            
+            for iN = 1:N,
+                cost = cost + sub_norm(Qy, Y(iN, :)' - reference, norm) + ...
+                    sub_norm(R, U(iN, :)', norm);
+            end
+            
+        else
+            % || Q * (x - ref) || + || R * u ||
+            
+            for iN = 1:N,
+                cost = cost + sub_norm(Q, X(iN, :)' - reference, norm) + ...
+                    sub_norm(R, U(iN, :)', norm);
+            end
+            
+        end
+        
+end
+
+
+
+%==========================================================================
+function result = sub_norm(Q, x, p)
+% computes a weighted p-norm of a vector
+
+x = x(:);
+if p==2
+    result = x'*Q*x;
+else
+    result = norm(Q*x, p);
 end
