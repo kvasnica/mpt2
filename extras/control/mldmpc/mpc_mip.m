@@ -198,6 +198,13 @@ else
 end  
 if ~isfield(Options,'epsil')
    epsil = 1e-10;
+    if ~isempty(mptOptions.milpsolver),
+        if mptOptions.milpsolver == 2,
+            % set "epsil" to zero for GLPK, noticed some numerical problems when a
+            % non-zero value is used
+            epsil = 0;
+        end
+    end
 else
    epsil = Options.epsil;   
 end
@@ -687,13 +694,6 @@ if Options.norm==2,
     [xopt, fopt, Eflagm, flag] = mpt_solveMIQP(G, CC, AA, B+epsil*ones(nlin,1), AAeq, BBeq, ...
         bl, bu, vartype, [], MIoptions);
 else
-    if ~isempty(mptOptions.milpsolver),
-        if mptOptions.milpsolver == 2,
-            % set "epsil" to zero for GLPK, noticed some numerical problems when a
-            % non-zero value is used
-            epsil = 0;
-        end
-    end
     [xopt, fopt, Eflagm, flag] = mpt_solveMILP(CC, AA, B+epsil*ones(nlin,1), AAeq, BBeq, ...
         bl, bu, vartype, [], MIoptions);
 end
