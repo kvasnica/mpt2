@@ -96,14 +96,13 @@ if isa(ctrl, 'mptctrl')
     if ~isexplicit(ctrl),
         error('This function supports only explicit controllers!');
     end
-    ctrlStruct = struct(ctrl);
 else
-    ctrlStruct = ctrl;
+    if ~mpt_isValidCS(ctrl)
+        error('mpt_performance: First argument has to be a valid controller structure! See mpt_control for details.');
+    end
 end
-
-if ~mpt_isValidCS(ctrlStruct)
-    error('mpt_performance: First argument has to be a valid controller structure! See mpt_control for details.');
-end
+    
+ctrlStruct = ctrl;
 
 if nargin<2
     gridpoints = 30;
