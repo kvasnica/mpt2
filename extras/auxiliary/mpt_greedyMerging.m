@@ -10,9 +10,6 @@ function [PolyOut,details] = mpt_greedyMerging(PolyIn, Options)
 %                 as an array of polytopes using the MPT toolbox, or
 %                 or as a structure using the halfspaces description Hi*x <= Ki
 %               Options (optional):
-%                 hullunion: if enabled, uses convex hull to compute convex union
-%                            WARNING: can be VERY slow on higher-dimensional polytopes!
-%                            (default is OFF)
 %                 multiple: 0: one loop
 %                           1: do multiple merging loops until no improvement (default)
 %                 trials:   0: one trial (default)
@@ -91,9 +88,6 @@ if ~isfield(Options,'abs_tol')
 end
 if ~isfield(Options,'rel_tol')
     Options.rel_tol = mptOptions.rel_tol;
-end
-if ~isfield(Options,'hullunion')
-    Options.hullunion = 0;
 end
 
 if ~isfield(Options, 'statusbar')
