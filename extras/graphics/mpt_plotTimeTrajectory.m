@@ -277,25 +277,25 @@ if 0 & ctrlStruct.probStruct.tracking,
         % plot states
         ctr = ctr+1;
         Xmat = [Xmat X(1:end-endp,ii)];
-        %handleX(ctr) = plot(T,X(1:end-endp,ii),'Color',colors(ii),'LineWidth',linewidth);
+        legendXtext{ctr}=sprintf('x_%d',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
             % use user defined text labels if defined
-            legendXtext{ctr} = ctrlStruct.sysStruct.StateName{ii};
-        else
-            legendXtext{ctr}=sprintf('x_%d',ii);
+            if ~isempty(ctrlStruct.sysStruct.StateName),
+                legendXtext{ctr} = ctrlStruct.sysStruct.StateName{ii};
+            end
         end
     end
     Xrefmat = [];
     for ii=1:nxt,
         % plot references
         ctr = ctr+1;
-        %handleX(ctr) = plot(T,X(1:end-endp,nxt+nu+ii),'--','Color',colors(ii),'LineWidth',linewidth);
         Xrefmat = [Xrefmat X(1:end-endp,nxt+nu+ii)];
+        legendXtext{ctr}=sprintf('r_%d',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
-            % use user defined text labels if defined
-            legendXtext{ctr} = sprintf('Reference %s', ctrlStruct.sysStruct.StateName{ii});
-        else
-            legendXtext{ctr}=sprintf('r_%d',ii);
+            if ~isempty(ctrlStruct.sysStruct.StateName),
+                % use user defined text labels if defined
+                legendXtext{ctr} = sprintf('Reference %s', ctrlStruct.sysStruct.StateName{ii});
+            end
         end
     end
     handleX = plot(T,Xmat,T,Xrefmat,'--','LineWidth',linewidth);
@@ -309,13 +309,13 @@ else
     Xmat = [];
     for ii=1:nx,
         % create legend description (i.e. x_1, x_2, ... )
-        %handleX(ii)=plot(T,X(1:end-endp,ii),'Color',colors(ii),'LineWidth',linewidth);
         Xmat = [Xmat X(1:end-endp,ii)];
+        legendXtext{ii}=sprintf('x_%d',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
-            % use user defined text labels if defined
-            legendXtext{ii} = ctrlStruct.sysStruct.StateName{ii};
-        else
-            legendXtext{ii}=sprintf('x_%d',ii);
+            if ~isempty(ctrlStruct.sysStruct.StateName),
+                % use user defined text labels if defined
+                legendXtext{ii} = ctrlStruct.sysStruct.StateName{ii};
+            end
         end
     end
     handleX = plot(T,Xmat,'LineWidth',linewidth);
@@ -352,36 +352,37 @@ if ctrlStruct.probStruct.tracking,
     for ii=1:nyt,
         % plot outputs
         ctr = ctr+1;
-        %handleY(ctr) = plot(T,Y(:,ii),'Color',colors(ii),'LineWidth',linewidth);
         Ymat = [Ymat Y(:,ii)];
+        legendYtext{ctr}=sprintf('y_%d',ii);
         if isfield(ctrlStruct.sysStruct, 'OutputName'),
-            % use user defined text labels if defined
-            legendYtext{ctr} = ctrlStruct.sysStruct.OutputName{ii};
-        else
-            legendYtext{ctr}=sprintf('y_%d',ii);
+            if ~isempty(ctrlStruct.sysStruct.OutputName),
+                % use user defined text labels if defined
+                legendYtext{ctr} = ctrlStruct.sysStruct.OutputName{ii};
+            end
         end
     end
 else
     for ii=1:ny,
         % create legend description (i.e. y_1, y_2, ...)
-        %handleY(ii)=plot(T,Y(:,ii),'Color',colors(ii),'LineWidth',linewidth);
         Ymat = [Ymat Y(:,ii)];
+        legendYtext{ii}=sprintf('y_%d',ii);
         if isfield(ctrlStruct.sysStruct, 'OutputName'),
-            % use user defined text labels if defined
-            legendYtext{ii} = ctrlStruct.sysStruct.OutputName{ii};
-        else
-            legendYtext{ii}=sprintf('y_%d',ii);
+            if ~isempty(ctrlStruct.sysStruct.OutputName),
+                % use user defined text labels if defined
+                legendYtext{ii} = ctrlStruct.sysStruct.OutputName{ii};
+            end
         end
     end
     if isfield(ctrlStruct.probStruct,'yref'),
         Ymatref = [];
         for ii=1:ny,
             Ymatref = [Ymatref ctrlStruct.probStruct.yref(ii)*ones(length(T),1)];
+            legendYtext{end+1}=sprintf('r_%d',ii);
             if isfield(ctrlStruct.sysStruct, 'OutputName'),
-                % use user defined text labels if defined
-                legendYtext{end+1} = sprintf('Reference %s', ctrlStruct.sysStruct.OutputName{ii});
-            else
-                legendYtext{end+1}=sprintf('r_%d',ii);
+                if ~isempty(ctrlStruct.sysStruct.OutputName),
+                    % use user defined text labels if defined
+                    legendYtext{end+1} = sprintf('Reference %s', ctrlStruct.sysStruct.OutputName{ii});
+                end
             end
         end
     end
@@ -433,13 +434,13 @@ Umat = [];
 for ii=1:nu,
     % create legend description (i.e. u_1, u_2, ...)
     [Tx,Uy]=stairs(T,U(:,ii));
-    %handleU(ii)=plot(Tx,Uy,'Color',colors(ii),'LineWidth',linewidth);
     Umat = [Umat Uy];
+    legendUtext{ii}=sprintf('u_%d',ii);
     if isfield(ctrlStruct.sysStruct, 'InputName'),
-        % use user defined text labels if defined
-        legendUtext{ii} = ctrlStruct.sysStruct.InputName{ii};
-    else
-        legendUtext{ii}=sprintf('u_%d',ii);
+        if ~isempty(ctrlStruct.sysStruct.InputName),
+            % use user defined text labels if defined
+            legendUtext{ii} = ctrlStruct.sysStruct.InputName{ii};
+        end
     end
 end
 handleU=plot(Tx,Umat,'LineWidth',linewidth);
@@ -509,25 +510,25 @@ else
         for ii=1:nxt,
             % plot states
             ctr = ctr+1;
-            %handleD(ctr) = plot(T,D(:,ii),'Color',colors(ii),'LineWidth',linewidth);
             Dmat = [Dmat D(:,ii)];
+            legendDtext{ctr}=sprintf('d_%d',ii);
             if isfield(ctrlStruct.sysStruct, 'StateName'),
-                % use user defined text labels if defined
-                legendDtext{ctr} = sprintf('Disturbance on %s',ctrlStruct.sysStruct.StateName{ii});
-            else
-                legendDtext{ctr}=sprintf('d_%d',ii);
+                if ~isempty(ctrlStruct.sysStruct.StateName),
+                    % use user defined text labels if defined
+                    legendDtext{ctr} = sprintf('Disturbance on %s',ctrlStruct.sysStruct.StateName{ii});
+                end
             end
         end
     else
         for ii=1:nd,
             % create legend description (i.e. d_1, d_2, ...)
-            %handleD(ii)=plot(T,D(:,ii),'Color',colors(ii),'LineWidth',linewidth);
             Dmat = [Dmat D(:,ii)];
+            legendDtext{ii}=sprintf('d_%d',ii);
             if isfield(ctrlStruct.sysStruct, 'StateName'),
-                % use user defined text labels if defined
-                legendDtext{ii} = sprintf('Disturbance on %s',ctrlStruct.sysStruct.StateName{ii});
-            else
-                legendDtext{ii}=sprintf('d_%d',ii);
+                if ~isempty(ctrlStruct.sysStruct.StateName),
+                    % use user defined text labels if defined
+                    legendDtext{ii} = sprintf('Disturbance on %s',ctrlStruct.sysStruct.StateName{ii});
+                end
             end
         end
     end
