@@ -97,7 +97,7 @@ end
 
 bboxOpt.noPolyOutput = 1;  % tell bounding_box that we just need vertices
 [R, Pl, Pu] = bounding_box(P, bboxOpt);
-[R, Ol, Ou] = bounding_box(outer);
+[R, Ol, Ou] = bounding_box(outer, bboxOpt);
 bboxP = [Pl Pu];
 bboxO = [Ol Ou];
 
