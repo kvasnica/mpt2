@@ -370,23 +370,10 @@ while(notConverged>0 & iter<maxIter)
             if Options.nounion==1,
                 how=0;
             else
-                % Options.hullunion is handled directly in polytope/union.m
-                if nx<=3,
-                    % compute the convex union if dimension is below or equal to 3
-                    [Pu,how]=union(tP,Options);
-                    if how,
-                        % union is convex
-                        PuPn_equal = (Pu == Pn(i));
-                    end
-                else
-                    % it is also possible to simplify Pu using greedy merging
-                    Pu = merge(tP, mergeOpt);
-                    how = length(Pu) < trans;
-                    if how,
-                        % the merged object consists of less polytopes than the
-                        % original, this is good for us
-                        PuPn_equal = (Pu == Pn(i));
-                    end
+                [Pu,how]=union(tP,Options);
+                if how,
+                    % union is convex
+                    PuPn_equal = (Pu == Pn(i));
                 end
             end
             if(how)
@@ -445,15 +432,7 @@ if mergefinal,
         Pt=Pn(dynSet);   %set of polytopes with dynamic dyn
         
         %try to merge polytopes
-        if nx<=3,
-            % use union for dimensions smaller than 4
-            [Pu,how]=union(Pt, Options); 
-        else
-            % use greedy merging for higher dimensions (computation of union becomes
-            % prohibitive for dimensions above 3 and more than 2 input polytopes)
-            Pu = merge(Pt, mergeOpt);
-            how = length(Pu) <= length(Pt);
-        end
+        [Pu,how]=union(Pt, Options); 
         
         if(how==1)
             %union is convex
