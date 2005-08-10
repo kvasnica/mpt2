@@ -1,4 +1,4 @@
-function [cost,XC,X0] = mpt_performance(ctrl,gridpoints,Options)
+function [cost,XC,X0,Xinfeas] = mpt_performance(ctrl,gridpoints,Options)
 %MPT_PERFORMANCE Computes performance (i.e. sum of closed-loop costs) associated to a given controller
 %
 % [cost,XC] = mpt_performance(ctrl,gridpoints,Options)
@@ -40,6 +40,9 @@ function [cost,XC,X0] = mpt_performance(ctrl,gridpoints,Options)
 %          column is the cost obtained for this state
 % X0     - set of feasible initial states (states which lie in
 %          ctrlStruct.Pfinal)
+% Xinfeas - matrix of states for which the following holds:
+%             a) they feasible initial states (i.e. x \in Pfinal)
+%             b) no feasible closed-loop trajectory
 %
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
@@ -125,14 +128,7 @@ end
 
 bbOptions = Options;
 bbOptions.noPolyOutput = 1; % we don't need the bounding box as a polytope object
-if length(ctrlStruct.Pfinal)>1,
-    % if Pfinal is a polyarray, first compute the hull
-    hullPf = hull(ctrlStruct.Pfinal);
-    % and then calculate the bounding box to obtain bounds on feasible state-space
-    [B, lb, ub] = bounding_box(hullPf,bbOptions);
-else
-    [B, lb, ub] = bounding_box(ctrlStruct.Pfinal,bbOptions);
-end
+[B, lb, ub] = bounding_box(ctrlStruct.Pfinal, bbOptions);
 
 % grid the state-space into equidistantly placed points
 %dimB = dimension(B);
@@ -188,6 +184,7 @@ end
 
 narg3 = (nargout==3);
 X0 = [];
+Xinfeas = [];
 for ii=1:npoints,
     if ii==1 | ii==npoints | mod(ii*gridpoints,gridpoints^nx)==0,
         if ii>1, ind = (ii/gridpoints)*gridpoints; else ind = 0; end
@@ -202,8 +199,20 @@ for ii=1:npoints,
         end
     end
     [X,U,Y,D,cost(ii),traj,feasible]=mpt_computeTrajectory(ctrlStruct,x0,[],locOpt);  % compute closed-loop trajectory
+    if isinf(cost(ii)) & size(X) > 1,
+        % no convergence for this given point
+        if Options.verbose > 1,
+            fprintf('No feasible trajectory for feasible initial state %s\n', mat2str(x0(:))');
+        end
+        Xinfeas = [Xinfeas; x0(:)'];
+    end
 end
 
+if ~isempty(Xinfeas),
+    if Options.verbose > -1,
+        fprintf('\nPartition is not invariant! Check failed for %d states.\n\n', size(Xinfeas,1));
+    end
+end
 
 feasible_index = find(~isinf(-cost));
 feasibleX = datapoints(feasible_index,:);
