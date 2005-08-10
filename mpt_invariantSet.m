@@ -17,8 +17,6 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 % ---------------------------------------------------------------------------
 % ctrl              - explicit controller (an MPTCTRL object)
 % Options.verbose   - Level of verbosity {0|1|2}
-% Options.hullunion - If set to 1, uses alternative computation of convex unions
-%                     (default is 0)
 % Options.nohull    - If set to 1, do not compute convex unions (may
 %                     significantly prolong run-time)
 % Options.maxIter   - maximum number of iterations. Set is not invariant if
@@ -34,9 +32,6 @@ function invCtrl = mpt_invariantSet(ctrl, Options)
 %                     Default value is 20.
 %                     Set this option to 0 if you don't want to impose any limit
 %                     on number of separating hyperplanes.
-%
-% NOTE: If the algorihtms stalls, use Options.hullunion=1. This hack is,
-%       however, limited to small dimensions, say 2, 3, 4.
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
