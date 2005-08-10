@@ -337,6 +337,7 @@ else
             if Options.verbose>-1,
                 disp(['COMPUTETRAJECTORY: no feasible control law found for state x0=' mat2str(x0') ' !']);
             end
+            cost = -Inf;
             return
         end
         cost = cost + costCL;
@@ -419,6 +420,7 @@ else
         if Options.verbose>-1,
             disp('COMPUTETRAJECTORY: maximum number of iterations reached!');
         end
+        cost = -Inf;
     end
 
     if nargout > 4,
