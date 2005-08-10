@@ -16,9 +16,8 @@ function [Pu,how] = union(Pn, Options)
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% Pn                - Polytope array
-% Options.hullunion - if enabled, uses convex hull to compute convex union
-%                     WARNING: can be VERY slow on higher-dimensional polytopes!
+% Pn                  - Polytope array
+% Options.useisconvex - if enabled, uses convex hull to compute convex union
 %                     if number of regions is smaller than 3 and this flag is
 %                     not defined, the default value will be 0. otherwise, it
 %                     will be set to 1.
@@ -86,7 +85,6 @@ if ~isa(Pn,'polytope')
     error('UNION: you MUST pass polytopes to this function!');
 end
 
-%emptypoly=polytope;
 emptypoly = mptOptions.emptypoly;
 
 if ~isfulldim(Pn),  %check if polytope is empty
@@ -123,15 +121,15 @@ end
 if ~isfield(Options,'verbose'),
     Options.verbose=mptOptions.verbose;
 end
-if ~isfield(Options,'hullunion'),
-    % if enabled, uses convex hull to compute convex union
-    % WARNING: can be VERY slow on higher-dimensional polytopes!
+if ~isfield(Options,'useisconvex'),
+    % if enabled, uses alternative approach to compute convex unions (faster on
+    % higher dimensions)
     if length(Pn)<=2,
         % if we have only 2 regions, we switch to "standard" approach as
         % described in the corresponding literature (see above for citation)
-        Options.hullunion = 0;
+        Options.useisconvex = 0;
     else
-        Options.hullunion = 1;
+        Options.useisconvex = 1;
     end
 end
 
@@ -141,11 +139,11 @@ if Options.reduce,
     Pn=reduce(Pn);
 end
 
-if Options.hullunion,
-    Pu = hull(Pn, Options);
-    how = (Pu == Pn);
-    if how == 0
-        % union is not convex
+if Options.useisconvex,
+    % use isconvex() which is much faster on higher dimensions and/or with more
+    % than 3 regions
+    [how, Pu] = isconvex(Pn);
+    if ~how,
         Pu = Pn;
     end
     return
