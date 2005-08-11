@@ -425,6 +425,14 @@ if any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin))
     Options.dumax = sysStruct.dumax;
     Options.dumin = sysStruct.dumin;
 end
+if isfield(sysStruct, 'xmax') & isfield(sysStruct, 'xmin'),
+    Options.xmax = sysStruct.xmax;
+    Options.xmin = sysStruct.xmin;
+end
+if isfield(sysStruct, 'ymax') & isfield(sysStruct, 'ymin'),
+    Options.ymax = sysStruct.ymax;
+    Options.ymin = sysStruct.ymin;
+end
 
 Options.TerminalConstraint = 0;
 if probStruct.Tconstraint==2 & isfield(probStruct, 'Tset'),
