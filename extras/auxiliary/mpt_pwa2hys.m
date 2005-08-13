@@ -1,19 +1,19 @@
-function mpt_ss2mld(sysStruct, fname)
-%MPT_SS2MLD Converts a PWA system described in sysStruct to a MLD model
+function mpt_pwa2hys(sysStruct, fname)
+%MPT_PWA2HYS Converts a PWA system described in sysStruct into a HYSDEL model
 %
-% mpt_ss2mld(sysStruct, filename)
+% mpt_pwa2hys(sysStruct, filename)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Converts a PWA system described in sysStruct to a MLD model
+% Converts a PWA system described into a HYSDEL model.
 %
-% internal function
+% NOTE! you need to compile the output file with HYSDEL manually.
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
 %  sysStruct   - MPT system structure
-%  filename    - name of file
+%  filename    - name of HYSDEL file to create
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -22,7 +22,7 @@ function mpt_ss2mld(sysStruct, fname)
 
 % Copyright is with the following author(s):
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%(C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %         kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -49,12 +49,13 @@ function mpt_ss2mld(sysStruct, fname)
 %  * if sysStruct.(C,D,g) is constant for every dynamics, we can get rid of
 %    auxliary ZY variables and rewrite the OUTPUT section to use state variables
 
+fprintf('Warning: This function is experimental and known to be buggy in some cases, use with caution.\n');
+
+sysStruct = mpt_verifySysStruct(sysStruct);
 
 if ~iscell(sysStruct.A),
     error('System must be Piecewise-Affine!');
 end
-
-sysStruct = mpt_verifySysStruct(sysStruct);
 
 if ~isfield(sysStruct, 'xmin')
     error('"sysStruct.xmin" must be defined!');
