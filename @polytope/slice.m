@@ -62,10 +62,14 @@ if ~isa(PA,'polytope')
     error('SLICE: PA must be a polytope object!');
 end
 
+if ~isfulldim(PA),
+    Pcut = PA;
+    return
+end
+
 if length(unique(cut_dim)) ~= length(cut_dim)
     error('SLICE: same coordinate to cut is multiply defined!')
 end
-
 
 Pcut = mptOptions.emptypoly;
 nx   = dimension(PA);
