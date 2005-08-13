@@ -164,11 +164,10 @@ elseif isstruct(obj)
             % xmax and xmin must be defined for pwa2mld translation
             error(sprintf('"%s.xmin" and "%s.xmax" must be defined!', inputname(1), inputname(1)));
         end
-        fname = tempname;
-        mpt_ss2mld(obj, fname);
-        newSysStruct = mpt_sys(fname, struct('verbose', 0, 'dohys2pwa', 0));
-        obj.data = newSysStruct.data;
         sysStruct = obj;
+        % convert PWA system into MLD representation
+        S = mpt_pwa2mld(sysStruct);
+        sysStruct.data.MLD = S;
         itype = 'sysStruct';
         
     elseif isfield(obj, 'B')
