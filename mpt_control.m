@@ -223,7 +223,7 @@ if nbool>0,
         switch probStruct.subopt_lev
             case 0,
                 if probStruct.norm==2,
-                    error('2-norm problems not suuported for probStruct.subopt_lev=0 and discrete inputs!');
+                    error('2-norm problems not supported for probStruct.subopt_lev=0 and discrete inputs!');
                 end
                 if isinf(probStruct.N),
                     error('No infinite-time solution available for systems with discrete inputs!');
