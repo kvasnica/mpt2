@@ -351,8 +351,9 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref'),
     xref = probStruct.xref;
     uref = probStruct.uref;
     for reg = 1:nR,
+        nu = round(size(ctrlStruct.Fi{reg}, 1) / length(uref(:)));
         ctrlStruct.Gi{reg} = ctrlStruct.Gi{reg} - ...
-            ctrlStruct.Fi{reg}*xref + repmat(uref,probStruct.N,1);
+            ctrlStruct.Fi{reg}*xref + repmat(uref,nu,1);
         if probStruct.subopt_lev==0,
             % for cost-optimal solution, translate also the cost
             ctrlStruct.Ci{reg} = ctrlStruct.Ci{reg} - ctrlStruct.Bi{reg}*xref + xref'*ctrlStruct.Ai{reg}*xref;
