@@ -374,7 +374,7 @@ for i = 1:ALPHAit,
     [aSetFound,activeSet] = findActiveSet(probMatrices,xFeasible,asOptions);
     if aSetFound,
         cr = getCriticalRegion(probMatrices, activeSet, crOptions);
-        if cr.type ~= 0, % full dimensional CR
+        if cr.type ~= 0 & isfulldim(cr.P), % full dimensional CR
             initPointFound = 1;
             break;
         end
@@ -1175,6 +1175,9 @@ function cr  = getCriticalRegion (matrices, activeSet, crOptions)
         %-------------------------------------------------------
         cr  = getDualDegenerateCR (matrices, activeSet, crOptions);
         if cr.type == -1 | cr.type == 0,
+            if ~isfulldim(cr.P),
+                cr.type = 0;
+            end
             return;
         end
     end
