@@ -216,3 +216,15 @@ end
 if isfield(probStruct, 'Qy') & probStruct.Tconstraint==1,
     disp('WARNING: Closed-loop stability not guaranteed for penalties on outputs.');
 end
+
+if isfield(sysStruct, 'noise'),
+    if isa(sysStruct.noise, 'polytope'),
+        if isfulldim(sysStruct.noise) & probStruct.tracking > 0,
+            error('Additive uncertainties not supported for tracking problems.');
+        end
+    end
+end
+
+if isfield(sysStruct, 'Aunc') & probStruct.tracking > 0,
+    error('Parametric uncertainties not supported for tracking problems.');
+end
