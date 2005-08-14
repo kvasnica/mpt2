@@ -222,9 +222,15 @@ if isfield(sysStruct, 'noise'),
         if isfulldim(sysStruct.noise) & probStruct.tracking > 0,
             error('Additive uncertainties not supported for tracking problems.');
         end
+        if isfulldim(sysStruct.noise) & isinf(probStruct.N) & probStruct.subopt_lev==0,
+            error('Additive uncertainties not supported for infinite time solutions.');
+        end
     end
 end
 
 if isfield(sysStruct, 'Aunc') & probStruct.tracking > 0,
     error('Parametric uncertainties not supported for tracking problems.');
+end
+if isfield(sysStruct, 'Aunc') & isinf(probStruct.N) & probStruct.subopt_lev==0,
+    error('Parametric uncertainties not supported for infinite time solutions.');
 end
