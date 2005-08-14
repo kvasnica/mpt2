@@ -397,7 +397,7 @@ for dyn_ctr=1:unc_loop
         tmapOptions.maxsph = ceil(lenP^2/sphratio);
         tmap = mpt_transmap(Pn, Acell, Fcell, tmapOptions);
         
-        if Options.verbose > -1,
+        if Options.verbose > 1,
             fprintf('Transition map discarded %.2f%% of possible transitions.\n', 100*(1 - nnz(tmap)/numel(tmap)));
         end
     end
