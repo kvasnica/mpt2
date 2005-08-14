@@ -269,9 +269,9 @@ if dUconstraints,
 end
 if probStruct.tracking==1
     if Options.guierrors,
-        error('Tracking with delta U formulation is not allowed! Set "tracking without delta U formulation" option in "Advanced options".');
+        error('Tracking with delta U formulation for boolean inputs not supported. Set "tracking without delta U formulation" option in "Advanced options".');
     else
-        error('Tracking with delta U formulation is not allowed! Please use "probStruct.tracking=2".');
+        error('Tracking with delta U formulation for boolean inputs not supported. Please use "probStruct.tracking=2".');
     end
 end
 if isfield(sysStruct, 'dumode'),
