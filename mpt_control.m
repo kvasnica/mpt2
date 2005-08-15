@@ -377,6 +377,9 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref'),
     ctrlStruct.Pfinal = Pfinal;
     ctrlStruct.Pn = Pn;
     ctrlStruct.sysStruct = origSysStruct;
+    if isfield(probStruct, 'FBgain') & ~isfield(origProbStruct, 'FBgain'),
+        origProbStruct.FBgain = probStruct.FBgain;
+    end
     ctrlStruct.probStruct = origProbStruct;
 end
 
