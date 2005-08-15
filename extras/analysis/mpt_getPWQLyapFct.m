@@ -636,6 +636,9 @@ for i = 1:length(veriStore)
 end
 dims(dims==0) = 1; % Dummy variables
 N = sdpvar(dims,dims);
+if all(size(dims)==1),
+    N = {N};
+end
 
 % Setup LMIs for transition deacay
 for transCtr = 1:length(veriStore)
