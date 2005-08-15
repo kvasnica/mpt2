@@ -301,13 +301,13 @@ end
 
 if isfulldim(sysStruct.noise)
     disp('System is subject to additive noise, calculating Quadratic Lyapunov function...');
-    [lyapunovP, drho, feasible] = mpt_getQuadLyapFct(ctrlStruct, lyapOptions);
-    if feasible==0
+    [lyapunovP, drho, feasibleN] = mpt_getQuadLyapFct(ctrlStruct, lyapOptions);
+    if feasibleN==0
         disp('WARNING: System may be unstable!');
     else
         ctrlStruct.details.lyapunovP = lyapunovP;
     end
-    ctrlStruct.details.feasible = feasible;
+    ctrlStruct.details.feasible = feasibleN;
     
 elseif Options.PWQlyap,
     % PWQ Lyapunov function is computed to verify stability
