@@ -234,3 +234,12 @@ end
 if isfield(sysStruct, 'Aunc') & isinf(probStruct.N) & probStruct.subopt_lev==0,
     error('Parametric uncertainties not supported for infinite time solutions.');
 end
+
+% reject feedback pre-stabilization
+if isfield(probStruct, 'feedback'),
+    if probStruct.feedback,
+        if nbool > 0,
+            error('Feedback pre-stabilization not supported for systems with boolean inputs.');
+        end
+    end
+end

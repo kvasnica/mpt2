@@ -472,6 +472,13 @@ if isinf(probStruct.N) & probStruct.subopt_lev==0,
     end
 end
 
+if probStruct.feedback,
+    if probStruct.tracking > 0,
+        error('Feedback pre-stabilization not supported for tracking problems.');
+    end
+end
+
+
 if probStruct.Tconstraint==2 & isfield(probStruct,'yref'),
     error(['"' psn '.Tset" and "' psn '.yref" are contradicting objectives, please remove one of them.']);
 end
