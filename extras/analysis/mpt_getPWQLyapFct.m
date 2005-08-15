@@ -310,6 +310,11 @@ temp = repmat(1,1,length(Pn));
 Q = sdpvar(n*temp,n*temp,'symmetric'); %initialize PWQ Lyapunov variables
 L = sdpvar(n*temp,temp,'full');        %initialize PWQ Lyapunov variables
 C = sdpvar(temp,temp,'full');          %initialize PWQ Lyapunov variables
+if ~iscell(L),
+    L = {L};
+    C = {C};
+    Q = {Q};
+end
 for i=1:length(Pn)
     if(isinside(Pn(i),zeros(n,1),isinOpt))
         containsOrigin(i)=1;%The Lyapunov function is quadratic around the origin...
