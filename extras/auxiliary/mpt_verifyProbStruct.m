@@ -507,4 +507,8 @@ if isfield(probStruct, 'Nc'),
     end
 end
 
+if isfield(probStruct, 'Qy') & probStruct.subopt_lev==1,
+    error('Output weights not supported for minimum-time solutions.');
+end
+
 probStruct.verified=1;
