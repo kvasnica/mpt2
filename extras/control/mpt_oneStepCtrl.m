@@ -222,6 +222,14 @@ if ~isfield(Options, 'Pfinal'),
         
         % get matrices of the problem
         [G1,W1,E1]=mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
+   
+        % exit if problem is not feasible
+        if isinf(W1),
+            if statusbar,
+                mpt_statusbar;
+            end
+            error('Problem is infeasible.');
+        end
         
         % compute feasible set via projection
         P=polytope([-E1 G1],W1);
