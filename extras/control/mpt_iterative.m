@@ -235,6 +235,9 @@ end
 
 if nR==1,
     Pfinal = Pinvset;
+    if ~isfulldim(Pfinal),
+        error('Bailing out since no fully dimensional invariant set found.');
+    end
     if isempty(bndA),
         Pbnd = emptypoly;
     else
