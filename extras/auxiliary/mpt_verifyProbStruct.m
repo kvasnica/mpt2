@@ -467,6 +467,8 @@ if isinf(probStruct.N) & probStruct.subopt_lev==0,
         error('Output tracking not allowed for infinite-time solutions!');
     elseif (isfield(probStruct,'xref') | isfield(probStruct,'uref')),
         error('Fixed state tracking not allowed for infinite-time solutions!');
+    elseif probStruct.tracking > 0,
+        error('Tracking not allowed for infinite-time solutions.');
     end
 end
 
