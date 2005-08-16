@@ -147,6 +147,7 @@ if nbool>0,
         umin=U(1:nu*probStruct.N);
         umin=reshape(umin,nu,probStruct.N)';            
         U = umin;
+        Umat = U;
     end
 else
     
@@ -197,6 +198,7 @@ else
                 exitflag = 0;
             end
         end
+        Umat = reshape(U, nu, size(U,1)/nu)';
     end
     
 if(exitflag<=0)
@@ -208,7 +210,6 @@ else
 end
     
 X = x0';
-Umat = reshape(U, nu, size(U,1)/nu)';
 if nargout > 6,
     if ~iscell(sysStruct.A),
         for ii=1:size(Umat,1),
