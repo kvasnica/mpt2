@@ -590,4 +590,27 @@ if ~isfield(sysStruct, 'Ts'),
     sysStruct.Ts = 1;
 end
 
+if length(sysStruct.ymax(:)) ~= length(sysStruct.ymin(:)),
+    error(sprintf('"%s.ymax" and "%s.ymin" must be of same length.', ssn, ssn));
+end
+if length(sysStruct.umax(:)) ~= length(sysStruct.umin(:)),
+    error(sprintf('"%s.umax" and "%s.umin" must be of same length.', ssn, ssn));
+end
+if length(sysStruct.umax(:)) ~= length(sysStruct.dumax(:)),
+    error(sprintf('"%s.umax" and "%s.dumax" must be of same length.', ssn, ssn));
+end
+if length(sysStruct.umin(:)) ~= length(sysStruct.dumin(:)),
+    error(sprintf('"%s.umin" and "%s.dumin" must be of same length.', ssn, ssn));
+end
+if isfield(sysStruct, 'xmax'),
+    if length(sysStruct.xmax(:)) ~= length(sysStruct.xmin(:)),
+        error(sprintf('"%s.xmax" and "%s.xmin" must be of same length.', ssn, ssn));
+    end
+end
+if isfield(sysStruct, 'dymax'),
+    if length(sysStruct.dymax(:)) ~= length(sysStruct.dymin(:)),
+        error(sprintf('"%s.dymax" and "%s.dymin" must be of same length.', ssn, ssn));
+    end
+end
+       
 sysStruct.verified=1;
