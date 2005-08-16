@@ -243,3 +243,9 @@ if isfield(probStruct, 'feedback'),
         end
     end
 end
+
+if any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin)),
+    if isfulldim(sysStruct.noise) | isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
+        error('Uncertainties not supported for systems with deltaU constraints');
+    end
+end
