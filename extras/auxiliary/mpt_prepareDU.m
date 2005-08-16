@@ -198,7 +198,7 @@ Hn = [Hbnd zeros(nxc,nu); zeros(nuc,nx) I2u];
 Kn = [Kbnd; sysStruct.umax; -sysStruct.umin];
 sysStruct.Pbnd = polytope(Hn,Kn);
 
-if ispwa & isfield(probStruct,'Tset'),
+if isfield(probStruct,'Tset'),
     if isfulldim(probStruct.Tset),
         [Hs,Ks]=double(probStruct.Tset);
         [nxc,nxx] = size(Hs);
