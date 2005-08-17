@@ -27,6 +27,8 @@ function [P]= projection(PA,dim,Options)
 % Options.projection=3  - Block Elimination
 % Options.projection=4  - Equality Set Projection (ESP)
 % Options.projection=5  - Fourier-Motzkin Elimination (mex implementation)
+% Options.projection=6  - Fourier-Motzkin Elimination (mex implementation) -
+%                         fast but eventualy unreliable
 %
 % Note: If Options.projection is not set, best method is selected automatically
 %
@@ -114,23 +116,23 @@ end
 if ~isfield(Options,'psolvers')
     if length(orig_dim)<=2,
         % use iterative hull for lower dimensions
-        Options.psolvers = [2 5 3 1 4 0];
+        Options.psolvers = [2 5 6 3 1 4 0];
     elseif length(dim)<=2,
         % only 1 or 2 dimensions to eliminate -> use fourier-motzkin
-        Options.psolvers = [5 4 1 2 3 0];
+        Options.psolvers = [5 1 4 6 2 3 0];
     elseif length(dim)<=d/2
         if dimension(PA)<=3,
             % use block-elimination for lower dimensions
-            Options.psolvers = [3 4 5 2 1 0];
+            Options.psolvers = [3 4 5 6 2 1 0];
         else
-            Options.psolvers = [4 5 3 1 2 0];
+            Options.psolvers = [4 5 6 3 1 2 0];
         end
     else
         if length(orig_dim)<=2,
             % use iterative hull for lower dimensions
-            Options.psolvers = [2 5 3 1 4 0];
+            Options.psolvers = [2 5 3 6 1 4 0];
         else
-            Options.psolvers = [4 5 2 3 1 0];
+            Options.psolvers = [5 4 6 2 3 1 0];
         end
     end
 end
@@ -147,7 +149,8 @@ p_strings = {'Vertex Enumeration',...
         'Iterative Hull',...
         'Block Elimination',...
         'ESP',...
-        'Fourier-Motzkin (mex version)'};
+        'Fourier-Motzkin (mex version)',...
+        'Fourier-Motzkin (mex version, fast)' };
 
 if (isempty(PA.Array) & ~PA.minrep & Options.noReduce==0) %| (~P.minrep & Options.projection==1),
     PA = reduce(PA);
@@ -173,6 +176,15 @@ if length(PA.Array)>0,
                     Q = sub_blockelimination(PA.Array{reg},dim,Options);
                 elseif Options.psolvers(ii)==4,
                     Q = mpt_esp(PA.Array{reg},orig_dim);
+                elseif Options.psolvers(ii)==6,
+                    % use mex implementation of fourier-motzkin elimination (fast
+                    % version)
+                    if ~isminrep(PA),
+                        PA = reduce(PA);
+                    end
+                    HK = double(PA);
+                    projHK = fourier(HK, orig_dim, Options.four_tol);
+                    Q = polytope(projHK(:, 1:end-1), projHK(:, end));
                 else
                     % use mex implementation of fourier-motzkin elimination
                     I = PA.Array{reg};
@@ -180,7 +192,7 @@ if length(PA.Array)>0,
                         I = reduce(I);
                     end
                     for qq=length(dim):-1:2,
-                        D = fourier(double(I),[orig_dim dim(1:qq-1)]);
+                        D = fourier(double(I),[orig_dim dim(1:qq-1)],Options.four_tol);
                         I = polytope(D(:,1:end-1), D(:,end));
                         I = polytope(H, K);
                     end
@@ -191,8 +203,11 @@ if length(PA.Array)>0,
             end
             return
         catch
-            disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' method failed, trying other method...']);
-            % method failed, try the next one
+            if length(Options.psolvers) > ii,
+                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed, trying ' p_strings{Options.psolvers(ii+1)+1} '...']);
+            else
+                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed...']);
+            end 
         end
     end
 else
@@ -213,6 +228,15 @@ else
                 P = sub_blockelimination(PA,dim,Options);
             elseif Options.psolvers(ii)==4,
                 P = mpt_esp(PA,orig_dim);
+            elseif Options.psolvers(ii)==6,
+                % use mex implementation of fourier-motzkin elimination (fast
+                % version)
+                if ~isminrep(PA),
+                    PA = reduce(PA);
+                end
+                HK = double(PA);
+                projHK = fourier(HK, orig_dim, Options.four_tol);
+                P = polytope(projHK(:, 1:end-1), projHK(:, end));
             else
                 % use mex implementation of fourier-motzkin elimination
                 if ~isminrep(PA),
@@ -224,25 +248,25 @@ else
                 xrand = randn(size(H,2),1)*10;
                 HK = [H K+H*xrand];
                 for qq=length(dim):-1:2,
-                    D = fourier(HK,[orig_dim dim(1:qq-1)]);
-                    %D = fourier(double(P),[orig_dim dim(1:qq-1)]);
+                    D = fourier(HK,[orig_dim dim(1:qq-1)],Options.four_tol);
                     P = polytope(D(:,1:end-1), D(:,end));
                     H = P.H;
                     K = P.K;
                     HK = [H K];
                 end
-                %D = fourier(double(P),orig_dim,Options.four_tol);
                 D = fourier(HK,orig_dim,Options.four_tol);
                 H = D(:,1:end-1);
                 K = D(:,end);
-                %%K = K - H*xrand(1:size(H,2));
                 K = K - H*xrand([orig_dim]);
-                %P = polytope(D(:,1:end-1), D(:,end));
                 P = polytope(H, K);
             end
             return
         catch
-            disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' method failed, trying other method...']);
+            if length(Options.psolvers) > ii,
+                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed, trying ' p_strings{Options.psolvers(ii+1)+1} '...']);
+            else
+                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed...']);
+            end
             % method failed, try the next one
         end
     end
