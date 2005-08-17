@@ -352,14 +352,16 @@ for ii=1:len,
     if ii==1 & userTset,
         continue
     end
-    for reg=1:length(Pstore{ii}),
-        Pn = [Pn Pstore{ii}(reg)];
-        Fi{end+1} = zeros(nu,nx);
-        Gi{end+1} = Ustore{ii}(reg,:)';
-        Ai{end+1} = zeros(nx);
-        Bi{end+1} = zeros(1,nx);
-        Ci{end+1} = ii;
-        dynamics = [dynamics DynStore{ii}(reg)];
+    if ~isempty(DynStore{ii}),
+        for reg=1:length(Pstore{ii}),
+            Pn = [Pn Pstore{ii}(reg)];
+            Fi{end+1} = zeros(nu,nx);
+            Gi{end+1} = Ustore{ii}(reg,:)';
+            Ai{end+1} = zeros(nx);
+            Bi{end+1} = zeros(1,nx);
+            Ci{end+1} = ii;
+            dynamics = [dynamics DynStore{ii}(reg)];
+        end
     end
 end
 ctrlStruct.sysStruct = sysStruct;
