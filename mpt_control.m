@@ -366,21 +366,23 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref'),
     end
     
     % translate feasible set:
-    Pfinal = [];
+    Pfinal = polytope;
     for fin = 1:length(ctrlStruct.Pfinal),
         if ~isfulldim(ctrlStruct.Pfinal(fin)), continue, end
         [Hf,Kf] = double(ctrlStruct.Pfinal(fin));
         Pfinal = [Pfinal polytope(Hf, Kf + Hf*xref)];
     end
+    if ~isfulldim(Pfinal),
+        Pfinal = Pn;
+    end
     
     % store the new data
     ctrlStruct.Pfinal = Pfinal;
     ctrlStruct.Pn = Pn;
-    ctrlStruct.sysStruct = origSysStruct;
-    if isfield(probStruct, 'FBgain') & ~isfield(origProbStruct, 'FBgain'),
-        origProbStruct.FBgain = probStruct.FBgain;
-    end
-    ctrlStruct.probStruct = origProbStruct;
+    ctrlStruct.details.origSysStruct = origSysStruct;
+    ctrlStruct.details.origProbStruct = origProbStruct;
+    ctrlStruct.sysStruct = sysStruct;    
+    ctrlStruct.probStruct = probStruct;
 end
 
 if dimension(ctrlStruct.Pn)<=3 & length(ctrlStruct.Pn)<1000 & Options.noExtreme==0,
