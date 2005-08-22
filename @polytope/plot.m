@@ -11,7 +11,7 @@ function [handle,titlehandle]=plot(varargin)
 %
 % Example
 %   plot(P)             - plots P in default (red) color
-%   plot(P,'g',Q,'b')   - plots P in red and Q in blue color
+%   plot(P,'g',Q,'b')   - plots P in green and Q in blue color
 %   plot(PA,P)          - plots array of polytopes PA and a single polytope P
 %   plot(PA,Options)    - plots PA using options given in the Options structure
 %
