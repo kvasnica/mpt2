@@ -133,8 +133,9 @@ end
 
 clear global pwa
 % call mpt_hyparr2 with no input arguments => it will clear it's persistent
-% variable, otherwise we get errors
-mpt_hyparr2;
+% variable, otherwise we get errors on subsequent runs with different hysdel
+% models
+mpt_hyparr;
 
 % choose LP solver 
 lpsolver = mptOptions.lpsolver;
@@ -1050,8 +1051,7 @@ end;
 if wellDef
     GLnewWell.A = GLnew.A(wellDef,:);
     GLnewWell.B = GLnew.B(wellDef);
-    %DeltasWell = hyparr(GLnewWell, GL, dom, lpsolver, verbose);
-    DeltasWell = mpt_hyparr2(GLnewWell, GL, dom);
+    DeltasWell = mpt_hyparr(GLnewWell, GL, dom, lpsolver, verbose);
 else
     DeltasWell = [];
 end;
@@ -1177,7 +1177,7 @@ if ALsolved
     % this yields Hi*[xr; ur] <= Ki
     if ~isempty(GL.A) & ~isempty(GL.B)
         %[Hi, Ki, isemptypoly, keptrows] = mb_polyreduce(GL.A, GL.B, 1e-6, lpsolver, 1);
-        Poly = polytope(GL.A, GL.B, 1);
+        Poly = polytope(GL.A, GL.B);
         [Hi, Ki] = double(Poly);
         isemptypoly = ~isfulldim(Poly);
     else
