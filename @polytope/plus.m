@@ -236,13 +236,13 @@ else
         error('Polytopes MUST have the same dimension in Minkowski sum');
     end
     
-    lenP = length(P.Array);
-    if lenP>0,
-        R = polytope;
-        for ii=1:lenP,
-            [RP,P.Array{ii},Q]=plus(P.Array{ii},Q,Options);
-            R = [R RP];
+    lenR = length(R.Array);
+    if lenR>0,
+        Result = mptOptions.emptypoly;
+        for ii=1:lenR,
+            Result = [Result plus(R.Array{ii}, Q, Options)];
         end
+        R = Result;
         return
     end
     
