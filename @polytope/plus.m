@@ -215,11 +215,21 @@ if size(Q,2)==1
     if ~R.minrep
         R=reduce(R);
     end
-
-    R.vertices = [];
-    R.K=R.K+R.H*Q;
-    R.xCheb=R.xCheb+Q;
-    R.bbox = [];
+    lenR = length(R.Array);
+    if lenR > 0,
+        % handle polyarrays
+        Result = mptOptions.emptypoly;
+        for ii = 1:lenR,
+            Result = [Result plus(R.Array{ii}, Q, Options)];
+        end
+        R = Result;
+    else
+        % P is a single polytope
+        R.vertices = [];
+        R.K=R.K+R.H*Q;
+        R.xCheb=R.xCheb+Q;
+        R.bbox = [];
+    end
 else
     d=dimension(R);
     if size(Q,1)~=d
