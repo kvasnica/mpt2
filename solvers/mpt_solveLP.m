@@ -136,3 +136,10 @@ if mptOptions.rescueLP,
 else
     [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',A,B,Aeq,Beq,x0,lpsolver);
 end
+
+if max(A*xopt - B) > mptOptions.abs_tol,
+    % CDD sometimes reports a feasible solution in spite of infeasible
+    % constraints, catch this case
+    how = 'infeasible';
+    exitflag = -1;
+end
