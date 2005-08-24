@@ -20,6 +20,7 @@ function [x,R]=facetcircle(P,ind,Options)
 %	         	     contained in this facet.
 % Options.lpsolver - LP solver to use (see help mpt_solveLP)
 % Options.abs_tol  - absolute tolerance
+% Options.verbose  - level of verbosity
 %
 % Note: If Options is missing or some of the fields are not defined, the default 
 %       values from mptOptions will be used
@@ -37,8 +38,8 @@ function [x,R]=facetcircle(P,ind,Options)
 %
 % (C) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %          baric@control.ee.ethz.ch  
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
@@ -79,11 +80,13 @@ if ~isfield(Options,'abs_tol')
 else
     abs_tol = Options.abs_tol;
 end
-
 if ~isfield(Options,'lpsolver')
     lpsolver=mptOptions.lpsolver;
 else
     lpsolver = Options.lpsolver;
+end
+if ~isfield(Options, 'verbose'),
+    Options.verbose = mptOptions.verbose;
 end
 
 if length(P.Array)>0,
@@ -120,22 +123,68 @@ Afacet = A(idxOther,:);
 normFacets = sqrt(diag(Afacet * Afacet'));
 auxH = [Afacet*Hi0 normFacets];
 auxK = B(idxOther,:) - Afacet * x0;
-[xopt,fval,lambda,exitflag,how]= ...
-    mpt_solveLPi([zeros(1,n-1) -1],auxH,auxK,[],[],[], ...
-                 mptOptions.lpsolver,1);
 
-x = x0 + Hi0 * xopt(1:end-1); % Chebyshev center of the facet
-R = xopt(end);                % Chebyshev radius of the facet
+% obtain list of available LP solvers
+solvers = mptOptions.solvers.lp_all;
 
-if strcmp(how,'infeasible'),
-      disp('FACETCIRCLE:   ERROR: Facet problem should be feasible (1)');
-      return;
-elseif(R<-abs_tol)
-      disp('FACETCIRCLE:   ERROR: Facet problem should be feasible (2)');
-      return;
-elseif(max(A*x-B)>abs_tol)
-      disp('FACETCIRCLE:   ERROR: Facet problem should be feasible (3)');
-      return;
+% delete current solver from it's position among prefered solvers
+solvers(find(solvers==lpsolver)) = [];
+
+% move current solver to the top
+solvers = [lpsolver solvers];
+
+for ii = 1:length(solvers),
+    % try other solvers
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLP([zeros(1,n-1) -1],auxH,auxK,[],[],[], solvers(ii));
+    
+    x = x0 + Hi0 * xopt(1:end-1); % Chebyshev center of the facet
+    R = xopt(end);                % Chebyshev radius of the facet
+    
+    problem_infeasible = strcmpi(how, 'infeasible');
+    
+    % NOTE! before we have been checking (R < -abs_tol) here, but it seems that
+    % this is not tight enough. sometimes (especially CDD) LP solver gives R
+    % -1e-16, hence negative, but not catched by the old condition. and since in
+    % mpt_mpqp we check (R < 0), we use the same tolerance here.
+    problem_negativeR = (R < 0);  
+    problem_constraints = (max(A*x - B) > abs_tol);
+
+    if problem_infeasible | problem_negativeR | problem_constraints,
+        % use different solver in case of problems
+        if Options.verbose > 1,
+            if ii > 1,
+                % finish new line from previous output
+                fprintf('\n');
+            end
+            if ii < length(solvers)
+                fprintf('FACETCIRCLE: Solver "%s" failed, trying "%s"...', ...
+                    mpt_solverInfo('lp', solvers(ii)), mpt_solverInfo('lp', solvers(ii+1)));
+            else
+                fprintf('FACETCIRCLE: Last chance solver "%s" failed, panic.\n', mpt_solverInfo('lp', solvers(ii)));
+            end
+        end
+    else
+        % otherwise we have a feasible solution
+        if ii > 1 & Options.verbose > 1,
+            fprintf(' success\n');
+        end
+        break
+    end
+end
+
+if problem_infeasible | problem_negativeR | problem_constraints,
+    fprintf('FACETCIRCLE: All available LP solvers failed:\n');
+end
+if problem_infeasible,
+    % try different LP solver
+    disp('FACETCIRCLE:   ERROR: No feasible solution found (1)');
+    return;
+elseif problem_negativeR,
+    disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (2)');
+    return;
+elseif problem_constraints,
+    disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (3)');
+    return;
 end
 
 % project the point to the facet, this is just to annulate all numerical
@@ -143,6 +192,3 @@ end
 %
 xSlack = facetK - facetH * x;
 x = x + xSlack * facetH' / normFacet;
-
-
-
