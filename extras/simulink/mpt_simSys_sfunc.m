@@ -60,17 +60,34 @@ end
 
 % check if we have direct feedthrough of inputs
 directu = 0;
-if iscell(sysStruct.D),
-    for ii = 1:length(sysStruct.D);
-        if any(any(sysStruct.D{ii}~=0)),
-            directu = 1;
-            break
+
+% we need direct feedthrough in case of:
+%  - non-zero D matrix
+%  - guards on inputs
+%  - MLD systems
+
+if isfield(sysStruct, 'data'),
+    if isfield(sysStruct.data, 'MLD'),
+        if isfield(sysStruct.data.MLD, 'D1'),
+            D1 = sysStruct.data.MLD.D1;
+            D2 = sysStruct.data.MLD.D2;
+            D3 = sysStruct.data.MLD.D3;
+            directu = any(any(D1~=0)) | any(any(D2~=0)) | any(any(D3~=0));
         end
     end
 else
-    directu = any(any(sysStruct.D~=0));
+    if iscell(sysStruct.D),
+        for ii = 1:length(sysStruct.D);
+            if any(any(sysStruct.D{ii}~=0)) | any(any(sysStruct.guardU{ii}~=0)),
+                directu = 1;
+                break
+            end
+        end
+    else
+        directu = any(any(sysStruct.D~=0));
+    end
 end
-        
+
 switch flag,
     
     %%%%%%%%%%%%%%%%%%
@@ -116,7 +133,7 @@ function [sys,x0,str,ts] = mdlInitializeSizes(sysStruct,X0,Ts,nx,nu,ny,directu)
 
 sizes = simsizes;
 sizes.NumContStates  = 0;
-sizes.NumDiscStates  = nx;
+sizes.NumDiscStates  = nx+nu;
 sizes.NumOutputs     = nx+ny;
 sizes.NumInputs      = nu;
 sizes.DirFeedthrough = directu;
@@ -127,7 +144,7 @@ sys = simsizes(sizes);
 if isempty(X0),
     x0 = zeros(sizes.NumDiscStates,1);
 else
-    x0 = [X0(:)];
+    x0 = [X0(:); zeros(nu, 1)];
 end
 str = [];
 ts  = [Ts 0]; 
@@ -151,7 +168,6 @@ if constr & isfield(sysStruct, 'umax'),
     u(uviol) = sysStruct.umin(uviol);
 end
 
-
 [X,U,Y] = mpt_simSys(sysStruct,x(1:nx),u(:));
 X = X(:);
 if constr & isfield(sysStruct, 'xmax')
@@ -162,7 +178,7 @@ if constr & isfield(sysStruct, 'xmax')
     X(xviol) = sysStruct.xmin(xviol);
 end
   
-sys = X(:);
+sys = [X(:); u(:)];
 
 %end mdlUpdate
 
@@ -174,16 +190,18 @@ sys = X(:);
 %
 function sys = mdlOutputs(t,x,u,sysStruct,nx,nu,ny,directu,constr)
 
-u = u(:);
-if ~directu,
-    u = zeros(size(u));
-else
+if directu,
+    % use direct feedthrough
+    u = u(:);
     if constr & isfield(sysStruct, 'umax'),
         uviol = find(u > sysStruct.umax);
         u(uviol) = sysStruct.umax(uviol);
         uviol = find(u < sysStruct.umin);
         u(uviol) = sysStruct.umin(uviol);
     end
+else
+    % otherwise use the same U which was used for state update
+    u = x(nx+1:end);
 end
 
 [X,U,Y] = mpt_simSys(sysStruct,x(1:nx),u);
