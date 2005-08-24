@@ -184,7 +184,7 @@ disp('>> sysStruct.noise = polytope([eye(2); -eye(2)], [1;1;1;1]*0.1);');
 fprintf('\n');
 disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
 fprintf('\n\n');
-fprintf('The multi-parametric program results in %d regions for prediction horizon N=5.\n',length(ctrlStruct.Pn));
+fprintf('The multi-parametric program results in %d regions for prediction horizon N=3.\n',length(ctrlStruct.Pn));
 mpt_plotPartition(ctrlStruct,Options);
 fprintf('\n\n');
 disp('The end');
