@@ -27,6 +27,7 @@
 %   domain       - Computes polytope that is mapped to an another polytope using affine map
 %   envelope     - Computes envelope of n polytopes
 %   extreme      - Calculates extreme points of a given polytope
+%   facetvoronoi - Calculates a "voronoi diagram for facets of a polytope"
 %   hull         - Convex hull of n polytopes
 %   intersect    - Intersection of 2 polytopes
 %   plus         - Minkowski sum
