@@ -177,13 +177,13 @@ if problem_infeasible | problem_negativeR | problem_constraints,
 end
 if problem_infeasible,
     % try different LP solver
-    disp('FACETCIRCLE:   ERROR: No feasible solution found (1)');
+    disp('FACETCIRCLE:   ERROR: No feasible solution found (problem is infeasible)');
     return;
 elseif problem_negativeR,
-    disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (2)');
+    disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (radius is negative)');
     return;
 elseif problem_constraints,
-    disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (3)');
+    disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (constraints not satisfied)');
     return;
 end
 
