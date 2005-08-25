@@ -91,7 +91,7 @@ if exitflag ~= 1,
         else
             % try next solver
             nextsolver = allsolvers(solverpos);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver);
+            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,nextsolver);
             if exitflag == 1,
                 % optimal solution found
                 return
