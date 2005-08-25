@@ -685,7 +685,7 @@ elseif lenPn == 1,
         f = -ones(1,nx+1);
         A = [Ve -ones(nve,1); -P' ones(npe, 1); zeros(1, nx) 1];
         B = [zeros(nve+npe, 1); 1];
-        [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,[],[],[],lpsolver,0);
+        [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,[],[],[],lpsolver);
 
         sephp = ~all(xopt==0) & ~any(xopt==1e9);
         if sephp
@@ -755,7 +755,7 @@ else
                 % we still need to check if intersection exists
                 A = [Ve -ones(nve,1); -P' ones(npe, 1); zeros(1, nx) 1];
                 B = [zeros(nve+npe, 1); 1];
-                [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,[],[],[],lpsolver,0);
+                [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,[],[],[],lpsolver);
                 sephp = ~all(xopt==0) & ~any(xopt==1e9);
             end
 
