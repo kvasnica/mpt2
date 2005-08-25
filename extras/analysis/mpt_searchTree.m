@@ -475,8 +475,8 @@ function R=sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver)
 if all(K>-1e9),
     % use 'rescue' function - resolve an LP automatically if it is infeasible
     % with default solver
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
-        K,[],[],[],lpsolver,1);
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
+        K,[],[],[],lpsolver);
 else
     how = 'infeasible';
 end
@@ -528,7 +528,7 @@ if ~strcmp(how,'ok')
     
     % use 'rescue' function - resolve an LP automatically if it is infeasible
     % with default solver
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],K,[],[],x0,lpsolver,1);
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],K,[],[],x0,lpsolver);
 end
 
 R=-xopt(nx+1); % Radius of the ball

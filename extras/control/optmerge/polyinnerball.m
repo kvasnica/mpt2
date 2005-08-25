@@ -93,8 +93,8 @@ end
 
 % use 'rescue' function - resolve an LP automatically if it is infeasible
 % with default solver
-[xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
-    K, [], [], [zeros(nx,1); 1000], Options.lpsolver, 1);
+[xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
+    K, [], [], [zeros(nx,1); 1000], Options.lpsolver);
 
 if ~strcmp(how,'ok'),
     % maybe there is a numerical problem, thus we normalize H and K
@@ -145,8 +145,8 @@ if ~strcmp(how,'ok'),
     
     % use 'rescue' function - resolve an LP automatically if it is infeasible
     % with default solver
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
-        K,[],[],x0,Options.lpsolver,1);
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
+        K,[],[],x0,Options.lpsolver);
 end
 
 xc=xopt(1:nx); % Center of the ball

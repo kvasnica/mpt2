@@ -50,7 +50,10 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
 % xopt      - The optimizer
 % fval      - Value of the objective
 % lambda    - Vector of Lagrangian multipliers
-% exitflag  - An integer specifying result of the optimization (depends on the solver)
+% exitflag  - An integer specifying result of the optimization:
+%                1 - feasible optimal solution found
+%                0 - unbounded or undecided problem
+%               -1 - infeasible problem
 % how       - States the result of optimization ('ok', 'unbounded', 'infeasible')
 %
 % see also MPT_SOLVEQP, MPT_MPLP, MPT_MPQP
@@ -132,7 +135,7 @@ end
 
 % do all the computation in mpt_solveLPi
 if mptOptions.rescueLP,
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',A,B,Aeq,Beq,x0,lpsolver,1);
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs(f(:)',A,B,Aeq,Beq,x0,lpsolver);
 else
     [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',A,B,Aeq,Beq,x0,lpsolver);
 end
