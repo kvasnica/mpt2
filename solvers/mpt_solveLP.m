@@ -1,7 +1,7 @@
 function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver,lb,ub)
 %MPT_SOLVELP Interface to various LP solvers
 %
-% [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
+% [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver,lb,ub)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
