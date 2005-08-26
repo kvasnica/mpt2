@@ -20,7 +20,6 @@ function status = isbounded(P,Options)
 % P                - polytope
 % Options.abs_tol  - absolute tolerance
 % Options.lpsolver - LP solver to use
-% Options.verbose  - level of verbosity
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -35,8 +34,8 @@ function status = isbounded(P,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
-%          baric@control.ee.ethz.ch
+% (C) 2003-2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
+%               baric@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich
 %          baotic@control.ee.ethz.ch
 
@@ -61,10 +60,6 @@ function status = isbounded(P,Options)
 % ---------------------------------------------------------------------------
 
 
-% if ~isa(P, 'polytope')
-%   error('ISBOUNDED: Argument MUST be a polytope object');
-% end
-
 global mptOptions;
 
 if nargin<2
@@ -81,9 +76,6 @@ end
 if ~isfield(Options,'lpsolver'),
     Options.lpsolver = mptOptions.lpsolver;  % LP solver to use
 end
-if ~isfield(Options,'verbose'),
-    Options.verbose = mptOptions.verbose;    % level of verbosity
-end
 
 lenP = length(P.Array);
 if lenP>1,
@@ -96,6 +88,12 @@ if lenP>1,
     end
 else
     [ChebyC,ChebyR] = chebyball(P,Options);
+    
+    % polytope must be in minimal representation
+    %
+    if ( ~isminrep(P) ),
+        P = reduce(P,Options);
+    end
     
     if ChebyR == Inf,   % don't trust this one too much
         status = 0;
@@ -117,27 +115,37 @@ else
         return;
     end;
     
-    if rank(A) < m,
+    nullA = null(A');
+    colsNullA = size(nullA,2);
+    rankA = n - colsNullA;
+    
+    if rankA < m,  % linearly dependant constraints
         status = 0;
         return;
     end;
     
-    AA = -eye(n);
-    bb = -ones(n,1);
-    %LPi%f = zeros(n,1);
-    f = zeros(1,n);
-    [xopt,fval,lambda,exitflag,how] = mpt_solveLPi(f,AA,bb,A',zeros(m,1),[],Options.lpsolver);
+    % we're using the Minkowski's theorem on polytopes:
+    % Given a_1, ..., a_m unit vectors, and x_1, ... x_m > 0, there
+    % exists a polytope having a_1,...,a_m as facets and x_1, ... x_m as
+    % facet areas iff:
+    %
+    %  a_1 x_1 + ... + a_m x_m = 0
+    %
+    % Hence, checking boundedness of a polytope boils down to feasibility
+    % LP.
     
-    if how(1)=='i' | how(1)=='I',   % problem is infeasible
-        status = 0;                 %  => polyhedron is unbounded
-        return;
-    elseif strcmp(how,'ok')         % problem is feasible (unconstrained case
-        status = 1;                   % cannot actually happen
-        return;                       %  => polyhedron is bounded
+    Aineq = -nullA;
+    bineq = -ones(n,1);
+    f = zeros(1,colsNullA);
+    [xopt,fval,lambda,exitflag,how] = mpt_solveLPi(f,Aineq,bineq,[],[],[],Options.lpsolver);
+    
+    if strcmpi(how, 'ok')    % problem is feasible (unconstrained case)
+        status = 1;          % cannot actually happen (a_i are
+                             % not co-planar and sum(a_i x_i) =
+                             % 0 with x_i > 0)
+                             %  => polyhedron is bounded
     else
-        if Options.verbose>0,
-            disp('ISBOUNDED: Problem detected!');
-        end
-        status=0;
+        % problem is infeasible => polyhedron is unbounded
+        status = 0;
     end
 end
