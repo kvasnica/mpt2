@@ -1,7 +1,7 @@
-function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
+function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver,lb,ub)
 %MPT_SOLVELP Interface to various LP solvers
 %
-% [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
+% [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver,lb,ub)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -9,8 +9,9 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
 % Solves an LP problem:
 %
 %     min  f'x
-%     s.t. A*x<=B,
-%          Aeq*x=Beq
+%     s.t.   A*x <= B
+%          Aeq*x = Beq
+%          lb <= x <= ub
 %
 % by using the method specified in 'solver'
 %
@@ -38,8 +39,8 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
 %              lpsolver=13: uses CLP
 %              lpsolver=14: uses BPMPD (bpmpd_mex)
 %
-% rescue   - if set to 1, uses a different solver if the problem is
-%            infeasible with default solver (off by default)
+% lb, ub   - lower and upper bounds on variables (optional)
+%            Note! set "lpsolver=[]" to select the default solver.
 %
 % Note: if 'lpsolver' is not specified, mptOptions.lpsolver will be used instead
 %       (see help mpt_init)
@@ -50,7 +51,10 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver)
 % xopt      - The optimizer
 % fval      - Value of the objective
 % lambda    - Vector of Lagrangian multipliers
-% exitflag  - An integer specifying result of the optimization (depends on the solver)
+% exitflag  - An integer specifying result of the optimization:
+%                1 - feasible optimal solution found
+%                0 - unbounded or undecided problem
+%               -1 - infeasible problem
 % how       - States the result of optimization ('ok', 'unbounded', 'infeasible')
 %
 % see also MPT_SOLVEQP, MPT_MPLP, MPT_MPQP
@@ -105,6 +109,33 @@ elseif nargin<3,
     error('mpt_solveLP: Not enough input arguments!');
 end
 
+if isempty(lpsolver),
+    lpsolver = mptOptions.lpsolver;
+end
+
+% handle lower and upper bounds on optimization variables
+if nargin >= 8,
+    if nargin == 8,
+        error('mpt_solveLP: "ub" must be provided if "lb" is given.');
+    end
+    if ~isempty(lb) | ~isempty(ub),
+        nx = size(A, 2);
+        lb = lb(:);
+        ub = ub(:);
+        if length(lb) ~= length(ub),
+            error('mpt_solveLP: incompatible dimensions of "lb" and "ub".');
+        end
+        if length(lb) ~= nx,
+            error('mpt_solveLP: "lb" has wrong dimension.');
+        end
+        
+        % include "lb" and "ub" into constraints
+        nx = size(A, 2);
+        A = [A; eye(nx); -eye(nx)];
+        B = [B; ub; -lb];
+    end
+end
+    
 rescue = mptOptions.rescueLP;
 
 if any(B<-1e9),
@@ -132,7 +163,7 @@ end
 
 % do all the computation in mpt_solveLPi
 if mptOptions.rescueLP,
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',A,B,Aeq,Beq,x0,lpsolver,1);
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs(f(:)',A,B,Aeq,Beq,x0,lpsolver);
 else
     [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',A,B,Aeq,Beq,x0,lpsolver);
 end

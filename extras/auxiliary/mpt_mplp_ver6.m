@@ -979,8 +979,8 @@ function [facetPoints,facetR] = getFacetPoints(P, idxUnexplored,Options)
         facetK = Kother - Hother * x0;
 
         [xopt,fval,lambda,exitflag,how]= ...
-            mpt_solveLPi([zeros(1,dim-1) -1],[facetH theOnes],facetK,[],[],[], ...
-                         Options.lpsolver,1);
+            mpt_solveLPs([zeros(1,dim-1) -1],[facetH theOnes],facetK,[],[],[], ...
+                         Options.lpsolver);
 
         rFacet = xopt(end);
         cFacet = x0 + Hi0 * xopt(1:end-1);

@@ -149,7 +149,7 @@ Aconstr = [H, -sqrt(sum(H.*H,2))];
 
 % use 'rescue' function - resolve an LP automatically if it is infeasible
 % with default solver
-[xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,nx) 1],Aconstr,K,[],[],[],Options.lpsolver,1);
+[xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],Aconstr,K,[],[],[],Options.lpsolver);
 
 if ~strcmp(how,'ok'),
     % maybe there is a numerical problem, thus we normalize H and K
@@ -162,7 +162,7 @@ if ~strcmp(how,'ok'),
     end
     x0 = [zeros(nx,1); 1000];         % hard-coded initial conditions
     
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi([zeros(1,nx) 1],Aconstr,K,[],[],x0,Options.lpsolver,1);
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],Aconstr,K,[],[],x0,Options.lpsolver);
 end
 
 nag3 = (nargout>3);

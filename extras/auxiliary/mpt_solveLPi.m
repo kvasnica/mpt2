@@ -1,4 +1,4 @@
-function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,rescue)
+function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver)
 %MPT_SOLVELPi Interface to various LP solvers (version without errorchecks)
 %
 % [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver);
@@ -14,10 +14,13 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %
 % by using the method specified in 'lpsolver'
 %
-% WARNING: This is a "fast" version of mpt_solveLP. No (or at least very few)
-% error checks are being performed, all 8 input arguments must be specified, the
-% objective vector "f" must be a row vector. You should always call
-% "mpt_solveLP" instead of this function, unless you know what you are doing! 
+% WARNING: This is a "fast" version of mpt_solveLP:
+%   - objective vector "f" must be a row vector !!!
+%   - no (or at least very few) error checks are being performed
+%   - all 7 input arguments must be specified
+%
+% NOTE! NOTE! NOTE! This function is used only for internal purposes, ordinary
+% users should always use "mpt_solveLP" instead.
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -44,16 +47,16 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver,
 %              lpsolver=14: uses BPMPD (bpmpd_mex)
 %              lpsolver=15: uses CPLEX (cplexmex)
 %
-% Note: if 'lpsolver' is not specified, mptOptions.lpsolver will be used instead
-%       (see help mpt_init)
-%
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
 % xopt      - The optimizer
 % fval      - Value of the objective
 % lambda    - Vector of Lagrangian multipliers
-% exitflag  - An integer specifying result of the optimization (depends on the solver)
+% exitflag  - An integer specifying result of the optimization:
+%                1 - feasible optimal solution found
+%                0 - unbounded or undecided problem
+%               -1 - infeasible problem
 % how       - States the result of optimization ('ok', 'unbounded', 'infeasible')
 %
 % see also MPT_SOLVELP
@@ -89,15 +92,6 @@ if any(B<-1e9),
     error('mpt_solveLPi: Upper bound exceeded. Most probably the problem is unbounded.');
 end
 
-if nargin==8,
-    f_orig = f;
-    A_orig = A;
-    B_orig = B;
-    Aeq_orig = Aeq;
-    Beq_orig = Beq;
-    x0_orig = x0;
-end
-
 if (lpsolver==3)
     %=============
     % Fukuda: CDD - Criss-Cross Method
@@ -111,15 +105,6 @@ if (lpsolver==3)
     sA2times2 = sA2*2;
     IsA2 = eye(sA2);
     OsA2 = 1e9*ones(sA2times2,1);
-
-    % using cat() is much slower:
-    %     IsA2f = cat(1,IsA2,-IsA2);
-    %     HA = cat(1, A, IsA2f, Aeq);
-    %     HB = cat(1, B, OsA2, Beq);
-
-    %     IsA2 = [IsA2; -IsA2];
-    %     HA=[A; IsA2; Aeq];
-    %     HB=[B; OsA2; Beq];
 
     HA=[A; IsA2; -IsA2; Aeq];
     HB=[B; OsA2; Beq];
@@ -138,46 +123,22 @@ if (lpsolver==3)
         how = 'undecided';
     elseif exitflag == 1
         how = 'ok';
-        return
     elseif exitflag<=5,
-        % 3 = dual-inconsistent solution, solve the problem using linprog
+        % 3 = dual-inconsistent solution
         how = 'infeasible';
+        exitflag = -1;
     elseif exitflag==6 | exitflag==7,
         how = 'unbounded';
+        exitflag = 0;
     else
         error('mpt_solveLPi: other error code in "exitflag" from cdd')
     end
     
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver,1);
-        end
-    end
-
 elseif (lpsolver==0)
     %===============
     % NAG: e04naf.m
     %===============
 
-    if (~isempty(Aeq)),
-        % convert equality constraints Aeq x=Beq into Aeq x<=Beq and Aeq x>=Beq
-        A = [A; Aeq; -Aeq];  
-        B = [B; Beq; -Beq];
-    end
-    
     if any(isnan(B)),
         B(find(isnan(B)))=1e9; % convert NaN bounds to some large number
     end
@@ -190,8 +151,8 @@ elseif (lpsolver==0)
     itmax=450;
    
     H = zeros(n);
-    bl=-1e9*ones(m+n,1);
-    bu=[1e9*ones(n,1);B];
+    bl=[-1e9*ones(m+n,1); Beq];
+    bu=[1e9*ones(n,1); B; Beq];
     lp=1;   % this flag is important! states that e04naf should solve an LP
     cold=1;
     istate = zeros(length(bu),1);
@@ -201,7 +162,7 @@ elseif (lpsolver==0)
     orthog = 1;
     ifail=1;
     
-    [xopt,iter,fval,clambda,istate,exitflag] = e04naf(bl,bu,'mpt_qphess',x0,f(:),A,H,...
+    [xopt,iter,fval,clambda,istate,exitflag] = e04naf(bl,bu,'mpt_qphess',x0,f(:),[A; Aeq],H,...
         lp,cold,istate,featol,msglvl,itmax,bigbnd,orthog,ifail);
 
     lambda=-clambda(n+1:m+n);
@@ -209,38 +170,22 @@ elseif (lpsolver==0)
     switch exitflag
         case {0,1,3}
             how = 'ok';
-            exitflag = 0;
-            return
+            exitflag = 1;
         case 2
             how = 'unbounded';
+            exitflag = 0;
         case 6
             how = 'infeasible';
+            exitflag = -1;
         case {9}
-            disp('mpt_solveLPi: An input parameter is invalid.');
+            disp('mpt_solveLPi (NAG): An input parameter is invalid.');
             how = 'infeasible';
+            exitflag = -1;
         otherwise
             how = 'infeasible';
+            exitflag = -1;
     end
     
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
 elseif (lpsolver==9)
     %===============
     % NAG: e04mbf.m
@@ -270,42 +215,25 @@ elseif (lpsolver==9)
     switch exitflag
         case 0
             how = 'ok';
-            return
+            exitflag = 1;
         case 2
             how = 'unbounded';
+            exitflag = 0;
         case 1
             how = 'infeasible';
+            exitflag = -1;
         case {3,4}
             % might also be considered as infeasible
             how = 'infeasible';
+            exitflag = -1;
         case {5}
-            disp('mpt_solveLPi: An input parameter is invalid.');
+            disp('mpt_solveLPi (NAG): An input parameter is invalid.');
             how = 'infeasible';
+            exitflag = -1;
         otherwise
             error('mpt_solveLPi: other error code in "ifail" from e04mbf')
     end
 
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
-    
-    
 elseif (lpsolver==1)
     %case 1,
     %=================
@@ -326,31 +254,12 @@ elseif (lpsolver==1)
     lambda=lambdav.ineqlin;
     if exitflag>0 %then LINPROG converged with a solution X.
         how = 'ok';
-        return
+        exitflag = 1;
     else
         how = 'infeasible';
+        exitflag = -1;
     end
 
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);          
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
-    
 elseif (lpsolver==2)
     % CPLEX 9
     
@@ -374,30 +283,8 @@ elseif (lpsolver==2)
     exitflag = -1;
     if strcmpi(how, 'optimal')
         how = 'ok';
-        exitflag = 0;
-        return
+        exitflag = 1;
     end
-    
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
-    
     
 elseif (lpsolver==8)
     %=============
@@ -455,37 +342,20 @@ elseif (lpsolver==8)
     switch exitflag
         case {1}   % feasible, optimal
             how = 'ok';
-            return
         case {3}   % infeasible
             how = 'infeasible';
+            exitflag = -1;
         case {2}   % unbounded
             how = 'unbounded';
+            exitflag = 0;
         case {4}
             how = 'InfOrUnbd';
+            exitflag = -1;
         otherwise
             how = 'infeasible';
+            exitflag = -1;
     end
 
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
-    
 elseif (lpsolver==4)
     %case 4,
     % GLPK solver interfaced by GLPKmex
@@ -505,42 +375,21 @@ elseif (lpsolver==4)
     switch status
         case {180,181,151}   % optimal, feasible
             how = 'ok';
-            exitflag=1;
-            return
+            exitflag = 1;
         case {182}   % infeasible
             how = 'infeasible';
-            exitflag=3;
+            exitflag = -1;
         case {184}   % unbounded
             how = 'unbounded';
-            exitflag=2;
+            exitflag = 0;
         case {183}   % problem has no feasible solution
             how = 'InfOrUnbd';
-            exitflag=3;
+            exitflag = -1;
         otherwise
-            exitflag=4;
             how = 'infeasible';
+            exitflag = -1;
     end
 
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
-   
 elseif (lpsolver==5)
     %case 5
     %=============
@@ -561,55 +410,20 @@ elseif (lpsolver==5)
             how = 'undecided';
         case 1
             how = 'ok';
-            return
         case {2,3,4,5}
             % 3 = dual-inconsistent solution
             how = 'infeasible';
+            exitflag = -1;
         case {6,7}
             how = 'unbounded';
+            exitflag = 0;
         otherwise
             error('mpt_solveLPi: other error code in "exitflag" from cdd')
     end
 
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
-    
 elseif (lpsolver==6)
     % SeDuMi
     [xopt,fval,lambda,exitflag,how]=yalmipLP(f,A,B,Aeq,Beq,x0,'sedumi');
-    if nargin==8 & exitflag ~= 1,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
     
 elseif (lpsolver==7)
     %case 7,
@@ -630,53 +444,18 @@ elseif (lpsolver==7)
     fval = f(:)'*xopt;
     if status==1 
         how = 'ok';
-        exitflag=0;
-        return
+        exitflag=1;
     else
         how = 'infeasible';
-        exitflag=1;
+        exitflag=-1;
     end
     
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
 elseif (lpsolver==10)
 
     %========
     % XPress
     %========
     [xopt,fval,lambda,exitflag,how]=yalmipLP(f,A,B,Aeq,Beq,x0,'xpress');
-    if nargin==8 & exitflag ~= 1,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
 
 elseif (lpsolver==11)
     
@@ -684,21 +463,6 @@ elseif (lpsolver==11)
     % Mosek
     %========
     [xopt,fval,lambda,exitflag,how]=yalmipLP(f,A,B,Aeq,Beq,x0,'mosek');
-    if nargin==8 & exitflag ~= 1,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
 
 elseif (lpsolver==12)
     
@@ -706,21 +470,6 @@ elseif (lpsolver==12)
     % OOQP
     %========
     [xopt,fval,lambda,exitflag,how]=yalmipLP(f,A,B,Aeq,Beq,x0,'ooqp');
-    if nargin==8 & exitflag ~= 1,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
     
 elseif (lpsolver==13)
     
@@ -734,32 +483,15 @@ elseif (lpsolver==13)
     
     if exitflag==0,
         how = 'ok';
-        return
+        exitflag = 1;
     elseif exitflag==1,
         how = 'infeasible';
+        exitflag = -1;
     else
         how = 'unbounded';
+        exitflag = 0;
     end
     
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
 elseif (lpsolver==14)
     %========
     % BPMPD
@@ -776,38 +508,20 @@ elseif (lpsolver==14)
     
     switch howout,
         case 'optimal solution'
-            exitflag = 0;
-        otherwise
             exitflag = 1;
+        otherwise
+            exitflag = -1;
     end
     fval = f(:)'*xopt;
     
     if exitflag==0,
         how = 'ok';
-        return
+        exitflag = 1;
     elseif exitflag==1,
         how = 'infeasible';
+        exitflag = -1;
     end
     
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
 elseif (lpsolver==15)
     % CPLEX interfaced with CPLEXMEX (by Nicolo Giorgetti)
     
@@ -841,34 +555,17 @@ elseif (lpsolver==15)
     if exitflag == 1,
         % optimal solution found
         how = 'ok';
-        return
     elseif exitflag == 3,
         how = 'infeasible';
+        exitflag = -1;
     elseif exitflag == 2,
         how = 'unbounded';
+        exitflag = 0;
     else
         how = 'unknown';
+        exitflag = 0;
     end
     
-    % since we exit if optimal solution was found, we reach this code only if
-    % the problem is infeasible or unbounded. in this case we try another
-    % solver.
-    if nargin==8,
-        % solution is not optimal, try another solver
-        global mptOptions
-        lpsolvers = mptOptions.solvers.lp;
-        
-        % get position of curent solver
-        curpos = find(lpsolvers==lpsolver);
-        
-        if curpos < length(lpsolvers)
-            % if this is not the last solver in the list, try other solver
-            nextsolver = lpsolvers(curpos+1);
-            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f_orig, A_orig, B_orig, ...
-                Aeq_orig, Beq_orig, x0_orig, nextsolver, 1);
-        end
-    end
-
 else
     error('mpt_solveLP: unknown LP solver specified!');
 end
