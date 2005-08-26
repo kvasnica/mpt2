@@ -139,12 +139,6 @@ elseif (lpsolver==0)
     % NAG: e04naf.m
     %===============
 
-    if (~isempty(Aeq)),
-        % convert equality constraints Aeq x=Beq into Aeq x<=Beq and Aeq x>=Beq
-        A = [A; Aeq; -Aeq];  
-        B = [B; Beq; -Beq];
-    end
-    
     if any(isnan(B)),
         B(find(isnan(B)))=1e9; % convert NaN bounds to some large number
     end
@@ -157,8 +151,8 @@ elseif (lpsolver==0)
     itmax=450;
    
     H = zeros(n);
-    bl=-1e9*ones(m+n,1);
-    bu=[1e9*ones(n,1);B];
+    bl=[-1e9*ones(m+n,1); Beq];
+    bu=[1e9*ones(n,1); B; Beq];
     lp=1;   % this flag is important! states that e04naf should solve an LP
     cold=1;
     istate = zeros(length(bu),1);
@@ -168,7 +162,7 @@ elseif (lpsolver==0)
     orthog = 1;
     ifail=1;
     
-    [xopt,iter,fval,clambda,istate,exitflag] = e04naf(bl,bu,'mpt_qphess',x0,f(:),A,H,...
+    [xopt,iter,fval,clambda,istate,exitflag] = e04naf(bl,bu,'mpt_qphess',x0,f(:),[A; Aeq],H,...
         lp,cold,istate,featol,msglvl,itmax,bigbnd,orthog,ifail);
 
     lambda=-clambda(n+1:m+n);
