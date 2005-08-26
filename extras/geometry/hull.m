@@ -110,6 +110,7 @@ if isempty(V)
 end
 
 Vorig = V;
+nx = size(V, 2);
 
 % initiliaze variables ([issue91])
 Vconv = []; H = []; K = [];
@@ -135,7 +136,7 @@ else
 end
 
 if Options.debug_level>0
-    if isfulldim(P),
+    if size(H, 2) == nx,
         % do not check hull if H is empty, otherwise an error about
         % incompatible dimensions
         % [issue91]
@@ -331,7 +332,17 @@ else
     % do not reduce the polytope yet, it will be done at the end
     P=polytope(H,K,0,2);
     P = set(P,'vertices',Vconv);
-    [H, K] = double(P);
+    %[H,K] = double(P);
+    % Reason why the line above is commented out (by Mario Vasak):
+    %
+    % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+    % polytope if cheby radius of P falls below the abs_tol, and that is 
+    % correct. But taking H & K in row 490 then from P brings empty H and K in 
+    % the superimposed function, and this ends in a hull-error (result=1), but 
+    % nothing is really wrong: H and K are hopefully correctly computed, but 
+    % the resulting hull is too small, so H and K should be checked in 
+    % checkhull.m, while hull.m should return an empty polytope if the check 
+    % is all right.
 end
 return
 
@@ -487,7 +498,17 @@ else
         P=Options.emptypoly;
         Vconv=[];
     end
-    [H,K] = double(P);
+    %[H,K] = double(P);
+    % Reason why the line above is commented out (by Mario Vasak):
+    %
+    % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+    % polytope if cheby radius of P falls below the abs_tol, and that is 
+    % correct. But taking H & K in row 490 then from P brings empty H and K in 
+    % the superimposed function, and this ends in a hull-error (result=1), but 
+    % nothing is really wrong: H and K are hopefully correctly computed, but 
+    % the resulting hull is too small, so H and K should be checked in 
+    % checkhull.m, while hull.m should return an empty polytope if the check 
+    % is all right.
 end
 return
 
@@ -522,7 +543,17 @@ if isempty(H),
 else
     % do not reduce the polytope yet, it will be done at the end
     P = polytope(H, K, 0, 2);
-    [H, K] = double(P);
+    %[H,K] = double(P);
+    % Reason why the line above is commented out (by Mario Vasak):
+    %
+    % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+    % polytope if cheby radius of P falls below the abs_tol, and that is 
+    % correct. But taking H & K in row 490 then from P brings empty H and K in 
+    % the superimposed function, and this ends in a hull-error (result=1), but 
+    % nothing is really wrong: H and K are hopefully correctly computed, but 
+    % the resulting hull is too small, so H and K should be checked in 
+    % checkhull.m, while hull.m should return an empty polytope if the check 
+    % is all right.
 end
 warning(w);
 
