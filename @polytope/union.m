@@ -6,18 +6,22 @@ function [Pu,how] = union(Pn, Options)
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% This function tries to compute convex union of polytopes in the given polytope array Pn
+% This function tries to compute convex union of polytopes in the given polytope
+% array Pn 
 %
 % USAGE:
 %   U = union([P1 P2 P3 ...])
 %   U = union([P1 P2 P3 ...], Options)
 %   [U,how] = union([P1 P2 P3 ...], Options)
 %
+% NOTE! if Pn has more than 2 elements, the "convex union" problem is in fact
+% solved with polytope/isconvex.m, unless Options.useisconvex=0 is specified.
+%
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
 % Pn                  - Polytope array
-% Options.useisconvex - if enabled, uses convex hull to compute convex union
+% Options.useisconvex - if enabled, uses isconvex() to compute convex union.
 %                     if number of regions is smaller than 3 and this flag is
 %                     not defined, the default value will be 0. otherwise, it
 %                     will be set to 1.
@@ -37,7 +41,11 @@ function [Pu,how] = union(Pn, Options)
 % how = 1    if union is convex
 %     = 0    union is not convex (in this case Pu=Pn)
 %
+% see also ENVELOPE, HULL, ISCONVEX
 %
+
+% For the simple case of finding convex union of 2 polytopes, the following
+% algorithm is used:
 % ---------------------------------------------------------------------------
 % LITERATURE
 % ---------------------------------------------------------------------------
@@ -46,13 +54,13 @@ function [Pu,how] = union(Pn, Options)
 % "Convexity recognition of the union of polyhedra",
 % Computational Geometry, 18, pp. 141-154, 2001.
 %
-% see also ENVELOPE, HULL
-%
+% If the input polyarray has more than two polytopes, we use the approach
+% described in isconvex.m
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 %
