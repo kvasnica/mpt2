@@ -257,7 +257,7 @@ elseif probStruct.norm==2 & any(eig(probStruct.R)<=0),
 end
 
 if isfield(probStruct,'Rdu'),
-    if probStruct.norm==2 & any(eig(probStruct.Rdu)<0)
+    if probStruct.norm==2 & any(eig(probStruct.Rdu)<=0)
         if Options.guierrors,
             error('Penalty on delta U must be a positive definite matrix!');
         else
