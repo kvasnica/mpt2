@@ -101,6 +101,13 @@ bboxOpt.noPolyOutput = 1;  % tell bounding_box that we just need vertices
 bboxP = [Pl Pu];
 bboxO = [Ol Ou];
 
+if any(isnan(Ol)) | any(isnan(Ou)),
+    % if envelope returns R^n, bounding_box returns NaNs
+    status = 0;
+    Pconv = mptOptions.emptypoly;
+    return
+end    
+
 bbox_tol = Options.bbox_tol;
 if any(abs(bboxP(:,1) - bboxO(:,1)) > bbox_tol) | any(abs(bboxP(:,2) - bboxO(:,2)) > bbox_tol),
     % bounding boxes differ by more than bbox_tol => polytopes cannot be equal
