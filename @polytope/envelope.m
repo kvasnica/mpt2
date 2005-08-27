@@ -143,6 +143,8 @@ if ~isempty(Ae) & ~isempty(Be),
     Be = [Be; ones(dimbox*2, 1) * Options.infbox];
     R=polytope(Ae,Be);
 else
-    R=polytope(1,Inf,1,1,0,Inf);    % envelope is R^n
+    % envelope is R^n, but keep dimension of the input polytope.
+    nx = dimension(P);
+    R=polytope(eye(nx), repmat(Inf, nx, 1), 1, 1, zeros(nx, 1), Inf);    
 end
 return;
