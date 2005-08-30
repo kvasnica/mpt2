@@ -7,6 +7,75 @@
 % For support, write to: mpt@control.ee.ethz.ch
 
 
+Version 2.0.3 (05-Sep-2005)
+---------------------------
+
+[NEW] mpt_solveLP: unified "exitflag" output
+
+[NEW] polytope/facetvoronoi - computes some kind of "voronoi cells"
+for facets of a polytope
+
+[NEW] mpt_invariantSet: another major speedup
+
+[NEW] polytope/isconvex - decides if a polyarray forms a convex union
+
+[NEW] major speedup of polytope/union by calling isconvex()
+
+[NEW] mpt_evalPWA - evaluates a PWA function at a given location
+
+[NEW] mpt_solveLP: now allows to specify bounds on variables
+[issue136]
+
+[PATCH] polytope/isbounded is now less sensitive to numerical problems
+(by Miroslav Baric) [issue141, issue142]
+
+[PATCH] polytope/regiondiff now exits quickly if input polytope is not
+fully dimensional [issue145]
+
+[PATCH] fixed conversion of MLD systems with boolean states to PWA
+form [issue127, issue140]
+
+[PATCH] polytope/facetcircle is now more numerically robust [issue138]
+
+[PATCH] better handling of empty regions in mpt_mplp (by Miroslav
+Baric)
+
+[PATCH] hull.m: use unreduced (H,K) pair when checking hull
+correctness (by Mario Vasak)
+
+[PATCH] mpt_sysStructInfo now propely detect intersections of dynamics
+in X-space [issue146]
+
+[PATCH] polytope/plot - minor updates by Frank J. Christophersen
+
+[PATCH] enforce deltaU constraints in closed-loop in on-line MPC for
+hybrid systems
+
+[PATCH] mpt_sys: properly handle cases where both Ts and 'nopwa' flag
+are given
+
+[PATCH] include constraints on final states when solving an on-line
+MPC for hybrid systems
+
+[PATCH] fixed issue with GLPKMEX giving different results on
+subsequent runs
+
+[PATCH] polytope/envelope - if envelope is R^n, keep dimension of
+input polytope
+
+[PATCH] check if probStruct.Rdu is positive definite (for 2-norm)
+
+[PATCH] mpt_solveLP - use e04naf()'s syntax for equality constraints
+[issue141]
+
+[PATCH] calculate correct output for PWA/MLD systems with guards on U
+
+[PATCH] renamed mpt_ss2mld to mpt_pwa2hys
+
+[PATCH] use mpt_pwa2mld() when converting from PWA to MLD
+
+
+
 Version 2.0.2 (25-Jul-2005)
 ---------------------------
 
