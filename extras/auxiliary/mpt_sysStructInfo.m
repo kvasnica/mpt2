@@ -30,8 +30,8 @@ function [nx,nu,ny,ndyn,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -156,16 +156,7 @@ if iscell(sysStruct.A),
         for jj=1:ndyn
             if ii==jj,
                 Xintersect{ii} = [Xintersect{ii} ii];
-                continue
-            end
-            H = [pureX_gX{ii}; pureX_gX{jj}];
-            K = [pureX_gC{ii}; pureX_gC{jj}];
-            if isempty(H),
-                P = sysStruct.Pbnd;
-            else
-                P = polytope(H,K,0,2);
-            end
-            if isfulldim(P),
+            elseif dointersect(Pdyn{ii}, Pdyn{jj}),
                 Xintersect{ii} = [Xintersect{ii} jj];
             end
         end
