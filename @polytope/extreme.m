@@ -452,8 +452,11 @@ elseif nx==2,
 
 
     end
-elseif nx==3
-    % 3D polytope
+elseif nx==3 & nchoosek(nc, nx)<=161700,
+    % 3D polytope with less than 100 facets
+    % if it has more than 100 facets, the number of all possible combinations
+    % we have to explore is just so high that it is more efficient to use the
+    % hull-approach via sub_extreme_through_hull()
     if isempty(P.vertices),
         H=P.H;
         K=P.K;
@@ -576,6 +579,11 @@ function [result,i]=checkextreme(P,V,nx,Options)
 
 result = 0;
 i = 0;
+if size(V,1) < nconstr(P),
+    result = 1;
+    % polytope cannot have less vertices than facets
+    return
+end
 for i=1:size(V,1)
     d = P.H*V(i,:)'-P.K;
     tmp=find(abs(d)<=Options.abs_tol); % find intersections with hyperplanes
