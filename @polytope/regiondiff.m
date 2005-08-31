@@ -123,6 +123,15 @@ if ~isa(P,'polytope') | ~isa(Pn,'polytope'),
     error('REGIONDIFF: Input argument MUST be a polytope object!');
 end
 
+if ~isfulldim(P),
+    res = mptOptions.emptypoly;
+    return
+end
+if ~isfulldim(Pn),
+    res = P;
+    return
+end
+
 [cx,cr]=chebyball(P);
 if isinf(cr) & all(cx==0),
     % P is R^n, convert it to infinity box polytope

@@ -265,7 +265,43 @@ else
         Options.PAcompl = mptOptions.emptypoly;
     else
         % feasible set is (presumably) non-convex
-        Options.PAdom = hull(ctrlStruct.Pfinal);
+        dimPfinal = dimension(ctrlStruct.Pfinal);
+        if dimPfinal <= 3,
+            % use hull() for dimensions below 4
+            Options.PAdom = hull(ctrlStruct.Pfinal);
+        else
+            % we have two options here how to compute the complement to a
+            % non-convex Pfinal:
+            %  A) use the bounding box of Pfinal
+            %  B) use the envelope of Pfinal
+            %
+            % approach (A) is easier to compute, but (B) can actually result
+            % into a convex piece (if Pfinal is convex), hence giving
+            % pottentially  better run-time
+            if 0,
+                % use bounding box
+                Options.PAdom = bounding_box(ctrlStruct.Pfinal);
+            else
+                % use envelope() for dimensions above 3. this is due to hull() being
+                % quite slow on higher dimensions, and the result obtained by
+                % envelope is good enough to obtain the domain
+                %
+                % NOTE! we could as well use the bounding box of Pfinal here, but
+                % the advantage of envelope is that it is quite likely that the
+                % envelope and Pfinal will be identical. This simplifies further
+                % computation significantly.
+                Options.PAdom = envelope(ctrlStruct.Pfinal);
+                
+                % one problem with using envelope is that the output can be a the
+                % whole space, i.e. R^n. therefore we need to bound the output. we
+                % do it by intersecting it with the largest box which contains
+                % ctrlStruct.Pfinal
+                boundP = bounding_box(ctrlStruct.Pfinal);
+                
+                % finally intersect the envelope with the bounding box
+                Options.PAdom = Options.PAdom & boundP;
+            end
+        end
         Options.PAcompl = Options.PAdom \ ctrlStruct.Pfinal;
     end
     [PAmer, colorMer] = mpt_optMerge(ctrlStruct.Pn, Options);

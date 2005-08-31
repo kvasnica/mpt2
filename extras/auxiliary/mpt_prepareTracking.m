@@ -176,10 +176,7 @@ sysStruct.dims.nu = nu;
 sysStruct.dims.ny = ny;
 
 if(ny~=nx & ~ycost)
-    fprintf('\nPlease define penalty on outputs in probStruct.Qy!\n\n');
-    %fprintf('\nFor full state tracking the system ouput needs to be of the same dimension as the system state!\n');
-    %fprintf('Either define sysStruct.C as an identity matrix, or set penalty on outputs in probStruct.Qy\n\n');
-    error('mpt_prepareTracking: problem with tracking setup.')
+    error('mpt_prepareTracking: Penalty on outputs probStruct.Qy must be defined if number of outputs is different from number of states.')
     %since otherwise there are no constraints defined for the reference state
 end
 %++++++++++++++++++++++++++++++++++++

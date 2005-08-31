@@ -119,7 +119,7 @@ if nargin >= 8,
         error('mpt_solveLP: "ub" must be provided if "lb" is given.');
     end
     if ~isempty(lb) | ~isempty(ub),
-        nx = size(A, 2);
+        nx = max(size(A, 2), size(Aeq, 2));
         lb = lb(:);
         ub = ub(:);
         if length(lb) ~= length(ub),
@@ -168,9 +168,11 @@ else
     [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',A,B,Aeq,Beq,x0,lpsolver);
 end
 
-if max(A*xopt - B) > mptOptions.abs_tol,
-    % CDD sometimes reports a feasible solution in spite of infeasible
-    % constraints, catch this case
-    how = 'infeasible';
-    exitflag = -1;
+if ~isempty(A),
+    if max(A*xopt - B) > mptOptions.abs_tol,
+        % CDD sometimes reports a feasible solution in spite of infeasible
+        % constraints, catch this case
+        how = 'infeasible';
+        exitflag = -1;
+    end
 end
