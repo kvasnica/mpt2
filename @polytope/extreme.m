@@ -452,8 +452,11 @@ elseif nx==2,
 
 
     end
-elseif nx==3
-    % 3D polytope
+elseif nx==3 & nchoosek(nc, nx)<=161700,
+    % 3D polytope with less than 100 facets
+    % if it has more than 100 facets, the number of all possible combinations
+    % we have to explore is just so high that it is more efficient to use the
+    % hull-approach via sub_extreme_through_hull()
     if isempty(P.vertices),
         H=P.H;
         K=P.K;
