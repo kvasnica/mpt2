@@ -56,9 +56,17 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
-if(nargin<2 | ~isfield(Options,'plot'))
-    Options.plot=0;
+if nargin < 2,
+    Options = [];
 end
+if ~isfield(Options, 'plot'),
+    Options.plot = 0;
+end
+if ~isfield(Options, 'verbose'),
+    % this is to keep mpt_mplp silent
+    Options.verbose = -1;
+end
+
 if(nargin==0 | isempty(points))
     points=[];
     figure; axis([-10 10 -10 10]);hold on; grid on
