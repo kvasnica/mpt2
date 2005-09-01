@@ -119,13 +119,12 @@ if iscell(sysStruct.A),
         gX = sysStruct.guardX{ii};
         gC = sysStruct.guardC{ii};
         gU = sysStruct.guardU{ii};
-        zerorows = [];
+        nonzerorows = [];
         for jj=1:size(gX,1)
-            if all(gX(jj,:)==0),
-                zerorows = [zerorows; jj];
+            if any(gX(jj,:)~=0),
+                nonzerorows = [nonzerorows; jj];
             end
         end
-        nonzerorows = setdiff(1:size(gX,1),zerorows);
         gXnz = gX(nonzerorows,:);
         gCnz = gC(nonzerorows,:);
         gUnz = gU(nonzerorows,:);
