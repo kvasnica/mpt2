@@ -96,7 +96,11 @@ if ~isfield(Options,'lpsolver')
     Options.lpsolver = mptOptions.lpsolver;
 end
 
-
+if ~isfulldim(PA),
+    % exit quickly if input polytope is not fully dimensional
+    P = mptOptions.emptypoly;
+    return
+end
 
 d=dimension(PA);
 orig_dim = dim;
