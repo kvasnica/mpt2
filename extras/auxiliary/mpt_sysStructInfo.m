@@ -26,6 +26,10 @@ function [nx,nu,ny,ndyn,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct)
 % nbool    - number of boolean inputs
 % ubool    - indexes of integer (or boolean) inputs
 % intInfo  - structure with information about overlapping dynamics
+%   .Xintersect - cell array, "Xintersect{i}" is a vector of indices of dynamics
+%                 which intersect with dynamics "i" in the X-space
+%   .PdynX      - cell array, "PdynX{i}" is a polytope which defines dynamics
+%                 "i" in  the X-space
 %
 
 % Copyright is with the following author(s):
@@ -111,7 +115,10 @@ if nargout <= 6
     return
 end
 
+emptypoly = polytope;
+
 Pdyn = {};
+PdynX = {};
 if iscell(sysStruct.A),
     Xintersect = {};
     for ii=1:ndyn,
@@ -133,7 +140,7 @@ if iscell(sysStruct.A),
         pureX_gC{ii} = gCnz;
         
         if isempty(gXnz),
-            P = polytope;
+            P = emptypoly;
         else
             P = polytope([gXnz gUnz],gCnz);
         end
@@ -141,12 +148,14 @@ if iscell(sysStruct.A),
         % project it down to X space
         if ~isfulldim(P) | isempty(gXnz)
             PX = sysStruct.Pbnd;
+            PdynX{ii} = emptypoly;
         else
             try
                 TT = evalc('PX = projection(P,1:nx) & sysStruct.Pbnd;');
             catch
                 PX = sysStruct.Pbnd;
             end
+            PdynX{ii} = PX;
         end
         Pdyn{ii} = PX;
         
@@ -209,3 +218,4 @@ intInfo.dyns_stack = Dyns;
 intInfo.dyns_links = dynamics_links;
 intInfo.stacks = length(Dyns);
 intInfo.Pdyn = Pdyn;
+intInfo.PdynX = PdynX;
