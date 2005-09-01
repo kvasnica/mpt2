@@ -347,8 +347,10 @@ end
 if isempty(ctrlStruct.Pn),
     error('mpt_control: Problem is infeasible...');
 end
-
 if ~isfulldim(ctrlStruct.Pn) | length(ctrlStruct.Fi)==0,
+    error('mpt_control: Problem is infeasible...');
+end
+if isempty(ctrlStruct.Fi{1}),
     error('mpt_control: Problem is infeasible...');
 end
 
