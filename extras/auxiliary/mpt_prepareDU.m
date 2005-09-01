@@ -188,6 +188,10 @@ if ycost
 end
 Qn = [probStruct.Q zeros(nx,nu); zeros(nu,nx) probStruct.R];
 
+if isfield(probStruct, 'Rdu'),
+    probStruct.R = probStruct.Rdu;
+end
+
 %Update the outer bound Pbnd
 [Hbnd,Kbnd] = double(sysStruct.Pbnd);
 [nxc,nxx] = size(Hbnd);
