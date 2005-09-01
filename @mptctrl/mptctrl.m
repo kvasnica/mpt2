@@ -330,7 +330,16 @@ elseif nargin==2 | nargin==3
             [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct);
         end
         
-        if (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax))) & ~probStruct.tracking,
+        useDUmode = 0;
+        if isfield(probStruct, 'Rdu'),
+            if any(probStruct.Rdu~=0),
+                useDUmode = 1;
+            end
+        end
+        if (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax)))
+            useDUmode = 1;
+        end
+        if useDUmode & ~probStruct.tracking,
             % augment state vector for deltaU constraints case to guarantee fullfilment
             % of those constraints in closed loop
             [sysStruct, probStruct] = mpt_prepareDU(sysStruct, probStruct);
