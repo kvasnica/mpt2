@@ -22,7 +22,7 @@ function varargout = mpt_guiProbStruct_export(varargin)
 
 % Edit the above text to modify the response to help mpt_guiProbStruct_export
 
-% Last Modified by GUIDE v2.5 06-Apr-2005 11:59:03
+% Last Modified by GUIDE v2.5 05-Sep-2005 18:23:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -125,6 +125,11 @@ if isstruct(mpt___sysStruct)
     else
         res = 1;
         for ii = 1:ndyn,
+            % check if C matrix is square [issue128]
+            if any(size(mpt___sysStruct.C{ii}) ~= ny),
+                res = 0;
+                break
+            end
             if any(mpt___sysStruct.C{ii} ~= eye(ny)),
                 res = 0;
                 break
@@ -2580,7 +2585,7 @@ function varargout = gui_mainfcn(gui_State, varargin)
 %      instance to run (singleton)".
 
 %   Copyright 1984-2002 The MathWorks, Inc.
-%   $Revision: 1.14 $ $Date: 2005/04/06 13:50:58 $
+%   $Revision: 1.5 $ $Date: 2003/07/17 18:28:28 $
 
 gui_StateFields =  {'gui_Name'
                     'gui_Singleton'

@@ -125,6 +125,11 @@ if isstruct(mpt___sysStruct)
     else
         res = 1;
         for ii = 1:ndyn,
+            % check if C matrix is square [issue128]
+            if any(size(mpt___sysStruct.C{ii}) ~= ny),
+                res = 0;
+                break
+            end
             if any(mpt___sysStruct.C{ii} ~= eye(ny)),
                 res = 0;
                 break
