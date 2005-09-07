@@ -209,7 +209,7 @@ for i=1:nx,
 end
 
 % Eliminating HP out the BB
-cand = ~((H>0).*H*(u-l) - (K-H*l) < -abs_tol);
+cand = ~((H>0).*H*(u-l) - (K-H*l) < -max(1e-4,abs_tol));
 
 keptrows = find(cand); %keep only the candidates
 H=H(keptrows,:);
