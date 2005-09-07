@@ -197,14 +197,14 @@ u=zeros(nx,1);               % Upper bounds
 % Determine external box ; minimize x_i
 for i=1:nx,
     f=In(i,:);
-    x=mpt_solveLPi(f,H,K,[],[],xCheb,lpsolver);
+    x=mpt_solveLPs(f,H,K,[],[],xCheb,lpsolver);
     l(i)=x(i);
 end
 
 % Determine external box ; maximize x_i
 for i=1:nx,
     f=-In(i,:);
-    x=mpt_solveLPi(f,H,K,[],[],xCheb,lpsolver);
+    x=mpt_solveLPs(f,H,K,[],[],xCheb,lpsolver);
     u(i)=x(i);
 end
 
@@ -333,7 +333,7 @@ else
         if any(k==f_cand)
             f1 = H(k,:);
             K(k) = K(k)+0.1;
-            [xopt,fval,lambda,exitflag,status]=mpt_solveLPi(-f1,H(nonredundant,:),K(nonredundant),[],[],xCheb,lpsolver);
+            [xopt,fval,lambda,exitflag,status]=mpt_solveLPs(-f1,H(nonredundant,:),K(nonredundant),[],[],xCheb,lpsolver);
             K(k) = K(k)-0.1;
             obj=f1*xopt-K(k);
             nonredundant(k)=0;
