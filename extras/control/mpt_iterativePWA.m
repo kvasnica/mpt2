@@ -224,17 +224,18 @@ for ii=1:nPWA
     end
 end
 
-if(isempty(originindynamics))
-    error('mpt_iterativePWA: No dynamic has the origin as an equilibrium point !! Aborting computation...');
-end
-if Options.verbose>=1,
-    disp(['origin included in: ' num2str(originindynamics)]);
-end
-
 %%++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 %%  COMPUTE TARGET SET
 %%++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if(~isfield(probStruct,'Tset') | ~isfulldim(probStruct.Tset))
+    
+    if(isempty(originindynamics))
+        error('mpt_iterativePWA: No dynamic has the origin as an equilibrium point! You must define your own target set...');
+    end
+    if Options.verbose>=1,
+        disp(['origin included in: ' num2str(originindynamics)]);
+    end
+    
     userTset=0; % true if user provided the terminal set, false otherwise
     % compute target set
     [Pn,Fi,Gi,dynamics,probStruct]=mpt_computePWATset(sysStruct,probStruct,originindynamics,Options);

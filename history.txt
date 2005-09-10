@@ -1,11 +1,16 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.2 25-Jul-2005
+% Version 2.0.4 ??-???-2005
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
 
+Version 2.0.4 (??-??-2005)
+---------------------------
+
+[PATCH] mpt_iterativePWA: allow user-define target sets even if no dynamics 
+contains the origin
 
 Version 2.0.3 (05-Sep-2005)
 ---------------------------
