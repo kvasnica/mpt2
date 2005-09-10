@@ -246,6 +246,18 @@ else
         fprintf('\n')
         disp('Using User-Defined Target Set...')
         disp('Warning: this may not guarantee stability')
+    end
+    if ~isfield(probStruct, 'P_N'),
+        if Options.verbose > 0,
+            fprintf('Warning: setting probStruct.P_N to stage cost.\n');
+        end
+        if iscell(probStruct.Q),
+            probStruct.P_N = probStruct.Q{1};
+        else
+            probStruct.P_N = probStruct.Q;
+        end
+    end
+    if Options.verbose > -1,
         fprintf('\n')
     end
     dynamics = [];
