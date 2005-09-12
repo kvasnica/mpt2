@@ -265,16 +265,23 @@ else
     
     % get the maximum value of noise (additive disturbance)
     addnoise = 0;
-    if (finalboxtype==2 | finalboxtype==3) & Options.randdist & isfulldim(sysStruct.noise),
+    if (finalboxtype==2 | finalboxtype==3) & Options.randdist & mpt_isnoise(sysStruct.noise),
         % noise is added only for state regulation, otherwise we cannot
         % guarantee convergence detection
-        [Hnoise,Knoise]=double(sysStruct.noise);
         if Options.verbose>0,
             disp('Assuming noise is hyperrectangle... trajectory is wrong if this is not true.')
         end
-        deltaNoise=Knoise(1:length(Knoise)/2)+Knoise(length(Knoise)/2+1:end);
-        maxNoise=Knoise(1:length(Knoise)/2);
-        if dimension(finalbox)==dimension(sysStruct.noise),
+        if isa(sysStruct.noise, 'polytope'),
+            Vnoise = extreme(sysStruct.noise);
+        else
+            % NOTE! remember that a V-represented noise has vertices stored
+            % column-wise!
+            Vnoise = sysStruct.noise';
+        end
+        noisedim = size(Vnoise, 2);
+        maxNoise = repmat(min(min(abs(Vnoise))), nx, 1);
+        deltaNoise = maxNoise/2;
+        if dimension(finalbox)==noisedim,
             finalbox = finalbox + sysStruct.noise;
             addnoise = 1;
         end

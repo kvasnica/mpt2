@@ -343,7 +343,7 @@ for ii=1:intInfo.stacks,
     maxPfinalStep{1}{ii} = CSstorage{ii}.Pfinals;
 end
 
-isaddnoise=isfulldim(sysStruct.noise);
+isaddnoise=mpt_isnoise(sysStruct.noise);
 Options.noNoiseOnTset=1;
 Options.ispwa=1;
 
@@ -788,7 +788,7 @@ if Options.finalOneStep,
     end
         
     
-    if isfulldim(sysStruct.noise)
+    if mpt_isnoise(sysStruct.noise)
         % system is subject to additive noise, can compute only common lyapunov
         % function
         disp('System is subject to additive noise, calculating Quadratic Lyapunov function...');

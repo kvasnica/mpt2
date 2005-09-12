@@ -214,7 +214,7 @@ if ~isfield(sysStruct,'verified')
     sysStruct = mpt_verifySysStruct(sysStruct, verOptions);
 end
 
-if isfulldim(sysStruct.noise)
+if mpt_isnoise(sysStruct.noise)
     error('Cannot compute PWQ Lyapunov function for systems with additive disturbances.');
 end    
 

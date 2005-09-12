@@ -122,6 +122,13 @@ if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt.sysstructname = inputname(1);
     verOpt.probstructname = inputname(2);
     [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
+    if isfield(sysStruct, 'noise'),
+        if isa(sysStruct.noise, 'double'),
+            % NOTE! V-represented noise needs to be stored column-wise for all
+            % functions!
+            sysStruct.noise = sysStruct.noise';
+        end
+    end
 end
 
 if strcmpi(ctrltype, 'on-line') | strcmpi(ctrltype, 'online')
@@ -284,7 +291,7 @@ else
                     elseif mplpver < 4 | Options.qpsolver==-1,
                         useoptcontrol = 1;
                     elseif isfield(sysStruct, 'noise'),
-                        if isfulldim(sysStruct.noise),
+                        if mpt_isnoise(sysStruct.noise),
                             useoptcontrol = 1;
                         end
                     end

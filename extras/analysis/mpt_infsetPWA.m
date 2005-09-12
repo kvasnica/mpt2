@@ -167,7 +167,7 @@ if nargs==1,
         error('mpt_infsetPWA: First argument has to be a valid controller structure! See mpt_control for details.');
     end
     sysStruct = ctrlStruct.sysStruct;
-    if isfulldim(sysStruct.noise)
+    if mpt_isnoise(sysStruct.noise)
         Wnoise = sysStruct.noise;
     end
     Pn = ctrlStruct.Pn;
@@ -214,7 +214,7 @@ iter=1;
 dynamics=1:length(Pn);
 notConverged=1;
 
-if(isfulldim(Wnoise))
+if(mpt_isnoise(Wnoise))
     targetPn=Pn-Wnoise;
 else
     targetPn=Pn;
@@ -397,7 +397,7 @@ while(notConverged>0 & iter<maxIter)
     
     Pn=transP;      %write results for next iteration
     dynamics=tdyn;
-    if(isfulldim(Wnoise))
+    if(mpt_isnoise(Wnoise))
         targetPn=Pn-Wnoise;
     else
         targetPn=Pn;

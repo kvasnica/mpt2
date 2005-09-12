@@ -150,10 +150,8 @@ if ~isfield(probStruct,'verified')
 end
 
 if isfield(sysStruct, 'noise'),
-    if isa(sysStruct.noise, 'polytope'),
-        if isfulldim(sysStruct.noise),
-            error('No optimal solution for systems with additive noise available.');
-        end
+    if mpt_isnoise(sysStruct.noise),
+        error('No optimal solution for systems with additive noise available.');
     end
 end
 
@@ -200,19 +198,31 @@ end
 %
 Options.noNoiseOnTset = 1;
 if isfield(sysStruct,'noise') == 1,
-    if ~isfulldim(sysStruct.noise),
+    if ~mpt_isnoise(sysStruct.noise),
         disp('Noise polytope empty.');
         isNoisy = false;
-    elseif dimension(sysStruct.noise) ~= size(sysStruct.A{1},1),
-        error('Noise polytope of the wrong dimension!');
     else
-        isNoisy = true;
-        [noiseH,noiseK]  = double(sysStruct.noise);
-        Vnoise = [];
-        if dimension(sysStruct.noise) < 4,
-            Vnoise = extreme(sysStruct.noise);
+        if isa(sysStruct.noise, 'polytope'),
+            noisedim = dimension(sysStruct.noise);
+        else
+            % NOTE! remember that the noise in V-representation has vertices
+            % stored column-wise!!!
+            noisedim = size(sysStruct.noise, 1);
         end
-        Options.noNoiseOnTset = 0;
+        if noisedim ~= size(sysStruct.A{1},1),
+            error('Noise polytope of the wrong dimension!');
+        else
+            isNoisy = true;
+            if isa(sysStruct.noise, 'polytope'),
+                Vnoise = extreme(sysStruct.noise);
+            else
+                % NOTE! remember that the noise in V-representation has vertices
+                % stored column-wise!!! therefore we need to convert it to a
+                % row-wise format, since that is what extreme() returns!
+                Vnoise = sysStruct.noise';
+            end
+            Options.noNoiseOnTset = 0;
+        end
     end
 else
     isNoisy = false;
@@ -448,7 +458,7 @@ for k = horizon:-1:1,
                 % add noise offset to "cost-to-go"
                 %
                 if isNoisy,
-                    costOffset = getNoiseOffset(noiseH,noiseK,[],Bi);
+                    costOffset = getNoiseOffset([],[],Vnoise,Bi);
                     Ci = Ci + costOffset;
                 end
                 if isOffset(iDyn),
@@ -912,6 +922,3 @@ else
         end
     end
 end
-
-
-

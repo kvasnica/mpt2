@@ -110,6 +110,7 @@ function [G,W,E,H,F,Y,Cf,Cx,Cc,symmetric,bndA,bndb,Pinvset]=mpt_constructMatrice
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -225,7 +226,7 @@ if(nargin<4 | isempty(setHorizon))
     setHorizon=horizon; %add set constraint as terminal set constraint
 end
 
-if(isfulldim(sysStruct.noise))
+if(mpt_isnoise(sysStruct.noise))
     noise=1;
     if(isfield(Options,'noNoiseOnTset') & Options.noNoiseOnTset)
         noiseOnTset=0;  %do not take minkowski difference on target set
@@ -1434,19 +1435,25 @@ return
 
 %--------------------------------------------------------
 function noiseVal=subtractNoise(Apow,e,noise,Options)
-    noiseVal=zeros(size(e,1),1);
-    eA=e*Apow;
+   
+polynoise = isa(noise, 'polytope');
+noiseVal=zeros(size(e,1),1);
+eA=e*Apow;
+if ~polynoise,
+    % NOTE! noise is represented column-wise if it is in V-representation
+    noiseVal = min(eA * noise,[],2);
+else
     [Hnoise,Knoise]=double(noise);
     for ii=1:size(e,1)
-         %LPi%[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(eA(ii,:)',Hnoise,Knoise,[],[],[],Options.lpsolver);
-         [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(eA(ii,:),Hnoise,Knoise,[],[],[],Options.lpsolver);
-         if(~strcmp(how,'ok'))
-             fprintf('\n\n')
-             error(' mpt_contructMatrices: Not possible to robustify constraints');
-         end
-         noiseVal(ii)=eA(ii,:)*xopt;
+        % minimize in each direction
+        [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(eA(ii,:),Hnoise,Knoise,[],[],[],Options.lpsolver);
+        if(~strcmp(how,'ok'))
+            fprintf('\n\n')
+            error(' mpt_contructMatrices: Not possible to robustify constraints');
+        end
+        noiseVal(ii)=eA(ii,:)*xopt;        
     end
-return
+end
 
 
 %--------------------------------------------------------

@@ -374,7 +374,7 @@ Ucombs = mpt_allcombs(Udiscr);
 % indices of continuous inputs;
 ucont = setdiff(1:nu, ubool);
 ncont = length(ucont);
-isaddnoise=isfulldim(sysStruct.noise);
+isaddnoise=mpt_isnoise(sysStruct.noise);
 Options.noNoiseOnTset=1;
 Options.ispwa=1;
 

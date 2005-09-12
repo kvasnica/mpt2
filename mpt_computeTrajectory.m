@@ -334,14 +334,20 @@ index=1;
 PA = ctrlStruct.Pn;
 
 % get the maximum value of noise (additive disturbance)
-if isfulldim(sysStruct.noise) & Options.randdist,
-    [Hnoise,Knoise]=double(sysStruct.noise);
-    disp('Assuming noise is hyperrectangle... trajectory is wrong if this is not true.')
-    if(length(Knoise)~=2*nx)
-        error('Noise is not a hyperrectangle; it is not possible to consider noise when plotting; set Options.randdist=0')
+if mpt_isnoise(sysStruct.noise) & Options.randdist,
+    if ~isa(sysStruct.noise, 'polytope'),
+        disp('Noise is not a polytope, no noise will be used for simulation...');
+        maxNoise=zeros(nx,1);
+        deltaNoise=zeros(nx,1);        
+    else
+        [Hnoise,Knoise]=double(sysStruct.noise);
+        disp('Assuming noise is hyperrectangle... trajectory is wrong if this is not true.')
+        if(length(Knoise)~=2*nx)
+            error('Noise is not a hyperrectangle; it is not possible to consider noise when plotting; set Options.randdist=0')
+        end
+        deltaNoise=Knoise(1:length(Knoise)/2)+Knoise(length(Knoise)/2+1:end);
+        maxNoise=Knoise(1:length(Knoise)/2);
     end
-    deltaNoise=Knoise(1:length(Knoise)/2)+Knoise(length(Knoise)/2+1:end);
-    maxNoise=Knoise(1:length(Knoise)/2);
 else
     maxNoise=zeros(nx,1);
     deltaNoise=zeros(nx,1);

@@ -70,7 +70,7 @@ else
     ctrltype = sprintf('low-complexity solution (Horizon %d)', N);
 end
    
-if isfulldim(sysStruct.noise) | isfield(sysStruct, 'Aunc')
+if mpt_isnoise(sysStruct.noise) | isfield(sysStruct, 'Aunc')
     ctrltype = [ctrltype ' robust'];
 end
 cost_str = sprintf('%s (%s-norm)', ctrltype, num2str(probStruct.norm));

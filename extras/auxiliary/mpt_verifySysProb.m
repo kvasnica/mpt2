@@ -218,13 +218,11 @@ if isfield(probStruct, 'Qy') & probStruct.Tconstraint==1,
 end
 
 if isfield(sysStruct, 'noise'),
-    if isa(sysStruct.noise, 'polytope'),
-        if isfulldim(sysStruct.noise) & probStruct.tracking > 0,
-            error('Additive uncertainties not supported for tracking problems.');
-        end
-        if isfulldim(sysStruct.noise) & isinf(probStruct.N) & probStruct.subopt_lev==0,
-            error('Additive uncertainties not supported for infinite time solutions.');
-        end
+    if mpt_isnoise(sysStruct.noise) & probStruct.tracking > 0,
+        error('Additive uncertainties not supported for tracking problems.');
+    end
+    if mpt_isnoise(sysStruct.noise) & isinf(probStruct.N) & probStruct.subopt_lev==0,
+        error('Additive uncertainties not supported for infinite time solutions.');
     end
 end
 
@@ -245,7 +243,7 @@ if isfield(probStruct, 'feedback'),
 end
 
 if any(~isinf(sysStruct.dumax)) | any(~isinf(sysStruct.dumin)),
-    if isfulldim(sysStruct.noise) | isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
+    if mpt_isnoise(sysStruct.noise) | isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
         error('Uncertainties not supported for systems with deltaU constraints');
     end
 end
