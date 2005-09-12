@@ -112,8 +112,8 @@ else
             Hint = [H1{i1}; H2{i2}];
             Kint = [K1{i1}; K2{i2}];
             [xcheb, rcheb] = chebyball_f(Hint, Kint, mptOptions);
-            answer =  (rcheb > mptOptions.abs_tol);
-            if answer == 1,
+            if (rcheb > mptOptions.abs_tol),
+                answer = 1;
                 if nargout > 1,
                     IAB = [IAB; i1 i2];
                 else
