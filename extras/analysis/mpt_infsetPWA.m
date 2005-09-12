@@ -35,6 +35,15 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 %                     on number of separating hyperplanes.
 % Options.mergefinal - If set to true (default), tries to simplify
 %                      final result by merging regions
+% Options.simplify_target - If set to true, tries to merge regions between
+%                           iteration steps, after Minkowski calculations, 
+%                           and after detecting a non-convex union of more than
+%                           two polytopes in iterations. Default value is set to
+%                           TRUE if system is subject to noise, and to FALSE
+%                           otherwise.
+% Options.simplify_method - valid only if .simplify_target set; 'greedy'
+%                           (default) - uses greedy merging, other string -
+%                           uses optimal merging
 %
 % NOTE: Length of Pn, A, f must be identical
 %
@@ -63,6 +72,8 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Mario Vasak, FER, Zagreb
+%          mario.vasak@fer.hr 
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -101,20 +112,26 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
-if nargin<5,
-    Options.verbose=1;
-end
-if(nargin<4 | isempty(Wnoise))
+if nargin<4         % | isempty(Wnoise)) M.V. later if we find out that the noise is hidden in ctrlStruct, we override this
     Wnoise=polytope;
 end
 
 nargs = nargin;
 if nargin==2
-    if isstruct(A),
+    if isa(Pn,'polytope') & nargin<3 %M.V. to fix the issue with giving a PWL model (i.e. only Pn and A)
+        f=cell(length(A),1);
+        Options={};
+    elseif isstruct(A), % if we give ctrlStruct and Options, again everything is handeled
         Options = A;
+        nargs = 1;
     end
     nargs = 1;
 end
+
+if (nargin>2 & nargin<5) | nargin==1
+    Options={};
+end
+
 if ~isfield(Options,'verbose'),
     Options.verbose=mptOptions.verbose;
 end
@@ -149,11 +166,17 @@ if sphratio == 0,
     % to avoid "division by zero" warnings
     sphratio = 1e-9;
 end
+if ~isfield(Options,'simplify_method')
+    Options.simplify_method = 'greedy';
+end
 
 maxIter = Options.maxIter;
 
 if nargs==1,
     ctrl = Pn;
+    if isa(ctrl,'polytope')
+        error('You should provide additional fields defining autonomous dynamics of a PWA system!')
+    end
     if isa(ctrl, 'mptctrl')
         if ~isexplicit(ctrl),
             error('This function supports only explicit controllers!');
@@ -214,10 +237,26 @@ iter=1;
 dynamics=1:length(Pn);
 notConverged=1;
 
-if(mpt_isnoise(Wnoise))
-    targetPn=Pn-Wnoise;
+mergeOpt.verbose=0;
+mergeOpt.greedy = strcmpi(Options.simplify_method, 'greedy'); 
+
+if ~isfield(Options,'simplify_target') 
+    Options.simplify_target = mpt_isnoise(Wnoise);
+end
+
+if Options.simplify_target,
+    P_merg=merge(Pn,mergeOpt);
 else
-    targetPn=Pn;
+    P_merg=Pn;
+end
+
+if mpt_isnoise(Wnoise),
+    targetPn=P_merg-Wnoise;
+    if Options.simplify_target
+        targetPn=merge(targetPn,mergeOpt);
+    end
+else
+    targetPn=P_merg;
 end
 
 if ~isfield(Options, 'statusbar')
@@ -255,9 +294,6 @@ if statusbar,
     end     
 end
 
-mergeOpt = Options;
-mergeOpt.statusbar = 0;
-mergeOpt.verbose = -1;
 while(notConverged>0 & iter<maxIter)
     
     if statusbar,
@@ -387,8 +423,11 @@ while(notConverged>0 & iter<maxIter)
                 end
             else
                 %union is not convex
-                transP = [transP tP];
-                for kk=1:trans
+                if Options.simplify_target & trans>=3      %M.V. issue b)
+                    tP=merge(tP,mergeOpt);
+                end
+                transP = [transP tP];  
+                for kk=1:length(tP)
                     tdyn(end+1)=dynamics(i);             %dynamics of new polytope are same as original polytope at t-1
                 end
             end
@@ -397,12 +436,21 @@ while(notConverged>0 & iter<maxIter)
     
     Pn=transP;      %write results for next iteration
     dynamics=tdyn;
-    if(mpt_isnoise(Wnoise))
-        targetPn=Pn-Wnoise;
+    if Options.simplify_target %M.V. issue b)
+        P_merg=merge(Pn,mergeOpt);
     else
-        targetPn=Pn;
+        P_merg=Pn;
     end
 
+	if mpt_isnoise(Wnoise),
+        targetPn=P_merg-Wnoise;
+        if Options.simplify_target
+            targetPn=merge(targetPn,mergeOpt);
+        end
+    else
+        targetPn=P_merg;
+    end
+    
     iter=iter+1;
 end
 
