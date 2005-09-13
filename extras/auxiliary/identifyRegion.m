@@ -1,13 +1,12 @@
 function identfyRegion(P)
-%FJC_IDENTIFYREGION plots the number of the polytopes into the current 
-%                   figure
+%IDENTIFYREGION plots the number of the polytopes into the current figure
 %
-% fjc_identfyregion(P)
+% identifyregion(P)
 %
 % -------------------------------------------------------------------------
 % INPUT
 % -------------------------------------------------------------------------
-% P                 - Polytopes
+% P                 - polytope array
 %
 % see also POLYTOPE/PLOT
 %
@@ -58,11 +57,11 @@ for ii=1:length(P)
   elseif n==3
     h2 = text(xc(1), xc(2), xc(3), num2str(ii));
   else
-    error('MPT_IDENTIFYREGION: only for 2D and 3D polytopes');
+    error('IDENTIFYREGION: only for 2D and 3D polytopes');
   end
   
   set(h2,'Color','w');
-  set(h2,'FontSize',8);
+  set(h2,'FontSize',7);
 
 end%ii
 

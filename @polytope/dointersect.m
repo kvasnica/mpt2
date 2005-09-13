@@ -1,7 +1,7 @@
 function [answer, IA, IB, IAB] = dointersect(P1,P2)
 %DOINTERSECT Checks if two polytopes / polyarrays intersect
 %
-% answer = dointersect(P1,P2)
+% [answer, IA, IB, IAB] = dointersect(P1,P2)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
