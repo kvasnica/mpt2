@@ -123,6 +123,17 @@ if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt.probstructname = inputname(2);
     [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
     if isfield(sysStruct, 'noise'),
+        if mpt_isnoise(sysStruct.noise),
+            % noise is defined, check if it has proper dimension
+            if isa(sysStruct.noise, 'polytope'),
+                noisedim = dimension(sysStruct.noise);
+            else
+                noisedim = size(sysStruct.noise, 2);
+            end
+            if noisedim ~= mpt_sysStructInfo(sysStruct),
+                error(sprintf('"%s.noise" has wrong dimension.', Options.sysstructname));
+            end
+        end
         if isa(sysStruct.noise, 'double'),
             % NOTE! V-represented noise needs to be stored column-wise for all
             % functions!
