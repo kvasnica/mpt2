@@ -11,6 +11,11 @@ function R=minus(P,Q,Options)
 %  S. Rakovic and D. Mayne entitled "Constrained Control Computations"
 %  It was the keynote address at the GBT Meeting, London, November, 2002.
 %
+% NOTE: If Q ia a polyarray, Q=[Q1 Q2 ... Qn], then Q is considered
+% as the space covered with polytopes Qi, and the minus.m computes P-Q according
+% to the definition 
+%   P-Q=\{x\in P| x+w\in P \forall w\in Q\}=(P-Q1)&(P-Q2)&...&(P-Qn) 
+%
 % USAGE:
 %   R=P-Q
 %   R=minus(P,Q,Options)
@@ -174,12 +179,12 @@ elseif isa(P,'polytope') & isa(Q,'polytope')
         end
     else    %M.V. if lenP>0 we don't enter this part, but we enter it only then when lenP=0
         lenQ=length(Q.Array);
-        if lenQ>0,
-            R=P;
-            for ii=1:lenQ,
-                R = minus(R,Q.Array{ii},Options);
+        if lenQ>0, %M.V. we do R=(P-Q1)&(P-Q2)&...&(P-Qn)
+            R = minus(P,Q.Array{1},Options);
+            for ii=2:lenQ,
+                R = R & minus(P,Q.Array{ii},Options);
             end
-            return %lenP and lenQ is a single polytope - result is a single polytope, no need to merge
+            return %result is a single polytope, no need to merge
         end 
         if ~isfulldim(Q),
             R=P;
