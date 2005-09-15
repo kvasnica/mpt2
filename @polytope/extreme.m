@@ -579,11 +579,6 @@ function [result,i]=checkextreme(P,V,nx,Options)
 
 result = 0;
 i = 0;
-if size(V,1) < nconstr(P),
-    result = 1;
-    % polytope cannot have less vertices than facets
-    return
-end
 for i=1:size(V,1)
     d = P.H*V(i,:)'-P.K;
     tmp=find(abs(d)<=Options.abs_tol); % find intersections with hyperplanes
