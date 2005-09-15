@@ -300,7 +300,7 @@ if(Options.debug_level>1)
 end
 
 % assign polytope with updated vertices in caller's workspace
-if ~isempty(inputname(1)) & nargout<3,
+if ~isempty(inputname(1)) & nargout==0,
     assignin('caller',inputname(1),P);
 end
 
