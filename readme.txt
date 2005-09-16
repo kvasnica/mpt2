@@ -1,5 +1,5 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.2 25-Jul-2004
+% Version 2.0.4 16-Sep-2004
 %
 % http://control.ee.ethz.ch/~mpt/
 %
