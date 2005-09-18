@@ -290,13 +290,14 @@ if 0 & ctrlStruct.probStruct.tracking,
         % plot references
         ctr = ctr+1;
         Xrefmat = [Xrefmat X(1:end-endp,nxt+nu+ii)];
-        legendXtext{ctr}=sprintf('r_%d',ii);
+        refname = sprintf('r_%d',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
             if ~isempty(ctrlStruct.sysStruct.StateName),
                 % use user defined text labels if defined
-                legendXtext{ctr} = sprintf('Reference %s', ctrlStruct.sysStruct.StateName{ii});
+                refname = sprintf('Reference %s', ctrlStruct.sysStruct.StateName{ii});
             end
         end
+        legendXtext{ctr} = refname;
     end
     handleX = plot(T,Xmat,T,Xrefmat,'--','LineWidth',linewidth);
     for ii=1:nxt,
@@ -377,13 +378,14 @@ else
         Ymatref = [];
         for ii=1:ny,
             Ymatref = [Ymatref ctrlStruct.probStruct.yref(ii)*ones(length(T),1)];
-            legendYtext{end+1}=sprintf('r_%d',ii);
+            refname = sprintf('r_%d',ii);
             if isfield(ctrlStruct.sysStruct, 'OutputName'),
                 if ~isempty(ctrlStruct.sysStruct.OutputName),
                     % use user defined text labels if defined
-                    legendYtext{end+1} = sprintf('Reference %s', ctrlStruct.sysStruct.OutputName{ii});
+                    refname = sprintf('Reference %s', ctrlStruct.sysStruct.OutputName{ii});
                 end
             end
+            legendYtext{end+1}=refname;
         end
     end
 end

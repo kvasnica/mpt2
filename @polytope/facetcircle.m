@@ -113,16 +113,15 @@ end
 facetH    = A(ind,:);
 facetK    = B(ind,:);
 facetDist = facetK - facetH * xCheb;
-normFacet = norm(facetH);
-x0 = xCheb + facetDist * facetH'/normFacet;
+normedFacet = facetH' / norm(facetH);
+x0 = xCheb + facetDist * normedFacet;
 
 Hi0 = null(facetH);
-idxOther = 1:nb;
-idxOther(ind) = [];
-Afacet = A(idxOther,:);
-normFacets = sqrt(diag(Afacet * Afacet'));
-auxH = [Afacet*Hi0 normFacets];
-auxK = B(idxOther,:) - Afacet * x0;
+idxOther = [1:ind-1 ind+1:nb];
+Aother = A(idxOther,:);
+Afacet = Aother * Hi0;
+auxH = [Afacet sqrt(diag(Afacet * Afacet'))];
+auxK = B(idxOther,:) - Aother * x0;
 
 % obtain list of available LP solvers
 solvers = mptOptions.solvers.lp_all;
@@ -135,7 +134,7 @@ solvers = [lpsolver solvers];
 
 for ii = 1:length(solvers),
     % try other solvers
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLP([zeros(1,n-1) -1],auxH,auxK,[],[],[], solvers(ii));
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,n-1) -1],auxH,auxK,[],[],[], solvers(ii));
     
     x = x0 + Hi0 * xopt(1:end-1); % Chebyshev center of the facet
     R = xopt(end);                % Chebyshev radius of the facet
@@ -188,7 +187,7 @@ elseif problem_constraints,
 end
 
 % project the point to the facet, this is just to annulate all numerical
-% errors (never trust to an LP solver)
+% errors (never trust an LP solver)
 %
 xSlack = facetK - facetH * x;
-x = x + xSlack * facetH' / normFacet;
+x = x + xSlack * normedFacet;

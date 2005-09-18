@@ -1,10 +1,23 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.2 25-Jul-2005
+% Version 2.0.5 16-Sep-2005
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
+
+Version 2.0.4 (16-Sep-2005)
+---------------------------
+
+[PATCH] fix computation of extreme points for cyclic polytopes
+
+[PATCH] mpt_iterativePWA: allow user-define target sets even if no dynamics 
+contains the origin
+
+[PATCH] remove ghost legends in mpt_plotTimeTrajectory
+
+[PATCH] YALMIP updated to R20050915
+
 
 
 Version 2.0.3 (05-Sep-2005)
