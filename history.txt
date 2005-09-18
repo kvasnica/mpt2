@@ -1,5 +1,5 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.4 16-Sep-2005
+% Version 2.0.5 16-Sep-2005
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
