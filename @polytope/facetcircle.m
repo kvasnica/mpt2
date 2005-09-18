@@ -134,7 +134,7 @@ solvers = [lpsolver solvers];
 
 for ii = 1:length(solvers),
     % try other solvers
-    [xopt,fval,lambda,exitflag,how]=mpt_solveLP([zeros(1,n-1) -1],auxH,auxK,[],[],[], solvers(ii));
+    [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,n-1) -1],auxH,auxK,[],[],[], solvers(ii));
     
     x = x0 + Hi0 * xopt(1:end-1); % Chebyshev center of the facet
     R = xopt(end);                % Chebyshev radius of the facet
