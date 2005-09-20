@@ -322,27 +322,17 @@ feasible=0;
 region=0;
 
 
-locOpt.fastbreak = 1;
-
-isin = isinside(ctrlStruct.Pn,x0,locOpt);
-
-if ~isin,
-    if Options.verbose > 0
-        disp(sprintf('MPT_GETINPUT: NO REGION FOUND FOR STATE x = [%s]',num2str(x0')));
-    end
-    feasible = 0;
-    return
-end
-
-if ~isfield(Options, 'fastbreak')
-    Options.fastbreak = (ctrlStruct.overlaps==0);
-end
-
-if ctrlStruct.probStruct.norm~=2,
-    % if mpLP was solved, some states are likely to end up on a boundary of
-    % several regions, that's why we do not break prematurely in mpt_getInput
-    Options.fastbreak = 0;
-end
+% this is a safe setting, we _could_ eventually abort the search for active
+% region once we find at least one such region, but:
+%  * in PWA / CFTOC / linear norms case it is very likely that the state ends up
+%    on a boundary of multiple regions, therefore we have to compare costs and
+%    pick up region where the cost is minimal
+%  * in minimum-time case we could break after the first found region, because
+%    all regions are already sorted in a "good" way, but what if somebody
+%    modifies the controller with modify() and includes his own regions?
+%
+% bottom line, we don't loose much if we always search through _all_ regions
+locOpt.fastbreak = 0;
 
 [isin, inwhich] = isinside(ctrlStruct.Pn,x0,Options);
 
