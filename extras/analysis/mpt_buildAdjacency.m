@@ -18,11 +18,17 @@ function [adjList] = mpt_buildAdjacency(Pi,Options)
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-% adjList          - list of adjacent regions
+% adjList          - list of adjacent regions, where adjList{i}(j,:) is
+%                    the list of neighbor regions indices at facet j of
+%                    region i. "-Inf" denotes that the facet is at the
+%                    boundary of feasibility
+%                   
 %
 
 % Copyright is with the following author(s):
 %
+%(C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%         fjc@control.ee.ethz.ch
 %(C) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %         baric@control.ee.ethz.ch
 
