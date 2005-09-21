@@ -6,27 +6,36 @@ function [Pn]=mpt_voronoi(points,Options)
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% The voronoi diagram is a partition of the state space; For a given set of points
-% pj, each region Pn(j) is defined as 
+% The voronoi diagram is a partition of the state space; For a given set of
+% points pj, each region Pn(j) is defined as 
 %           Pn(j)={x \in R^n | d(x,pj)<=d(x,pi), \forall i \neq j}
 %  
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% points        -   Optional input:
+% points         -  Optional input:
 %                   Matrix p times nx of points: nx is state space dimension and
 %                   p is the number of points
 %                   The entry is graphical in 2D if no parameters are passed.
-% Options.plot  -   If set to 1, plots the voronoi diagram (0 is default)
+% Options.pbound -  A "bounding polytope". If provided, the voronoi cells will
+%                   be bounded by this polytope. If not provided, the cells will
+%                   be bounded by a hypercube as big as 1.5x the maximum
+%                   coordinate of any of the seed points
+% Options.plot   -  If set to 1, plots the voronoi diagram (0 is default)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 %
 % Pn            -   Voronoi partition
+%
+% see also MPT_DELAUNAY
+%
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%     kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %     grieder@control.ee.ethz.ch
 
@@ -105,7 +114,23 @@ Matrices.G=G;
 Matrices.W=W;
 Matrices.E=E;
 Matrices.H=[1]';
-[Matrices.bndA, Matrices.bndb]=double(unitbox(nx,max(max(points))*1.5));
+
+if isfield(Options, 'pbound'),
+    % user has provided a bounding polytope, check if the input is correct
+    pbound = Options.pbound;
+    if ~isa(pbound, 'polytope'),
+        error('''Options.pbound'' must be a polytope object.');
+    elseif dimension(pbound) ~= nx,
+        error(sprintf('''Options.pbounds'' must be a polytope in %dD.', nx));
+    elseif length(pbound)>1,
+        error('''Options.pbound'' must be a single polytope.');
+    end
+else
+    % by default we bound the voronoi cells with a hypercube of size 1.5x bigger
+    % than the maximum coordinate of seeds
+    pbound = unitbox(nx, max(max(points))*1.5);
+end
+[Matrices.bndA, Matrices.bndb]=double(pbound);
 
 %solve mpLP
 [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options);
