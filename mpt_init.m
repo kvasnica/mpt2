@@ -219,11 +219,21 @@ end
 % 11 - 'mosek'     - MOSEK
 % 12 - 'ooqp'      - OOQP
 % 13 - 'clp'       - CLP
+% 14 - 'bpmpd'     - BPMPD
+% 15 - 'cplexmex'  - CPLEXMEX
 
 % fastest solver will be chosen if this field is empty (recommended)
 mptOptions.lpsolver = [];
 
-
+% by default 'mpt_init' will try to execute every solver which is found on your
+% matlab path, to see if it is really working properly. however, due to a change
+% in Matlab R14 API, some solver interfaces can crash Matlab if run on Linux.
+% In such case provide the list of solvers which should be excluded from being
+% checked in following variable.
+%
+% e.g. to exclude all CPLEX interfaces from checking, define
+%   dontcheck.lp = [2 8 15]
+dontcheck.lp = [];
 
 % if you set mptOptions.rescueLP to 1 and some LP is infeasible with
 % default solver, the problem will be automatically re-solved using a
@@ -245,10 +255,21 @@ mptOptions.rescueLP = 0;
 %   7 - 'ooqp'      - OOQP
 %   3 - 'sedumi'    - SeDuMi
 %   8 - 'clp'       - CLP
+%   9 - 'bpmpd'     - BPMPD
+%  10 - 'cplexmex'  - CPLEXMEX
 
 % fastest solver will be chosen if this field is empty (recommended)
 mptOptions.qpsolver = [];
 
+% by default 'mpt_init' will try to execute every solver which is found on your
+% matlab path, to see if it is really working properly. however, due to a change
+% in Matlab R14 API, some solver interfaces can crash Matlab if run on Linux.
+% In such case provide the list of solvers which should be excluded from being
+% checked in following variable.
+%
+% e.g. to exclude all CPLEX interfaces from checking, define
+%   dontcheck.qp = [2 4 10]
+dontcheck.qp = [];
 
 % if you set mptOptions.rescueQP to 1 and some QP is infeasible with
 % default solver, the problem will be automatically re-solved using a
@@ -268,11 +289,21 @@ mptOptions.rescueQP = 0;
 %   3 - 'xpress'    - XPRESS
 %   4 - 'mosek'     - MOSEK
 %   5 - 'bintprog'  - bintprog.m
-%   6 - 'cplex8'    - CPLEX 8 (interfaced with cplexmex)
+%   6 - 'cplex8'    - CPLEX 8 (interfaced with milp_cplex)
+%   7 - 'cplexmex'  - CPLEXMEX
 
 % fastest solver will be chosen if this field is empty (recommended)
 mptOptions.milpsolver = [];
 
+% by default 'mpt_init' will try to execute every solver which is found on your
+% matlab path, to see if it is really working properly. however, due to a change
+% in Matlab R14 API, some solver interfaces can crash Matlab if run on Linux.
+% In such case provide the list of solvers which should be excluded from being
+% checked in following variable.
+%
+% e.g. to exclude all CPLEX interfaces from checking, define
+%   dontcheck.milp = [0 6 7]
+dontcheck.milp = [];
 
 
 %--------------------
@@ -284,11 +315,21 @@ mptOptions.milpsolver = [];
 %   1 - 'yalmip'    - YALMIP Branch & Bound algorithm
 %   2 - 'xpress'    - XPRESS
 %   3 - 'mosek'     - MOSEK
-%   4 - 'cplex8'    - CPLEX 8 (interfaced with cplexmex)
+%   4 - 'cplex8'    - CPLEX 8 (interfaced with miqp_cplex)
+%   5 - 'cplexmex'  - CPLEXMEX
 
 % fastest solver will be chosen if this field is empty (recommended)
 mptOptions.miqpsolver = [];
 
+% by default 'mpt_init' will try to execute every solver which is found on your
+% matlab path, to see if it is really working properly. however, due to a change
+% in Matlab R14 API, some solver interfaces can crash Matlab if run on Linux.
+% In such case provide the list of solvers which should be excluded from being
+% checked in following variable.
+%
+% e.g. to exclude all CPLEX interfaces from checking, define
+%   dontcheck.miqp = [0 4 5]
+dontcheck.miqp = [];
 
 
 %---------------------------------------------------
@@ -634,7 +675,9 @@ if executesolver,
 end
 
 solvers.lp = [];
-allLPsolvers = setdiff(0:sub_maxsolvers('lp'), 6); % do not check SeDuMi - leads to a crash with Matlab 6.5
+% do not check SeDuMi - leads to a crash with Matlab 6.5
+dontcheck.lp = [dontcheck.lp(:); 6];
+allLPsolvers = setdiff(0:sub_maxsolvers('lp'), dontcheck.lp); 
 for solver = allLPsolvers
     if test_lp(solver, executesolver),
         solvers.lp = [solvers.lp solver];
@@ -642,7 +685,9 @@ for solver = allLPsolvers
 end
 
 solvers.qp = [];
-allQPsolvers = setdiff(0:sub_maxsolvers('qp'), 3); % do not check SeDuMi - leads to a crash with Matlab 6.5
+% do not check SeDuMi - leads to a crash with Matlab 6.5
+dontcheck.qp = [dontcheck.qp(:); 3];
+allQPsolvers = setdiff(0:sub_maxsolvers('qp'), dontcheck.qp); 
 for solver = allQPsolvers
     % do not check SeDuMi - leads to a crash with Matlab 6.5
     if test_qp(solver, executesolver),
@@ -651,7 +696,8 @@ for solver = allQPsolvers
 end
 
 solvers.milp = [];
-allMILPsolvers = 0:sub_maxsolvers('milp');
+dontcheck.milp = dontcheck.milp(:);
+allMILPsolvers = setdiff(0:sub_maxsolvers('milp'), dontcheck.milp);
 for solver = allMILPsolvers,
     if test_milp(solver, executesolver),
         solvers.milp = [solvers.milp solver];
@@ -659,7 +705,8 @@ for solver = allMILPsolvers,
 end
 
 solvers.miqp = [];
-allMIQPsolvers = 0:sub_maxsolvers('miqp');
+dontcheck.miqp = dontcheck.miqp(:);
+allMIQPsolvers = setdiff(0:sub_maxsolvers('miqp'), dontcheck.miqp);
 for solver = allMIQPsolvers,
     if test_miqp(solver, executesolver),
         solvers.miqp = [solvers.miqp solver];
