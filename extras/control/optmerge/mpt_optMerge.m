@@ -470,7 +470,7 @@ function M_mer = mergePol(I, M, GL, Dom, Opt);
         if Opt.algo > 0
             % optimal merging based on branch and bound
             % resulting in non-overlapping polyhedra
-            [m_mer, nodes] = merge5(rem_ind*0, m_white, m_black, 0, 0, inf, Opt.algo);
+            [m_mer, nodes] = mpt_merge5(rem_ind*0, m_white, m_black, 0, 0, inf, Opt.algo);
         else
             % suboptimal merging based on boolean minimization
             % resulting in overlapping polyhedra

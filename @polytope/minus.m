@@ -11,6 +11,11 @@ function R=minus(P,Q,Options)
 %  S. Rakovic and D. Mayne entitled "Constrained Control Computations"
 %  It was the keynote address at the GBT Meeting, London, November, 2002.
 %
+% NOTE: If Q ia a polyarray, Q=[Q1 Q2 ... Qn], then Q is considered
+% as the space covered with polytopes Qi, and the minus.m computes P-Q according
+% to the definition 
+%   P-Q=\{x\in P| x+w\in P \forall w\in Q\}=(P-Q1)&(P-Q2)&...&(P-Qn) 
+%
 % USAGE:
 %   R=P-Q
 %   R=minus(P,Q,Options)
@@ -22,6 +27,11 @@ function R=minus(P,Q,Options)
 % Options.extreme_solver  - Which method to use for extreme points computation
 %                           (see help extreme)
 % Options.lpsolver        - Which LP solver to use (see help mpt_solveLP)
+% Options.merge           - If set to true (default), simplifies the final
+%                           polytope description using merge.m
+% Options.merge_method    - Valid only if .merge is set to 1, if 'greedy'
+%                           (default) greedy merging will be used,
+%                           otherwise optimal merging is used
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -36,6 +46,8 @@ function R=minus(P,Q,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Mario Vasak, FER, Zagreb
+%          mario.vasak@fer.hr  
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -80,11 +92,14 @@ end
 if ~isfield(Options,'lpsolver')
     Options.lpsolver=mptOptions.lpsolver;
 end
-if ~isfield(Options,'reduceMD')
-    Options.reduceMD=0;
-end
 if ~isfield(Options,'abs_tol'),
     Options.abs_tol=mptOptions.abs_tol;
+end
+if ~isfield(Options,'merge')
+    Options.merge=1;
+end
+if Options.merge & ~isfield(Options,'merge_method')
+    Options.merge_method='greedy';
 end
 
 
@@ -113,28 +128,28 @@ if isa(P, 'polytope') & isa(Q, 'double')
             Emin=plus(E,QM,Options);            %Minkowski addition on those sets
         end
         R=mldivide(PM,Emin,Options);        %Compute final polytopes
+        if ~Options.merge       %M.V.
+            return;
+        end
+    else    
+    
+        nx = dimension(P);
+        nc = nconstr(P);
+        if size(Q, 1)~=nx,
+            error(sprintf('The matrix must have %d rows!', nx));
+        end
+        A = P.H;
+        B = P.K;
+        for ii = 1:nc,
+            a = A(ii, :);
+            b = B(ii);
+            delta = min(-a*Q);
+            B(ii) = B(ii) + delta;
+        end
+        R = polytope(A, B);
         return
     end
-    
-    nx = dimension(P);
-    nc = nconstr(P);
-    if size(Q, 1)~=nx,
-        error(sprintf('The matrix must have %d rows!', nx));
-    end
-    A = P.H;
-    B = P.K;
-    for ii = 1:nc,
-        a = A(ii, :);
-        b = B(ii);
-        delta = min(-a*Q);
-        B(ii) = B(ii) + delta;
-    end
-    R = polytope(A, B);
-    return
-end
-    
-
-if isa(P,'polytope') & isa(Q,'polytope')
+elseif isa(P,'polytope') & isa(Q,'polytope')
     [cx,cr]=chebyball(P);
     if isinf(cr) & all(cx==0),
         R=P;
@@ -159,81 +174,52 @@ if isa(P,'polytope') & isa(Q,'polytope')
             Emin=plus(E,QM,struct('msolver',1));
         end
         R=mldivide(PM,Emin,Options);        %Compute final polytopes
-
-        if Options.reduceMD,          
-            Rest = mptOptions.emptypoly;
-            lenEmin = length(Emin.Array);
-            if lenEmin==0,
-                Rest = PM & Emin;
-            else
-                for ii=1:lenEmin,
-                    Rest = [Rest PM&Emin.Array{ii}];
-                end
+        if ~Options.merge       %M.V.
+            return;
+        end
+    else    %M.V. if lenP>0 we don't enter this part, but we enter it only then when lenP=0
+        lenQ=length(Q.Array);
+        if lenQ>0, %M.V. we do R=(P-Q1)&(P-Q2)&...&(P-Qn)
+            R = minus(P,Q.Array{1},Options);
+            for ii=2:lenQ,
+                R = R & minus(P,Q.Array{ii},Options);
             end
-            Opt = Options;
-            Opt.PAdom = PM;
-            Opt.PAcompl = Rest;
-            Opt.color = ones(length(R),1);
-            [PP,cm]=mpt_optMergeDivCon(R,Opt);
-            %R = merge(R,struct('greedy',1,'trials',2));
-            if isempty(PP.Array),
-                R = PP;
-            else
-                regind = find(cm.Reg==1);
-                R = mptOptions.emptypoly;
-                for ii=1:length(regind)
-                    R = [R PP.Array{regind(ii)}];
-                end
-            end
+            return %result is a single polytope, no need to merge
+        end 
+        if ~isfulldim(Q),
+            R=P;
             return
-            
-            diffU=mptOptions.emptypoly;
-            for ii=1:lenP,
-                diffU=[diffU minus(P.Array{ii},Q,Options)];    
-            end
-            M = R\diffU;                                       
-            [UM,how] = union(M);
-            if how,
-                M=UM;
-            end
-            R = [diffU M];
         end
-        return
-    end
-    lenQ=length(Q.Array);
-    if lenQ>0,
-        R=P;
-        for ii=1:lenQ,
-            R = minus(R,Q.Array{ii},Options);
+        if ~isfulldim(P),
+            R=polytope;
+            return
         end
-        return
-    end 
-    if ~isfulldim(Q),
-        R=P;
-        return
-    end
-    if ~isfulldim(P),
-        R=polytope;
-        return
-    end
-    if ~P.minrep
-        P=reduce(P);
-    end
-    if ~Q.minrep
-        Q=reduce(Q);
-    end
-    [ncP,dP]=size(P.H);
-    [ncQ,dQ]=size(Q.H);
-    if dP~=dQ
-        error('MINUS: Polytopes MUST have the same dimension in Minkowski difference');
-    end
-    H=P.H;
-    K=P.K;
-    for ii=1:ncP
-        [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(-P.H(ii,:),Q.H,Q.K,[],[],[],Options.lpsolver);
-        K(ii)=K(ii)+fval;
-    end
+        if ~P.minrep
+            P=reduce(P);
+        end
+        if ~Q.minrep
+            Q=reduce(Q);
+        end
+        [ncP,dP]=size(P.H);
+        [ncQ,dQ]=size(Q.H);
+        if dP~=dQ
+            error('MINUS: Polytopes MUST have the same dimension in Minkowski difference');
+        end
+        H=P.H;
+        K=P.K;
+        for ii=1:ncP
+            [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(-P.H(ii,:),Q.H,Q.K,[],[],[],Options.lpsolver);
+            K(ii)=K(ii)+fval;
+        end
 
-    R=polytope(H, K, 1);
-    return;
+        R=polytope(H, K, 1);
+        return;
+    end
+else
+    error('P must be a polytope object, and Q can either be a polytope object or a matrix of vertices');
+end
+
+if Options.merge & ~isempty(R.Array),
+    mergeOpt.greedy=strcmpi(Options.merge_method,'greedy');
+    R=merge(R,mergeOpt);
 end

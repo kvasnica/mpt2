@@ -21,6 +21,10 @@ function [Pm,details] = merge(Pn,Options)
 % Options.trials    - for greedy merging, defines number of trials to
 %                     improve the solution (default is 1, corresponds to 1 run)
 %
+% NOTE!!! if optimal merging is used (Options.greedy=0), then the result might
+% contain overlaps! if you do not want them, you must additionaly specify
+% Options.algo, see 'help mpt_optMerge' for more details.
+%
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------

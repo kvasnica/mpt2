@@ -235,8 +235,18 @@ if Options.debug_level>0
             K(iv) = 1 + V(iv,:)*xmid;
         end
         P = polytope(H,K,0,2);               % convex hull is given by {x : q_i x <= 1 + q_i xmid}
-        [H, K] = double(P);
-
+        %[H,K] = double(P);
+        % Reason why the line above is commented out (by Mario Vasak):
+        %
+        % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+        % polytope if cheby radius of P falls below the abs_tol, and that is 
+        % correct. But taking H & K in row 490 then from P brings empty H and K in 
+        % the superimposed function, and this ends in a hull-error (result=1), but 
+        % nothing is really wrong: H and K are hopefully correctly computed, but 
+        % the resulting hull is too small, so H and K should be checked in 
+        % checkhull.m, while hull.m should return an empty polytope if the check 
+        % is all right.
+        
         [result,i] = checkhull(P,H,K,Vconv,Options);
         if result~=0,
             error(['HULL: Point ' num2str(i) ' is not a vertex!'])
@@ -372,7 +382,17 @@ if size(V,2)==3,                   % points in 3D space
         P=polytope(H,K,0,2);
         Vconv=V(unique(Vconv),:);      % store extreme points
         P=set(P,'vertices',Vconv);
-        [H, K] = double(P);
+        %[H,K] = double(P);
+        % Reason why the line above is commented out (by Mario Vasak):
+        %
+        % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+        % polytope if cheby radius of P falls below the abs_tol, and that is 
+        % correct. But taking H & K in row 490 then from P brings empty H and K in 
+        % the superimposed function, and this ends in a hull-error (result=1), but 
+        % nothing is really wrong: H and K are hopefully correctly computed, but 
+        % the resulting hull is too small, so H and K should be checked in 
+        % checkhull.m, while hull.m should return an empty polytope if the check 
+        % is all right.
     end
     return
 
@@ -414,7 +434,17 @@ elseif size(V,2)==2,               % points in 2D space
         P = polytope(H,K,0,2);
         Vconv=puni;                     % store extreme points
         P=set(P,'vertices',Vconv);
-        [H, K] = double(P);
+        %[H,K] = double(P);
+        % Reason why the line above is commented out (by Mario Vasak):
+        %
+        % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+        % polytope if cheby radius of P falls below the abs_tol, and that is 
+        % correct. But taking H & K in row 490 then from P brings empty H and K in 
+        % the superimposed function, and this ends in a hull-error (result=1), but 
+        % nothing is really wrong: H and K are hopefully correctly computed, but 
+        % the resulting hull is too small, so H and K should be checked in 
+        % checkhull.m, while hull.m should return an empty polytope if the check 
+        % is all right.
     end
     return
 else

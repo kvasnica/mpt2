@@ -436,7 +436,17 @@ while index<nii
             handle=[handle;h];
         elseif dimP==3
             if Options.extreme_solver==3,
-                [tempV,VA]=cddmex('adj_extreme',tempH); % get vertices + adjacency list
+                try
+                    [tempV,VA]=cddmex('adj_extreme',tempH); % get vertices + adjacency list
+                catch
+                    % CDD failed, try analytical solution
+                    if Options.verbose > 1,
+                        fprintf('CDD failed to compute extreme points, switching to analytical computation...\n');
+                    end
+                    opt = Options;
+                    opt.extreme_solver = 0;
+                    [tempV.V,tempV.R,QQ,VA,adjF]=extreme(P,opt);
+                end
             else
                 [tempV.V,tempV.R,QQ,VA,adjF]=extreme(P,Options);
             end
