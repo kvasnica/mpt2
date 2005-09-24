@@ -1,4 +1,4 @@
-function identfyRegion(P,Idx)
+function identifyRegion(P,Idx)
 %IDENTIFYREGION plots the number of the polytopes into the current figure
 %
 % identifyRegion(P)
@@ -54,7 +54,7 @@ if nargin<2
     Idx = 1:length(P);
 elseif nargin==2
     if length(P)<length(Idx) | min(Idx)<=0 | max(Idx) > length(P)
-        error('IDENTIFYREGION: length of Idx must be smaller/equal than the length of P');
+        error('IDENTIFYREGION: Idx must represent a possible list of indices of P.');
     end
 end
 
