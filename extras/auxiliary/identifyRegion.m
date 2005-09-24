@@ -1,12 +1,13 @@
-function identfyRegion(P)
+function identfyRegion(P,Idx)
 %IDENTIFYREGION plots the number of the polytopes into the current figure
 %
-% identifyregion(P)
+% identifyregion(P,Idx)
 %
 % -------------------------------------------------------------------------
 % INPUT
 % -------------------------------------------------------------------------
 % P                 - polytope array
+% Idx               - vector of indexnumbers to be printed (optional)
 %
 % see also POLYTOPE/PLOT
 %
@@ -38,11 +39,26 @@ function identfyRegion(P)
 % -------------------------------------------------------------------------
 
 
-global mptOptions;
+
+error(nargchk(1,2,nargin));
+
+global mptOptions
+
+if ~isstruct(mptOptions),
+    mpt_error;
+end
 
 if ~isa(P, 'polytope'),
     error('IDENTIFYREGION: input argument MUST be a polytope');
 end
+if nargin<2
+    Idx = 1:length(P);
+elseif nargin==2
+    if length(P)~=length(Idx)
+        error('IDENTIFYREGION: length of P and Idx must be the same');
+    end
+end
+
 
 hold on;
 h = gcf;
@@ -53,9 +69,9 @@ for ii=1:length(P)
   [xc, Rc] = chebyball(P(ii));
   
   if n==2
-    h2 = text(xc(1), xc(2), num2str(ii));
+    h2 = text(xc(1), xc(2), num2str(Idx(ii)));
   elseif n==3
-    h2 = text(xc(1), xc(2), xc(3), num2str(ii));
+    h2 = text(xc(1), xc(2), xc(3), num2str(Idx(ii)));
   else
     error('IDENTIFYREGION: only for 2D and 3D polytopes');
   end
