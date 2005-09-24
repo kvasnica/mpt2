@@ -577,6 +577,13 @@ function [result,i]=checkhull(P,H,K,Vconv,Options)
 abs_tol = Options.abs_tol;
 result = 0;
 i = 0;
+if isempty(Vconv) & ~isempty(H),
+    % something is definitelly wrong. we don't have any vertices, 
+    % even though H-representation is not empty
+    result = 1;
+    return
+end
+
 nx = size(Vconv,2);
 for i=1:size(Vconv,1)
     HVK = H*Vconv(i,:)'-K;
