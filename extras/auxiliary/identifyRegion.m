@@ -1,21 +1,22 @@
 function identfyRegion(P,Idx)
 %IDENTIFYREGION plots the number of the polytopes into the current figure
 %
-% identifyregion(P,Idx)
+% identifyRegion(P)
+% identifyRegion(P,Idx)
 %
 % -------------------------------------------------------------------------
 % INPUT
 % -------------------------------------------------------------------------
 % P                 - polytope array
-% Idx               - vector of indexnumbers to be printed (optional)
+% Idx               - vector of index numbers to be printed (optional)
 %
 % see also POLYTOPE/PLOT
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2004 Frank J. Christophersen, Automatic Control Lab., ETH Zurich,
-%          fjc@control.ee.ethz.ch
+% (C) 2004-2005 Frank J. Christophersen, Automatic Control Lab., ETH Zurich,
+%               fjc@control.ee.ethz.ch
 
 % -------------------------------------------------------------------------
 % Legal note:
@@ -38,8 +39,6 @@ function identfyRegion(P,Idx)
 %
 % -------------------------------------------------------------------------
 
-
-
 error(nargchk(1,2,nargin));
 
 global mptOptions
@@ -54,24 +53,27 @@ end
 if nargin<2
     Idx = 1:length(P);
 elseif nargin==2
-    if length(P)~=length(Idx)
-        error('IDENTIFYREGION: length of P and Idx must be the same');
+    if length(P)<length(Idx) | min(Idx)<=0 | max(Idx) > length(P)
+        error('IDENTIFYREGION: length of Idx must be smaller/equal than the length of P');
     end
 end
 
+% we use the Idx variable in a for-cycle, thus we have to make sure that it is a
+% row vector
+Idx = Idx(:)';
 
 hold on;
 h = gcf;
 
 n = dimension(P);
 
-for ii=1:length(P)
+for ii= Idx,
   [xc, Rc] = chebyball(P(ii));
   
   if n==2
-    h2 = text(xc(1), xc(2), num2str(Idx(ii)));
+    h2 = text(xc(1), xc(2), num2str(ii));
   elseif n==3
-    h2 = text(xc(1), xc(2), xc(3), num2str(Idx(ii)));
+    h2 = text(xc(1), xc(2), xc(3), num2str(ii));
   else
     error('IDENTIFYREGION: only for 2D and 3D polytopes');
   end
