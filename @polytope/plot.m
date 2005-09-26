@@ -24,6 +24,8 @@ function [handle,titlehandle]=plot(varargin)
 %                           (see help extreme)
 % Options.newfigure   - if 1, each plot command will open a new figure window
 % Options.color='r'   - sets default color
+% Options.gradcolor   - if 1, third coordinate of a 3D polytope is used to
+%                       color the polytopes with a gradient coloring (default 0)
 % Options.edgecolor   - color of edges (default is black 'k')
 % Options.wire=1/0    - plots polytopes in wireframe
 % Options.wirestyle   - a string giving style of the wireframe, e.g. '--' or '.-'
@@ -57,9 +59,11 @@ function [handle,titlehandle]=plot(varargin)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
+% (c) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
-% (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -127,6 +131,9 @@ if ~isfield(Options,'verbose')
 end
 if ~isfield(Options,'marker')
     Options.marker='';
+end
+if ~isfield(Options,'gradcolor')
+    Options.gradcolor = 0;
 end
 if ~isfield(Options,'linestyle')
     % could also be 'none' or ':'
@@ -506,9 +513,15 @@ while index<nii
                     end
                     set(h(border),'Color',wcolor);
                 else
-                    h(border)=patch('Vertices',tempV.V,'Faces',f(border,1:npoints),...
-                        'FaceVertexCData',tempV.V(:,3),'FaceColor',color,'FaceAlpha',...
-                        Options.shade,'EdgeColor',Options.edgecolor,'LineStyle',Options.linestyle);
+                    if Options.gradcolor
+                        h(border)=patch(tempV.V(:,1),tempV.V(:,2),tempV.V(:,3),tempV.V(:,3),...
+                            'Vertices',tempV.V,'Faces',f(border,1:npoints),'FaceAlpha',...
+                            Options.shade,'EdgeColor',Options.edgecolor,'LineStyle',Options.linestyle);
+                    else
+                        h(border)=patch('Vertices',tempV.V,'Faces',f(border,1:npoints),...
+                            'FaceVertexCData',tempV.V(:,3),'FaceColor',color,'FaceAlpha',...
+                            Options.shade,'EdgeColor',Options.edgecolor,'LineStyle',Options.linestyle);
+                    end
                 end
                 view(3);
             end
