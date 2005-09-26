@@ -274,6 +274,7 @@ elseif solver==2,
     LB = [];
     UB = [];
     OPTIONS.verbose = 0;
+    OPTIONS.lic_rel = 1e2;  % after how many runs to release the license    
     PARAM.int=[1063, 2];    % use the dual-simplex method
     VARTYPE = []; % all variables are continuous
     

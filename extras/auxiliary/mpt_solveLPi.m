@@ -272,6 +272,7 @@ elseif (lpsolver==2)
     LB = [];
     UB = [];
     OPTIONS.verbose = 0;
+    OPTIONS.lic_rel = 1e3;  % after how many runs to release the license
     PARAM.int = [1030, 1];  % enable presolver
     VARTYPE = []; % all variables are continuous
     PARAM = [];
