@@ -279,8 +279,13 @@ else
             Vnoise = sysStruct.noise';
         end
         noisedim = size(Vnoise, 2);
-        maxNoise = repmat(min(min(abs(Vnoise))), nx, 1);
-        deltaNoise = maxNoise/2;
+        deltaNoise = zeros(noisedim, 1);
+        middleNoise = zeros(noisedim, 1);
+        for idim = 1:noisedim,
+            Vdim = Vnoise(:, idim);
+            deltaNoise(idim) = (max(Vdim) - min(Vdim))/2;
+            middleNoise(idim) = (max(Vdim) + min(Vdim))/2;
+        end
         if dimension(finalbox)==noisedim,
             finalbox = finalbox + sysStruct.noise;
             addnoise = 1;
@@ -365,7 +370,13 @@ else
         %-----------------------------------------------------------------------
         % if noise is specified, we take some random value within of noise bounds
         if addnoise,
-            noise=maxNoise-rand(nx,1).*deltaNoise;
+            noiseVal = randn(nx, 1);
+            % bound noiseVal to +/- 1
+            noiseVal(find(noiseVal>1)) = 1;
+            noiseVal(find(noiseVal<-1)) = -1;
+            % compute the noise, use safety scaling of 0.99 to be sure that we
+            % do not exceed allowed limits
+            noise = middleNoise + 0.99*noiseVal.*deltaNoise;
             xn = (xn(:) + noise)';
             D = [D; noise'];
         end
