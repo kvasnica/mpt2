@@ -20,6 +20,8 @@ function handle=mpt_plotPWA(PA,Fi,Gi,Options)
 % ---------------------------------------------------------------------------
 % Pn                      - Polyhedral partition of the state-space
 % L,C                     - cell arrays containing a PWA function
+% Options.shade           - Level of transparency (0 = fully transparent, 
+%                           1 = solid). Default: 1.
 % Options.extreme_solver  - Which method to use for vertex enumeration 
 %                           (see help extreme)
 % Options.lpsolver        - LP solver to be used
@@ -220,6 +222,7 @@ elseif dimension(PA)==2,
         end
         handle=[handle;h];
     end
+    Jhandles = handle;
     if Options.showPn,
         % we are going to plot the polyhedral partition PA below
         for ii=1:maxlen,
@@ -265,7 +268,13 @@ elseif dimension(PA)==2,
     zlabel('f','Fontsize',16);
     grid;
     h=gcf;
-    set(h, 'Renderer', 'painters');
+    if isfield(Options, 'shade')
+        for ii = 1:length(Jhandles),
+            set(Jhandles, 'FaceAlpha', Options.shade);
+        end
+    else
+        set(h, 'Renderer', 'painters');
+    end
     h1 = get(h,'CurrentAxes');
     set(h1,'Fontname','times');
     set(h1,'Fontsize',14);

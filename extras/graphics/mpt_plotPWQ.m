@@ -24,6 +24,7 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 % Q,L,C             - Cells containing parameters of the PWQ function x'Qx+x'L+C
 % meshgridpoints    - number of grid points in one axis,
 %                     (default: 30)
+% Options.shade     - Level of transparency (0 = fully transparent, 1 = solid)
 % Options.lpsolver  - Solver for LPs when (and if) computing bounding box of Pn,
 %                     (default: mptOptions.lpsolver)
 % Options.newfigure - If set to 1, opens a new figure window,
@@ -305,8 +306,12 @@ if oneDimCase,
     plot(X(1,:), Z(1,:), 'LineWidth', 3);
     ylabel('f_{PWQ}','Fontsize',16);
 else
-    surf(X,Y,Z,C);
-    set(gcf, 'Renderer', 'painters');
+    h = surf(X,Y,Z,C);
+    if isfield(Options, 'shade'),
+        set(h, 'FaceAlpha', Options.shade);
+    else
+        set(gcf, 'Renderer', 'painters');
+    end
 end
 if Options.showPn
     hold on
