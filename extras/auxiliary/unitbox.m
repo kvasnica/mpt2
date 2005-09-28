@@ -16,7 +16,7 @@ function P=unitbox(dimension, boxsize)
 % INPUT
 % ---------------------------------------------------------------------------
 % dimension  - dimension of hypercube
-% boxsize    - size of the box
+% boxsize    - size of the box (Optional, if not given, we assume 1)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -51,10 +51,13 @@ function P=unitbox(dimension, boxsize)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(2,2,nargin));
+error(nargchk(1,2,nargin));
 
 if dimension<1,
     error('unitbox: dimension of the hypercube must be greater zero!');
+end
+if nargin < 2,
+    boxsize = 1;
 end
 
 P=polytope([eye(dimension); -eye(dimension)], boxsize*ones(2*dimension,1));
