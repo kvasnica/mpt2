@@ -259,7 +259,7 @@ Vorig = V;
 vert.V=V;
 
 % initiliaze variables ([issue91])
-P=[]; Vconv = []; H = []; K = [];
+P=[]; Vconv = []; H = []; K = []; lowdim = 0;
 
 if Options.novertred==0,
     try
