@@ -24,6 +24,7 @@ function [handle,titlehandle]=plot(varargin)
 %                           (see help extreme)
 % Options.newfigure   - if 1, each plot command will open a new figure window
 % Options.color='r'   - sets default color
+% Options.colormap    - sets a different colormap (default: 'hsv')
 % Options.gradcolor   - if 1, third coordinate of a 3D polytope is used to
 %                       color the polytopes with a gradient coloring (default 0)
 % Options.edgecolor   - color of edges (default is black 'k')
@@ -172,18 +173,22 @@ if ~isfield(Options, 'color')       % default color
     %    winter     - Shades of blue and green color map.
     %    summer     - Shades of green and yellow color map.
     
-    auxcolors=hsv(lenQ);
-    colors = auxcolors;
-    multiplier=7;
-    if mod(size(auxcolors,1),multiplier)==0,
-        multiplier=multiplier+1;
+    if isfield(Options, 'colormap'),
+        eval(['Options.color=',Options.colormap,'(lenQ);']);
+    else
+        auxcolors = hsv(lenQ);
+        colors = auxcolors;
+        multiplier=7;
+        if mod(size(auxcolors,1),multiplier)==0,
+            multiplier=multiplier+1;
+        end
+        for i=1:lenQ,
+            jj=mod(i*multiplier,size(auxcolors,1))+1; % prepare enough colors for all polytopes, cycle through a given color map
+            colors(i,:)=auxcolors(jj,:);
+        end
+        colors = flipud(colors);
+        Options.color = colors;
     end
-    for i=1:lenQ,
-        jj=mod(i*multiplier,size(auxcolors,1))+1; % prepare enough colors for all polytopes, cycle through a given color map
-        colors(i,:)=auxcolors(jj,:);
-    end
-    colors = flipud(colors);
-    Options.color = colors;
 else
     if size(Options.color,1)~=length(varargin{1}),
         if size(Options.color,1)>length(varargin{1}),
