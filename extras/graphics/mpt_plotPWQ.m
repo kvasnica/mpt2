@@ -102,7 +102,10 @@ if(nargin<5 | isempty(meshgridpoints))
     meshgridpoints=30;
 end
 
-if(nargin<6)
+if isstruct(meshgridpoints) & nargin < 6,
+    Options = meshgridpoints;
+    meshgridpoints = 30;
+elseif nargin<6
     Options=[];
 end
 
