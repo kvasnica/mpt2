@@ -598,16 +598,40 @@ while region <= nRegions & nRegions <= MAXREGIONS,
             %
             idxViolatedBounds = find( (bndA * xBeyond - bndb) > 0 );
             if ( ~isempty(idxViolatedBounds) ),
-                if ( length(idxViolatedBounds) > 1 ),
-                    error(['MPLP ERROR: Point xBeyond violates more than' ...
-                           ' one bound.']);
+                % check if xBorder lies on some of the bounds
+                %
+                [minXBorderSlack,idxMinSlack] = min(bndb - bndA * xBorder);
+                if ( minXBorderSlack < -ZERO_TOL ),
+                    errmsg = sprintf('Region %d outside the feasible set.\n',region);
+                    error(errmsg);
                 end
-                hardA(end+1,:) = bndA(idxViolatedBounds,:);
-                hardb          = [hardb;bndb(idxViolatedBounds)];
-                nHard = nHard + 1;
-                adjacent{region}(border,1) = -Inf;
-                tsetcon{region}(end+1) = nHard;
-                continue;
+                % maybe we are just close to the bound
+                %
+                if ( minXBorderSlack > ZERO_TOL ),
+                    auxH = [borderDirections; bndA(idxMinSlack,:)];
+                    auxK = [Knr; bndb(idxMinSlack)];
+                    auxH(border,:) = -borderDirections(border,:);
+                    auxK(border) = -auxK(border);
+                    outerPoly = polytope(auxH,auxK);
+                    if ( isfulldim(outerPoly) ),
+                        [xOut,auxR] = chebyball(outerPoly);
+                        xBeyond = xOut;
+                    else
+                        hardA(end+1,:) = bndA(idxMinSlack,:);
+                        hardb          = [hardb;bndb(idxMinSlack)];
+                        nHard = nHard + 1;
+                        adjacent{region}(border,1) = -Inf;
+                        tsetcon{region}(end+1) = nHard;
+                        continue;
+                    end
+                else
+                    hardA(end+1,:) = bndA(idxMinSlack,:);
+                    hardb          = [hardb;bndb(idxMinSlack)];
+                    nHard = nHard + 1;
+                    adjacent{region}(border,1) = -Inf;
+                    tsetcon{region}(end+1) = nHard;
+                    continue;
+                end
             end
         end
         %
