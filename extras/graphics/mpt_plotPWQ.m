@@ -25,6 +25,7 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 % meshgridpoints    - number of grid points in one axis,
 %                     (default: 30)
 % Options.shade     - Level of transparency (0 = fully transparent, 1 = solid)
+% Options.edgecolor - specifies the color of edges. Default: 'k'.
 % Options.lpsolver  - Solver for LPs when (and if) computing bounding box of Pn,
 %                     (default: mptOptions.lpsolver)
 % Options.newfigure - If set to 1, opens a new figure window,
@@ -58,13 +59,15 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
+% (c) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
-% (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
-% (C) 2003 Marco Luethi, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Marco Luethi, Automatic Control Laboratory, ETH Zurich,
 %          mluethi@ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -311,6 +314,9 @@ else
         set(h, 'FaceAlpha', Options.shade);
     else
         set(gcf, 'Renderer', 'painters');
+    end
+    if isfield(Options, 'edgecolor')
+        set(h, 'EdgeColor', Options.edgecolor);
     end
 end
 if Options.showPn
