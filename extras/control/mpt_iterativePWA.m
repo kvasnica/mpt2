@@ -24,6 +24,9 @@ function ctrlStruct=mpt_iterativePWA(sysStruct,probStruct,Options)
 %       Use reduced-switching policy (0=no, 1=yes)
 % Options.maxiterations=100
 %       Maximum number of iterations
+% Options.nolyapunov
+%       If 1, no Lyapunov function will be computed for a one-step controllers.
+%       Default is 0.
 % Options.verbose
 %       Level of verbosity (see help mpt_init for more details)
 % Options.PWA_savemode=0
@@ -126,6 +129,9 @@ if ~isfield(Options,'feasset'),
 end
 if ~isfield(Options,'abs_tol')
     Options.abs_tol = mptOptions.abs_tol;
+end
+if ~isfield(Options, 'nolyapunov'),
+    Options.nolyapunov = 0;
 end
 
 if ~isfield(Options, 'statusbar'),
@@ -800,8 +806,11 @@ if Options.finalOneStep,
         lyapOptions.closestatbar = 0;
     end
         
-    
-    if isfulldim(sysStruct.noise)
+
+    if Options.nolyapunov,
+        % don't compute any lyapunov function
+        feasible = 0;
+    elseif isfulldim(sysStruct.noise)
         % system is subject to additive noise, can compute only common lyapunov
         % function
         disp('System is subject to additive noise, calculating Quadratic Lyapunov function...');
@@ -863,7 +872,10 @@ if Options.finalOneStep,
     end
     
     if Options.verbose > -1,
-        if feasible,
+        if Options.nolyapunov,
+            fprintf('\nNo Lyapunov function was computed because Options.nolyapunov=1.\n');
+            fprintf('Note that the closed-loop system may be unstable!\n\n');
+        elseif feasible,
             fprintf('\nLyapunov function found, system is stable\n\n');
         else
             fprintf('\nLyapunov function NOT found, stability is not guaranteed!\n\n');
