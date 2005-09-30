@@ -1,7 +1,7 @@
 function [d, x1, x2] = distance(P1,P2,Options)
 %DISTANCE Distance between two sets
 %
-% [d, x1, x2] = dist(P1,P2,Options)
+% [d, x1, x2] = distance(P1,P2,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -35,7 +35,7 @@ function [d, x1, x2] = distance(P1,P2,Options)
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 % d         - distance between two sets
-% x1, x2    - points in the polytopes for which the distance d is achived
+% x1, x2    - points in the polytopes for which the distance d is achieved
 %
 % see also POLYTOPE
 %
