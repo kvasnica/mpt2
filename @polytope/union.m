@@ -150,7 +150,7 @@ end
 if Options.useisconvex,
     % use isconvex() which is much faster on higher dimensions and/or with more
     % than 3 regions
-    [how, Pu] = isconvex(Pn);
+    [how, Pu] = isconvex(Pn, Options);
     if ~how,
         Pu = Pn;
     end
