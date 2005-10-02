@@ -24,9 +24,15 @@ function ctrlStruct=mpt_iterativePWA(sysStruct,probStruct,Options)
 %       Use reduced-switching policy (0=no, 1=yes)
 % Options.maxiterations=100
 %       Maximum number of iterations
-% Options.nolyapunov
-%       If 1, no Lyapunov function will be computed for a one-step controllers.
-%       Default is 0.
+% Options.lyapunov_type
+%       a string which denotes which Lyapunov function should be computed to
+%       testify stability of one-step controllers:
+%         'any'  - first a PWQ function is computed, if it fails, a PWA
+%                  Lyapunov function will be computed as well
+%         'pwq'  - only PWQ Lyapunov function
+%         'pwa'  - only PWA Lyapunov function
+%         'none' - do not compute any Lyapunov function; no closed-loop
+%                  stability is guaranteed
 % Options.verbose
 %       Level of verbosity (see help mpt_init for more details)
 % Options.PWA_savemode=0
@@ -130,8 +136,8 @@ end
 if ~isfield(Options,'abs_tol')
     Options.abs_tol = mptOptions.abs_tol;
 end
-if ~isfield(Options, 'nolyapunov'),
-    Options.nolyapunov = 0;
+if ~isfield(Options, 'lyapunov_type'),
+    Options.lyapunov_type = 'any';
 end
 
 if ~isfield(Options, 'statusbar'),
@@ -169,9 +175,6 @@ if ~isfield(Options,'PWA_savefilelast'),
 end
 if ~isfield(Options,'iterative'),
     Options.iterative=0;
-end
-if ~isfield(Options,'bothLyapFct'),
-    Options.bothLyapFct=0;
 end
 if ~isfield(Options,'oldTset')
     Options.oldTset=0;
@@ -807,7 +810,7 @@ if Options.finalOneStep,
     end
         
 
-    if Options.nolyapunov,
+    if strcmpi(Options.lyapunov_type, 'none'),
         % don't compute any lyapunov function
         feasible = 0;
     elseif isfulldim(sysStruct.noise)
@@ -825,31 +828,39 @@ if Options.finalOneStep,
         
     else
         % compute PWA or PWQ Lyapunov function to guarantee stability
-        if Options.verbose > -1,
-            disp('Computing PWQ Lyapunov function...');
-        end
-        feasible_pwq=0;
-        try
-            startt = cputime;
-            [lQ, lL, lC, feasible_pwq] = mpt_getPWQLyapFct(ctrlStruct, lyapOptions);
-            ctrlStruct.details.PWQTime = cputime-startt;
-        catch
-            feasible_pwq=0;
-        end
-        if(feasible_pwq)
-            ctrlStruct.details.PWQlyapQ=1;
-            if Options.details,
-                ctrlStruct.details.lyapPWQ_Q = lQ;
-                ctrlStruct.details.lyapPWQ_L = lL;
-                ctrlStruct.details.lyapPWQ_C = lC;
-            end
-        else
-            ctrlStruct.details.PWQlyapQ=0;
-        end
+        feasible_pwq = 0;
         feasible_pwa = 0;
-        if ~feasible_pwq | Options.bothLyapFct,
+        
+        if strcmpi(Options.lyapunov_type, 'pwq') | strcmpi(Options.lyapunov_type, 'any'),
             if Options.verbose > -1,
-                fprintf('\n\nPWQ Lyapunov function not found, computing PWA Lyapunov function...\n');
+                disp('Computing PWQ Lyapunov function...');
+            end
+            feasible_pwq=0;
+            try
+                startt = cputime;
+                [lQ, lL, lC, feasible_pwq] = mpt_getPWQLyapFct(ctrlStruct, lyapOptions);
+                ctrlStruct.details.PWQTime = cputime-startt;
+            catch
+                feasible_pwq=0;
+            end
+            if(feasible_pwq)
+                ctrlStruct.details.PWQlyapQ=1;
+                if Options.details,
+                    ctrlStruct.details.lyapPWQ_Q = lQ;
+                    ctrlStruct.details.lyapPWQ_L = lL;
+                    ctrlStruct.details.lyapPWQ_C = lC;
+                end
+            else
+                if Options.verbose > 0,
+                    fprintf('PWQ Lyapunov function not found!\n');
+                end
+                ctrlStruct.details.PWQlyapQ=0;
+            end
+        end
+        if (~feasible_pwq & strcmpi(Options.lyapunov_type, 'any')) | ...
+                strcmpi(Options.lyapunov_type, 'pwa'),
+            if Options.verbose > -1,
+                fprintf('Computing PWA Lyapunov function...\n');
             end
             try
                 startt = cputime;
@@ -865,6 +876,9 @@ if Options.finalOneStep,
                     ctrlStruct.details.lyapPWA_C = lC;
                 end
             else
+                if Options.verbose > 0,
+                    fprintf('PWA Lyapunov function not found!\n');
+                end                
                 ctrlStruct.details.PWAlyapL=0;    
             end
         end
@@ -872,8 +886,8 @@ if Options.finalOneStep,
     end
     
     if Options.verbose > -1,
-        if Options.nolyapunov,
-            fprintf('\nNo Lyapunov function was computed because Options.nolyapunov=1.\n');
+        if strcmpi(Options.lyapunov_type, 'none'),
+            fprintf('\nNo Lyapunov function was computed since Options.lyapunov_type=''none''.\n');
             fprintf('Note that the closed-loop system may be unstable!\n\n');
         elseif feasible,
             fprintf('\nLyapunov function found, system is stable\n\n');
