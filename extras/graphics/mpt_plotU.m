@@ -185,17 +185,32 @@ end
 Options.fastbreak=1;
 
 
-if nx==1 & nu==1
-    handle = mpt_plotPWA(PA,Fi,Gi,Options);
-    
-    title(sprintf('Value of the control action U^{*} over %d regions',length(PA)),'FontSize',14); % Modified by Arne Linder
-    xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
-    ylabel('U^{*}(x)','Fontsize',14);
-    grid on; 
-    h=gcf;
-    h1 = get(h,'CurrentAxes');
-    set(h1,'Fontname','times');
-    set(h1,'Fontsize',14);
+if nx==1
+    for num_u = urange,
+        % handle range of inputs
+        if isempty(uind),
+            % open new subplot only if we have more than one input
+            subplot(nu, 1, num_u);
+        end
+        Fi_u = cell(1, maxlen);
+        Gi_u = cell(1, maxlen);
+        for ir = 1:maxlen,
+            % extract feedback law associated to a given input
+            Fi_u{ir} = Fi{ir}(num_u:num_u);
+            Gi_u{ir} = Gi{ir}(num_u:num_u);
+        end
+        handle = mpt_plotPWA(PA,Fi_u,Gi_u,Options);
+        
+        title(sprintf('Value of the control action U^{*}_%d over %d regions', ...
+            num_u,length(PA)),'FontSize',14);
+        xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
+        ylabel(sprintf('U^{*}_%d(x)', num_u),'Fontsize',14);
+        grid on; 
+        h=gcf;
+        h1 = get(h,'CurrentAxes');
+        set(h1,'Fontname','times');
+        set(h1,'Fontsize',14);
+    end
     
 else
     for num_u=urange            % Addition by Arne Linder for dealing with models with multiple inputs
