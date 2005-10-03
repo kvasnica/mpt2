@@ -440,7 +440,14 @@ while(notConverged>0 & iter<maxIter)
                 if how,
                     % union is convex
                     %PuPn_equal = (Pu == Pn(i));
-                    PuPn_equal = (Pu == P_to_compare_candidates); %M.V. according to Rakovic, Grieder et al.
+                    PuPn_equal = (length(P_to_compare_candidates)==1) & (P_to_compare_candidates<=Pu);
+                    %M.V. according to Rakovic, Grieder et al., this implies that P_to_compare_candidates==Pu,
+                    %since the other direction P_to_compare_candidates>=Pu
+                    %we know holds for this iterative way of constructing
+                    %invariant set (see Rakovic,Grieder, page 3:
+                    %\Omega_{k+1}\subseteq\Omega_k, and thus in each
+                    %dynamics i we have
+                    %\Omega_{k+1}\cup\Q_i^*\subseteq\Omega_{k}\cup\Q_i^*)
                 end
             end
             if(how)
@@ -459,7 +466,13 @@ while(notConverged>0 & iter<maxIter)
                     tP=merge(tP,mergeOpt);
                 end
                 
-                if tP==P_to_compare_candidates
+                if P_to_compare_candidates<=tP
+                    %M.V. according to Rakovic, Grieder et al., this implies that P_to_compare_candidates==Pu,
+                    %since the direction P_to_compare_candidates>=Pu
+                    %we know holds for this iterative way of constructing
+                    %invariant set (see Rakovic,Grieder, page 3: \Omega_{k+1}\subseteq\Omega_k,
+                    %and thus in each dynamics i we have
+                    %\Omega_{k+1}\cup\Q_i^*\subseteq\Omega_{k}\cup\Q_i^*)
                     notConverged=notConverged-convCtr;
                     if length(P_to_compare_candidates)<length(tP)
                         tP=P_to_compare_candidates;
