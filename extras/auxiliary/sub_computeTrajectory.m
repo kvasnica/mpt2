@@ -270,7 +270,7 @@ else
     
     % get the maximum value of noise (additive disturbance)
     addnoise = 0;
-    if (finalboxtype==2 | finalboxtype==3) & Options.randdist & mpt_isnoise(sysStruct.noise),
+    if Options.randdist & mpt_isnoise(sysStruct.noise),
         % noise is added only for state regulation, otherwise we cannot
         % guarantee convergence detection
         if Options.verbose>0,
@@ -291,9 +291,12 @@ else
             deltaNoise(idim) = (max(Vdim) - min(Vdim))/2;
             middleNoise(idim) = (max(Vdim) + min(Vdim))/2;
         end
-        if dimension(finalbox)==noisedim,
-            finalbox = finalbox + sysStruct.noise;
-            addnoise = 1;
+        addnoise = 1;
+        if (finalboxtype==2 | finalboxtype==3),
+            if dimension(finalbox)==noisedim,
+                finalbox = finalbox + sysStruct.noise;
+                addnoise = 1;
+            end
         end
     end
     
