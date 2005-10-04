@@ -35,6 +35,11 @@ error(nargchk(2,4,nargin));
 
 if nargin<1
     help sub_computeTrajectory
+elseif nargin < 3
+    N = Inf;
+    Options = [];
+elseif nargin < 4
+    Options = [];
 end
 
 sysStruct = ctrl.sysStruct;
