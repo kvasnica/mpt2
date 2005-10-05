@@ -1,9 +1,9 @@
-function ctrl = modify(ctrl, action, indices, Options)
+function [ctrl,Idx_orig] = modify(ctrl, action, indices, Options)
 %MODIFY Modifies an MPTCTRL object
 %
-%   ctrl = modify(ctrl, action, indices)
-%   ctrl = modify(ctrl, action, Options)
-%   ctrl = modify(ctrl, action, indices, Options)
+%   [ctrl,Idx_orig] = modify(ctrl, action, indices)
+%   [ctrl,Idx_orig] = modify(ctrl, action, Options)
+%   [ctrl,Idx_orig] = modify(ctrl, action, indices, Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -29,14 +29,15 @@ function ctrl = modify(ctrl, action, indices, Options)
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 %
-% ctrl     - updated MPTCTRL object with given regions removed
+% ctrl      - updated MPTCTRL object with given regions removed
+% Idx_orig  - corresponding region number in the original partition ctrl
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
-% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (c) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -96,8 +97,9 @@ switch lower(action)
         error(sub_checkindices(indices, length(ctrl.Pn)));
         
         % remove given regions
+        Idx_orig = setdiff(1:length(ctrl.Pn),indices);
         ctrl = sub_keep(ctrl, setdiff(1:length(ctrl.Pn), indices));
-        
+               
     case 'pick',
         % be sure to catch cases like indices=[1 2 3 1]
         indices = unique(indices);
@@ -107,10 +109,11 @@ switch lower(action)
         
         % pick selected regions
         ctrl = sub_keep(ctrl, indices);
+        Idx_orig = indices;
 
     case 'removeflat',
         % remove flat regions
-        ctrl = sub_removeflat(ctrl, Options);
+        [ctrl,Idx_orig] = sub_removeflat(ctrl, Options);
         
     otherwise
         error(sprintf('Unknown operation ''%s''.', action));
@@ -193,7 +196,7 @@ end
 
 
 %---------------------------------------------------------------
-function ctrl = sub_removeflat(ctrl, Options)
+function [ctrl,Idx_orig] = sub_removeflat(ctrl, Options)
 
 global mptOptions
 if ~isstruct(mptOptions),
@@ -223,4 +226,5 @@ for ii=ind(:)'
 end
 
 % remove flat regions from the controller
-ctrl = sub_keep(ctrl, setdiff(1:length(ctrl.Pn), Idx_flat));
+Idx_orig = setdiff(1:length(ctrl.Pn), Idx_flat);
+ctrl = sub_keep(ctrl, Idx_orig);
