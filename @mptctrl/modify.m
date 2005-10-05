@@ -1,7 +1,9 @@
-function ctrl = modify(ctrl, action, indeces)
+function ctrl = modify(ctrl, action, indices, Options)
 %MODIFY Modifies an MPTCTRL object
 %
-%   ctrl = modify(ctrl, action, indeces)
+%   ctrl = modify(ctrl, action, indices)
+%   ctrl = modify(ctrl, action, Options)
+%   ctrl = modify(ctrl, action, indices, Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -15,7 +17,8 @@ function ctrl = modify(ctrl, action, indeces)
 % action   - what to do:
 %               'remove' - remove selected regions
 %               'pick'   - pick a subset of regions
-% indeces  - indeces of regions to remove/pick
+% indices  - indices of regions to remove/pick
+% Options  - additional options structure
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -55,38 +58,67 @@ end
 if ~isa(action, 'char')
     error('Second input must be a string');
 end
-if ~isa(indeces, 'double')
+if nargin < 3
+    indices = [];
+    Options = [];
+elseif nargin < 4
+    Options = [];
+end
+
+if isstruct(indices)
+    Options = indices;
+    indices = [];
+end
+
+if ~isa(indices, 'double')
     error('Third input must be a double.');
 end
 if ~isexplicit(ctrl)
     error('First input must be an explicit controller.');
 end
 
-if any(indeces > length(ctrl.Pn))
-    error('Index exceeds total number of regions');
-end
-if any(indeces <= 0)
-    error('Indeces must be only positive.');
-end
-
-% be sure to catch cases like indeces=[1 2 3 1]
-indeces = unique(indeces);
 
 switch lower(action)
     case 'remove',
+        % be sure to catch cases like indices=[1 2 3 1]
+        indices = unique(indices);
+
+        % check if indices are not out of allowed range
+        error(sub_checkindices(indices, length(ctrl.Pn)));
+        
         % remove given regions
-        ctrl = sub_keep(ctrl, setdiff(1:length(ctrl.Pn), indeces));
+        ctrl = sub_keep(ctrl, setdiff(1:length(ctrl.Pn), indices));
+        
     case 'pick',
+        % be sure to catch cases like indices=[1 2 3 1]
+        indices = unique(indices);
+
+        % check if indices are not out of allowed range
+        error(sub_checkindices(indices, length(ctrl.Pn)));
+        
         % pick selected regions
-        ctrl = sub_keep(ctrl, indeces);
+        ctrl = sub_keep(ctrl, indices);
+
     otherwise
         error(sprintf('Unknown operation ''%s''.', action));
 end
 
+%---------------------------------------------------------------
+function err = sub_checkindices(indices, lengthPn)
+
+if any(indices > lengthPn)
+    err = 'Index exceeds total number of regions';
+elseif any(indices <= 0)
+    err = 'Indices must be only positive.';
+else
+    err = '';
+end
+
+
 
 %---------------------------------------------------------------
 function ctrl = sub_keep(ctrl, keep)
-% keeps regions given by indeces 'keep'
+% keeps regions given by indices 'keep'
 
 nkeep = length(keep);
 
@@ -97,7 +129,7 @@ if nkeep > 0,
     Bi = cell(1, nkeep);
     Ci = cell(1, nkeep);
     
-    % just keep elements at indeces 'keep'
+    % just keep elements at indices 'keep'
     [Fi{:}] = deal(ctrl.Fi{keep});
     [Gi{:}] = deal(ctrl.Gi{keep});
     [Ai{:}] = deal(ctrl.Ai{keep});
