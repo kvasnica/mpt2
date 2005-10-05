@@ -13,12 +13,17 @@ function ctrl = modify(ctrl, action, indices, Options)
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% ctrl     - explicit controller (an MPTCTRL object)
-% action   - what to do:
-%               'remove' - remove selected regions
-%               'pick'   - pick a subset of regions
-% indices  - indices of regions to remove/pick
-% Options  - additional options structure
+% ctrl        - explicit controller (an MPTCTRL object)
+% action      - what to do:
+%                 'remove'     - remove selected regions
+%                 'pick'       - pick a subset of regions
+%                 'removeflat' - remove flat regions
+% indices     - indices of regions to remove/pick
+% Options     - additional options structure
+%   .r_small  - maximal chebychev ball size for detection of a flat region 
+%               (default: mptOptions.rel_tol)
+%   .bbox     - minimal bounding box size for detection of a flat region
+%               (default: mptOptions.rel_tol)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -29,6 +34,8 @@ function ctrl = modify(ctrl, action, indices, Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 
@@ -51,6 +58,8 @@ function ctrl = modify(ctrl, action, indices, Options)
 %          Boston, MA  02111-1307  USA
 %
 % ---------------------------------------------------------------------------
+
+error(nargchk(2,4,nargin));
 
 if ~isa(ctrl, 'mptctrl')
     error('First input must be an MPTCTRL object.');
@@ -99,6 +108,10 @@ switch lower(action)
         % pick selected regions
         ctrl = sub_keep(ctrl, indices);
 
+    case 'removeflat',
+        % remove flat regions
+        ctrl = sub_removeflat(ctrl, Options);
+        
     otherwise
         error(sprintf('Unknown operation ''%s''.', action));
 end
@@ -177,3 +190,37 @@ else
     % no regions to keep
     ctrl = mptctrl;
 end
+
+
+%---------------------------------------------------------------
+function ctrl = sub_removeflat(ctrl, Options)
+
+global mptOptions
+if ~isstruct(mptOptions),
+    mpt_error;
+end
+
+if ~isfield(Options, 'r_small'),
+    Options.r_small = mptOptions.rel_tol;
+end
+if ~isfield(Options, 'bbox'),
+    Options.bbox = mptOptions.rel_tol;
+end
+
+Pn = ctrl.Pn;
+[xc, Rc] = chebyball(Pn);
+ind      = find(Rc<=Options.r_small);
+
+Idx_flat = [];
+for ii=ind(:)'
+    if Rc(ii)<Options.r_small
+        [R,l,u] = bounding_box(Pn(ii),struct('noPolyOutput',1));
+        d = abs(u-l);
+        if any(d>Options.bbox)
+            Idx_flat = [Idx_flat ii];
+        end
+    end
+end
+
+% remove flat regions from the controller
+ctrl = sub_keep(ctrl, setdiff(1:length(ctrl.Pn), Idx_flat));
