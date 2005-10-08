@@ -358,16 +358,7 @@ else
     P.K = K;
 
     if isempty(keptrows)
-        P.H = 1;
-        P.K = -Inf;
-        P.normal = logical(1);
-        P.minrep = logical(1);
-        P.xCheb = 1;
-        P.RCheb = 1;
-        P.Array = {};
-        P.vertices=[];
-        P.bbox = [];
-        return;
+        % no constraints => polytope is R^n
+        error('REDUCE: Polytope P = R^nx');
     end
 end
-
