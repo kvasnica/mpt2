@@ -482,13 +482,9 @@ end
 function cost = sub_computeCost(X, U, Y, sysStruct, probStruct, Options)
 % computes closed-loop cost
 
-if isfield(sysStruct, 'dims'),
-    nx = sysStruct.dims.nx;
-    nu = sysStruct.dims.nu;
-    ny = sysStruct.dims.ny;
-else
-    [nx,nu,ny] = mpt_sysStructInfo(sysStruct);
-end
+nx = size(X, 2);
+ny = size(Y, 2);
+nu = size(U, 2);
 
 if isfield(probStruct, 'Qy'),
     ycost = 1;
@@ -528,18 +524,22 @@ switch probStruct.tracking
 
         if ycost,
             if isfield(probStruct, 'yref'),
-                reference = probStruct.yref;
+                % mpt_prepareDU can extend yref, we need to crop it down to
+                % original dimension
+                reference = probStruct.yref(1:ny);
             else
                 reference = zeros(ny, 1);
             end
         else
             if isfield(probStruct, 'xref'),
-                reference = probStruct.xref;
+                % mpt_prepareDU can extend xref, we need to crop it down to
+                % original dimension
+                reference = probStruct.xref(1:nx);
             else
                 reference = zeros(nx, 1);
             end
             if isfield(probStruct, 'uref'),
-                uref = probStruct.uref;
+                uref = probStruct.uref(1:nu);
             else
                 uref = zeros(nu, 1);
             end
