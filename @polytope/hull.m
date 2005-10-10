@@ -28,6 +28,7 @@ function [P,Pn]=hull(Pn,Options)
 % Options.extreme_solver  - Which method to use for vertex enumeration
 %                           (0 - brute force enumeration, 3 - CDD)
 %                           (see help mpt_init)
+% Options.verbose         - Level of verbosity
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -43,8 +44,8 @@ function [P,Pn]=hull(Pn,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
@@ -78,11 +79,11 @@ end
 if ~isstruct(mptOptions),
     mpt_error;
 end
-if ~isfield(Options,'debug_level')
-    Options.debug_level=mptOptions.debug_level;
-end
 if ~isfield(Options,'extreme_solver'),
     Options.extreme_solver=mptOptions.extreme_solver;
+end
+if ~isfield(Options, 'verbose'),
+    Options.verbose = mptOptions.verbose;
 end
 
 V=[];
@@ -107,4 +108,29 @@ else
     V=[V; Vext];
 end
 
-P=hull(V,Options);    % convex hull of all points
+extsolvers = mptOptions.solvers.extreme(:);
+% remove current solver
+extsolvers(find(extsolvers == Options.extreme_solver)) = [];
+% put current solver to the front
+extsolvers = [Options.extreme_solver; extsolvers]';
+
+Pnbounded = isbounded(Pn);
+
+for extsol = extsolvers,
+    Options.extreme_solver = extsol;
+    P=hull(V,Options);    % convex hull of all points
+    failed = 0;
+    if Pnbounded,
+        if ~isbounded(P),
+            % hull must be bounded if input is bounded
+            failed = 1;
+        end
+    end
+    if failed == 0,
+        % no problems due to unboundeness, exit
+        return
+    elseif Options.verbose > 1,
+        fprintf('POLYTOPE/HULL: "%s" failed, trying another method...\n', mpt_solverInfo('extreme', extsol));
+    end
+end
+fprintf('POLYTOPE/HULL: All methods failed, hull is unbounded!\n');
