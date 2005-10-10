@@ -118,7 +118,13 @@ if isfield(Options,'Pfinal') %& ~isfulldim(ctrlStruct.Pfinal),
     if ~isa(Options.Pfinal,'polytope'),
         error('mpt_performance: Options.Pfinal must be a polytope object!');
     end
-    ctrlStruct.Pfinal = Options.Pfinal;
+    if isa(ctrlStruct, 'mptctrl'),
+        ctrlStruct = set(ctrlStruct, 'Pfinal', Options.Pfinal);
+    elseif isstruct(ctrlStruct),
+        ctrlStruct.Pfinal = Options.Pfinal;
+    else
+        error('mpt_performance: Unknown class of controller.');
+    end
 end
 
 % first compute bounds on feasible state-space
