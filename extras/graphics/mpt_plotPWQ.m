@@ -1,7 +1,7 @@
-function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
+function h_all=mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 %MPT_PLOTPWQ Plots a PWQ function defined over polyhedral partition
 %
-% mpt_plotPWQ(Pn,Q,L,C,meshgridpoints,Options);
+% handle = mpt_plotPWQ(Pn,Q,L,C,meshgridpoints,Options);
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -26,6 +26,7 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 %                     (default: 30)
 % Options.shade     - Level of transparency (0 = fully transparent, 1 = solid)
 % Options.edgecolor - specifies the color of edges. Default: 'k'.
+% Options.edgewidth - specifies the width of edges. Default: 0.5.
 % Options.lpsolver  - Solver for LPs when (and if) computing bounding box of Pn,
 %                     (default: mptOptions.lpsolver)
 % Options.newfigure - If set to 1, opens a new figure window,
@@ -53,7 +54,8 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% none
+% handle.PWQ        - handle of the PWQ function
+% handle.Pn         - handle of the plotted partition
 %
 % see also MPT_PLOTPWA, MPT_GETPWQLYAPFCT, MPT_GETCOMMONLYAPFCT
 
@@ -320,8 +322,12 @@ else
     end
     if isfield(Options, 'edgecolor')
         set(h, 'EdgeColor', Options.edgecolor);
+    end    
+    if isfield(Options, 'edgewidth')
+	set(h, 'LineWidth', Options.edgewidth);
     end
 end
+handle = [];
 if Options.showPn
     hold on
     if Options.samecolors,
@@ -340,3 +346,6 @@ end
 hold off;
 grid on
 drawnow;
+
+h_all.PWQ = h;
+h_all.Pn  = handle;

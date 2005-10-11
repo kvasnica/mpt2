@@ -23,6 +23,7 @@ function handle=mpt_plotPWA(PA,Fi,Gi,Options)
 % Options.shade           - Level of transparency (0 = fully transparent, 
 %                           1 = solid). Default: 1.
 % Options.edgecolor       - specifies the color of edges. Default: 'k'.
+% Options.edgewidth       - specifies the width of edges. Default: 0.5.
 % Options.extreme_solver  - Which method to use for vertex enumeration 
 %                           (see help extreme)
 % Options.lpsolver        - LP solver to be used
@@ -121,7 +122,8 @@ end
 if ~isfield(Options,'samecolors')
     Options.samecolors = 0;
 end
-
+    
+    
 index=0;
 
 % if size(Fi{1},2)~=2,
@@ -281,6 +283,11 @@ elseif dimension(PA)==2,
     if isfield(Options, 'edgecolor')
         for ii = 1:length(Jhandles),
             set(Jhandles, 'EdgeColor', Options.edgecolor);
+        end
+    end
+    if isfield(Options, 'edgewidth')
+        for ii = 1:length(Jhandles),
+            set(Jhandles, 'LineWidth', Options.edgewidth);
         end
     end
     h1 = get(h,'CurrentAxes');
