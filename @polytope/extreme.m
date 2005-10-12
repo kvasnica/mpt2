@@ -37,6 +37,14 @@ function [V,R,P,adjV,adjf] = extreme(P,Options)
 %                           2: checks if hull of the computed vertices is
 %                              identical to the initial polytope P
 % Options.abs_tol         - absolute tolerance
+% Options.roundat         - if CDD is used, it usually helps to round the
+%                           H-representation of a polytope to certain number of
+%                           decimal places. This option defines at which decimal
+%                           point the representation should be rounded.
+%                           (Default is Options.roundat=15, which means that the
+%                           representation will be rounded to 15 decimal points)
+%                           NOTE! rounding is only used if extreme_solver=3
+%                           NOTE! set Options.roundat=Inf to disable rounding
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -55,8 +63,8 @@ function [V,R,P,adjV,adjf] = extreme(P,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
@@ -108,6 +116,10 @@ if ~isfield(Options,'verbose')
 end
 if ~isfield(Options, 'lpsolver'),
     Options.lpsolver = mptOptions.lpsolver;
+end
+if ~isfield(Options, 'roundat'),
+    % to how many decimal points should the input points be rounded for CDD    
+    Options.roundat = 15;
 end
 
 if length(P.Array)>0,
@@ -330,6 +342,14 @@ V = []; R = []; adjV={}; adjf=[];
 if isempty(P.vertices) | nargout>=4,
     % if no vertices are stored in the internal structure, compute them
     % also perform the computation if adjancency information is requested
+    
+    if ~isinf(Options.roundat),
+        % round H-representation to certain number of decimal places
+        roundfactor = 10^Options.roundat;
+        P.H = round(P.H*roundfactor) / roundfactor;
+        P.K = round(P.K*roundfactor) / roundfactor;
+    end
+    
     tempH.A=P.H;
     tempH.B=P.K;
     failed=0; tempV=[]; adjV={};

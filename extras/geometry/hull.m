@@ -18,6 +18,14 @@ function [P,Vconv]=hull(V,Options)
 % Options.extreme_solver - which method to use for convex hull computation
 %                          (see help mpt_init for details)
 % Options.abs_tol        - absolute tolerance
+% Options.roundat        - if CDD is used, it usually helps to round the
+%                          V-representation of a polytope to certain number of
+%                          decimal places. This option defines at which decimal
+%                          point the representation should be rounded.
+%                          (Default is Options.roundat=14, which means that the
+%                          representation will be rounded to 14 decimal points)
+%                          NOTE! rounding is only used if extreme_solver=3
+%                          NOTE! set Options.roundat=Inf to disable rounding
 %
 % Note: Initial values of the Options variable are given by mptOptions 
 %       (see help mpt_init)
@@ -99,6 +107,10 @@ if ~isfield(Options,'novertred')
     % if set to 1, vertices will not be reduced to kick out non-extreme points
     % before calling cddmex('hull', V) - this may help in certain tricky cases
     Options.novertred = 0;
+end
+if ~isfield(Options, 'roundat'),
+    % to how many decimal points should the input points be rounded for CDD
+    Options.roundat = 14;
 end
 
 P = mptOptions.emptypoly;
@@ -264,6 +276,12 @@ end
 
 %--------------------------------------------------------------------------
 function [P,Vconv,H,K,lowdim]=hull_cddmex(V, Options)
+
+if ~isinf(Options.roundat),
+    % round V-representation to certain number of decimal places
+    roundfactor = 10^Options.roundat;
+    V = round(V*roundfactor) / roundfactor;
+end
 
 Vorig = V;
 vert.V=V;
