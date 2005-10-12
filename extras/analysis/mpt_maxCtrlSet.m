@@ -34,6 +34,9 @@ function [invSet,iterations] = mpt_maxCtrlSet(sysStruct,Options)
 % Options.maxCtr   - Maximum number of iterations (default is 1000)
 %                    (corresponds to N-step attractive set)
 % Options.verbose  - Optional: level of verbosity
+% Options
+%   .Q, .R, .Tset  - additional problem-depended options
+%   .probStruct    - the whole problem structure can be passed as well
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used (see help mpt_init)
@@ -54,6 +57,8 @@ function [invSet,iterations] = mpt_maxCtrlSet(sysStruct,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
 
@@ -105,20 +110,36 @@ end
 
 [nx,nu,ny,ndyn,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct);
 
-%SET DUMMY VALUES
-probStruct.norm=2; %set to 2 to obtain more efficient computation
-probStruct.N=1; 
-probStruct.Q=eye(nx);
-probStruct.R=eye(nu);
-verOpt.verbose=0;
-if isfield(Options, 'Q'),
-    probStruct.Q = Options.Q;
+if isfield(Options, 'probStruct'),
+    % use user-defined problem structure
+    probStruct = Options.probStruct;
+else
+    %SET DUMMY VALUES
+    probStruct.norm=2; %set to 2 to obtain more efficient computation
+    probStruct.N=1; 
+    probStruct.Q=eye(nx);
+    probStruct.R=eye(nu);
+    
+    if isfield(Options, 'Tset'),
+        % set user-specified target set, if given
+        if isa(Options.Tset, 'polytope'),
+            if isfulldim(Options.Tset),
+                probStruct.Tset = Options.Tset;
+            end
+        end
+    end
+    if isfield(Options, 'Q'),
+        % set user-specified Q penalty, if given
+        probStruct.Q = Options.Q;
+    end
+    if isfield(Options, 'R'),
+        % set user-specified R penalty, if given        
+        probStruct.R = Options.R;
+    end
 end
-if isfield(Options, 'R'),
-    probStruct.R = Options.R;
-end
-[dummy, probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
 
+verOpt.verbose=0;
+[dummy, probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
 
 %USE ONLY PROJECTION TO COMPUTE SET
 %(no multiparametric programming)
