@@ -1,7 +1,7 @@
-function [E,x0]=getOutterEllipsoid(P,Options)
+function E=getOutterEllipsoid(P,Options)
 %GETOUTTERELLIPSOID Computes the smallest ellipsoid which covers the polytope P
 %
-% [E,x0]=getOutterEllipsoid(P)
+% E = getOutterEllipsoid(P)
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -13,16 +13,19 @@ function [E,x0]=getOutterEllipsoid(P,Options)
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-%  E,x0     -   Minimal volume ellipsoid,  (x-x0) E (x - x0) <= 1, covering P   
+%  E       -   Minimal volume ellipsoid,  (x-x0) E (x - x0) <= 1, covering P,
+%              returned as an ELLIPSOID object
 %
 % ---------------------------------------------------------------------------
 % LITERATURE
 % ---------------------------------------------------------------------------
 %   S. Boyd and L. Vanderberghe, Convex Optimization
 %
-% see also MPT_PLOTELLIP, MPT_GETINNERELLIPSOID
+% see also MPT_PLOTELLIP, GETINNERELLIPSOID
 
 
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
 
@@ -49,7 +52,10 @@ function [E,x0]=getOutterEllipsoid(P,Options)
 global mptOptions
 
 error(nargchk(1,2,nargin));
-if(nargin<2 | isempty(Options) | ~isfield(Options,'plotresult'))
+if nargin < 2,
+    Options = [];
+end
+if ~isfield(Options,'plotresult')
     Options.plotresult=0;
 end
 
@@ -77,12 +83,11 @@ bb=double(b);   %extract results
 E=Ss'*Ss;
 x0=-Ss^-1*bb;
 
-
-if(nx==2)
+if nx==2 & Options.plotresult,
     %plot results
     plot(P);
     hold on
     [xe,ye]=mpt_plotellip(E,x0);%   plots ellipsoid (x-xc)*E*(x-xc) = 1 in R^2
 end
 
-return 
+E = ellipsoid(x0, inv(E));

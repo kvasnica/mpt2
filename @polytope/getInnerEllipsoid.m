@@ -1,7 +1,7 @@
-function [E,x0]=getInnerEllipsoid(Pset,x0,E,Options)
+function E = getInnerEllipsoid(Pset,E,Options)
 %GETINNERELLIPSOID Computes the largest ellipsoid inscribed in a polytope
 %
-% [E,x0]=getInnerEllipsoid(Pset,x0,E,Options)
+% E = getInnerEllipsoid(Pset,x0,E,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -17,6 +17,7 @@ function [E,x0]=getInnerEllipsoid(Pset,x0,E,Options)
 %   Pset    -   Polytope object constraining the ellipsoid
 %   E,x0    -   Optional: input ellipsoid with center x0, i.e.
 %                           (x-x0) E (x - x0) <= rho 
+%               given as an ELLIPSOID object
 %               The function then computes the maximum rho such that the 
 %               ellipsoid is still contained in Pset.
 %   Options
@@ -25,16 +26,19 @@ function [E,x0]=getInnerEllipsoid(Pset,x0,E,Options)
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-%  E,x0     -   Maximum volume ellipsoid,  (x-x0) E (x - x0) <= 1   
+%  E       -   Maximum volume ellipsoid,  (x-x0) E (x - x0) <= 1, returned as
+%              an ELLIPSOID object
 %
 % ---------------------------------------------------------------------------
 % LITERATURE
 % ---------------------------------------------------------------------------
 %   S. Boyd and L. Vanderberghe, Convex Optimization
 %
-% see also MPT_PLOTELLIP, MPT_GETOUTTERELLIPSOID
+% see also MPT_PLOTELLIP, GETOUTTERELLIPSOID
 
 
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
 
@@ -60,12 +64,12 @@ function [E,x0]=getInnerEllipsoid(Pset,x0,E,Options)
 
 global mptOptions
 
-error(nargchk(1,4,nargin));
+error(nargchk(1,3,nargin));
 
-if(nargin==2)
-    error('Cannot pass 2 arguments: Pass 1 or 3 arguments.')
+if nargin < 3,
+    Options = [];
 end
-if(nargin<4 | isempty(Options) | ~isfield(Options,'plotresult'))
+if ~isfield(Options,'plotresult')
     Options.plotresult=0;
 end
 
@@ -74,6 +78,7 @@ nx=size(H,2);
 
 if(nargin>1)
     %compute the scaled ellipsoid
+    [x0, E] = parameters(E);
     E=(E+E')/2;
     iL=inv(E);
     aux=zeros(size(K));
@@ -86,7 +91,7 @@ if(nargin>1)
 else
     m = size(H,1);
     yalmip('clear' ) ;
-    
+
     B = sdpvar(2,2);
     d = sdpvar(nx,1);
     
@@ -103,12 +108,12 @@ else
     E   = double(B);
     x0  = double(d);
     E=inv(E)'*inv(E);
-    
-   %d=x0;   [xe,ye]=plotellip(E,2*(-d'*E)',d'*E*d-1);
 end
 
-if(nx==2 & Options.plotresult)
+if nx==2 & Options.plotresult
     plot(Pset)
     hold on
     [xe,ye]=mpt_plotellip(E,x0);
 end
+
+E = ellipsoid(x0, inv(E));
