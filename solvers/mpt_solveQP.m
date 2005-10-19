@@ -148,16 +148,14 @@ elseif solver==0
         Beq = full(Beq);
     end
     
-    A = [A; Aeq; -Aeq];  % convert equality constraints Aeq x=Beq into Aeq x<=Beq and Aeq x>=Beq
-    B = [B; Beq; -Beq];
     [m,n] = size(A);
     itmax=450;
     if isempty(x0),
         x0=zeros(n,1);
     end
     
-    bl=-1e8*ones(m+n,1);
-    bu=[1e8*ones(n,1);B];
+    bl=[-1e8*ones(m+n,1); Beq];
+    bu=[1e8*ones(n,1);B; Beq];
     lp=0;
     cold=1;
     istate = zeros(length(bu),1);
@@ -166,7 +164,7 @@ elseif solver==0
     bigbnd = 1e10;
     orthog = 1;
     ifail=1;
-    [xopt,iter,objqp,clambda,istate,ifail] = e04naf(bl,bu,'mpt_qphess',x0,f(:),A,H,...
+    [xopt,iter,objqp,clambda,istate,ifail] = e04naf(bl,bu,'mpt_qphess',x0,f(:),[A; Aeq],H,...
         lp,cold,istate,featol,msglvl,itmax,bigbnd,orthog,ifail);
     
     switch ifail
