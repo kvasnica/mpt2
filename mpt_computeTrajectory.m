@@ -35,6 +35,8 @@ function [X,U,Y,D,cost,trajectory,feasible,dyns,reason,details]=mpt_computeTraje
 % Options.verbose   - Level of verbosity
 % Options.lpsolver  - Solver for LPs (see help mpt_solveLP for details)
 % Options.abs_tol   - absolute tolerance
+% Options.useXU     - if 1, use a control input based on an XUset istead of the 
+%                     usual (optimization) based control action. (default 0)
 % 
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -52,10 +54,12 @@ function [X,U,Y,D,cost,trajectory,feasible,dyns,reason,details]=mpt_computeTraje
 
 % Copyright is with the following author(s):
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%         kvasnica@control.ee.ethz.ch
-%(C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
-%         grieder@control.ee.ethz.ch
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
+% (c) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
+% (c) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
+%          grieder@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:

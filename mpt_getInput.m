@@ -1,22 +1,22 @@
 function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,Options)
-%MPT_GETINPUT For a given state, extracts the optimal output from controller structure
+%MPT_GETINPUT For a given state, extracts the (optimal) output from a controller structure
 %
-% [U,feasible,region,cost]=mpt_getInput(ctrlStruct,x0,Options)
+% [U,feasible,region,cost,inwhich] = mpt_getInput(ctrlStruct,x0,Options)
 %
-% ---------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 % DESCRIPTION
-% ---------------------------------------------------------------------------
-% For the given state x0, this function extracts the optimal output from a controller
-% given by means of the controller structure ctrlStruct. If the controller partition
-% is overlapping in the X space, the input U will be picked up such that an associated
-% cost is minimized (i.e. if for x0 there are 2 or more associated control laws,
-% only the one which minimizes a given criterion is returned. The criterion is
-% either value of the objective function for optimal solution or minimum time
-% for the time-optimal solution).
+% ------------------------------------------------------------------------------
+% For the given state x0, this function extracts the optimal output from a
+% controller given by means of the controller structure ctrlStruct. If the
+% controller partition is overlapping in the X space, the input U will be picked
+% up such that an associated cost is minimized (i.e. if for x0 there are 2 or
+% more associated control laws, only the one which minimizes a given criterion
+% is returned. The criterion is either value of the objective function for
+% optimal solution or minimum time for the time-optimal solution).
 %
-% ---------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 % INPUT
-% ---------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 % ctrl              - MPT controller
 % x0                - initial state
 % Options.openloop  - 0 by default. If set to 1, the full optimizer as obtained
@@ -29,20 +29,22 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 %                     neighbour is used. Default is 0.
 % Options.abs_tol   - absolute tolerance
 % Options.verbose   - Level of verbosity
+% Options.useXU     - if 1, use a control input based on an XUset istead of the 
+%                     usual (optimization) based control action. (default 0)
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
 %
-% ---------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 % OUTPUT                                                                                                    
-% ---------------------------------------------------------------------------
-% U         - control input computed as U=F*x0 + G,
-% region    - index of a region which contains the optimal control input associated
-%             to the given state x0
+% ------------------------------------------------------------------------------
+% U         - control input computed as U=F*x0 + G (or via other strategies),
+% region    - index of a region which contains the optimal control input
+%             associated to the given state x0 
 % cost      - value of the associated cost function
-%             NOTE: The cost is not necessarily the cost of the objective function
-%                   obtained for state x0, it can be also distance to the invariant
-%                   set(s) in case of time-optimal controller!
+%             NOTE: The cost is not necessarily the cost of the objective
+%                   function obtained for state x0, it can be also distance to
+%                   the invariant set(s) in case of time-optimal controller!
 % feasible  - returns 1 if  the there is at least one control law associated to
 %             a given state x0, 0 otherwise
 %
@@ -51,12 +53,14 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 
 % Copyright is with the following author(s):
 %
-% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%               kvasnica@control.ee.ethz.ch
-% (C) 2004 Arne Linder, Faculty of Electrical, Information and Media Engineering, 
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
+% (c) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
+% (c) 2004 Arne Linder, Faculty of Electrical, Information and Media Engineering, 
 %          Wuppertal University, alinder@uni-wuppertal.de
 
-% ---------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 % Legal note:
 %          This program is free software; you can redistribute it and/or
 %          modify it under the terms of the GNU General Public
@@ -74,7 +78,7 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 %          59 Temple Place, Suite 330, 
 %          Boston, MA  02111-1307  USA
 %
-% ---------------------------------------------------------------------------
+% ------------------------------------------------------------------------------
 
 error(nargchk(2,3,nargin));
 
@@ -115,6 +119,20 @@ end
 if ~isfield(Options, 'recover')
     Options.recover = 0;
 end
+if ~isfield(Options, 'useXU')
+    Options.useXU = 0;
+end
+
+if Options.useXU
+    if isfield(ctrlStruct.details,'XU')
+        if ~isfield(ctrlStruct.details.XU, 'XUset') | ~isfield(ctrlStruct.details.XU, 'Idx_orig'),
+            error('MPT_GETINPUT: provide XUset and/or Idx_orig in ctrl.details.XU')
+        end
+    else
+        error('MPT_GETINPUT: provide XUset and/or Idx_orig in ctrl.details.XU')
+    end
+end
+
 
 x0=x0(:);
 inwhich = [];
@@ -299,6 +317,18 @@ end
 
 
 % evaluate explicit control law for state x0
+U=[];
+cost=-Inf;
+feasible=0;
+region=0;
+
+if Options.useXU
+    [U, feasible, region, XUreg] = mpt_getInputXU(ctrlStruct, x0, Options);
+    cost = 0;
+    fullopt = [];
+    runtime = 0;
+    return
+end
 
 PA = ctrlStruct.Pn;
 
