@@ -790,18 +790,28 @@ while region <= nRegions & nRegions <= MAXREGIONS,
                              'problem is badly scaled. Try to reformulate ' ...
                              'it or use another LP solver.']);
                 end
-                rvect = randn(size(bordvect));
-                dotpr = rvect'*bordvect;
-                while ( (norm(rvect) < 10*Options.abs_tol) | ...
-                        (abs(dotpr)  < 10*Options.abs_tol) ),
+                RBorder = facetR(border);
+                if ( RBorder <= Options.abs_tol ),
+                    % in case the radius of the border is very small we
+                    % perform the perturbation only in the size of the
+                    % step over the facet
+                    pertvect = bordvect
+                else
+                    % otherwise, perturbe both the step size and the
+                    % direction, relatively to the Chebyshev radius of
+                    % the facet
                     rvect = randn(size(bordvect));
                     dotpr = rvect'*bordvect;
+                    while ( (norm(rvect) < 10*Options.abs_tol) | ...
+                            (abs(dotpr)  < 10*Options.abs_tol) ),
+                        rvect = randn(size(bordvect));
+                        dotpr = rvect'*bordvect;
+                    end
+                    rvect = rvect / norm(rvect);
+                    pertdir = rvect - dot(rvect,bordvect) * bordvect;
+                    pertdir = rand(1) * RBorder * pertdir / norm(pertdir);
+                    pertvect = pertdir + bordvect;
                 end
-                rvect = rvect / norm(rvect);
-                pertdir = rvect - dot(rvect,bordvect) * bordvect;
-                RBorder = facetR(border);
-                pertdir = rand(1) * RBorder * pertdir / norm(pertdir);
-                pertvect = pertdir + bordvect;
                 xBeyond = xBorder + niter * ALPHA * pertvect/norm(pertvect);
             end
             %
