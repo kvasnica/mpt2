@@ -21,13 +21,19 @@ function [ctrlStruct,feasibleN,loopCtr] = mpt_oneStepCtrl(sysStruct,probStruct,O
 %	provided with this package.                                            
 %
 % Options.maxCtr   - Maximum number of iterations (default is 1000)
-% Options.scaling  - Sclaing the set at each iteration with a parameter 0 < lambda < 1
-%                    guarantees finite time convergence to a robust invariant subset
-%                    of the maximal control invariant set. (Default: Options.scaling = 1)
+% Options.scaling  - Scaling the set at each iteration with a parameter 
+%                    0 < lambda < 1 guarantees finite time convergence to a
+%                    robust invariant subset of the maximal control invariant
+%                    set. (Default: Options.scaling = 1) 
 % Options.PWQlyap  - if set to 1, compute PWQ Lyapunov function (default)
 % Options.verbose  - Optional: level of verbosity
-% Options.set_limit - If the invariant set has a chebychev redius which is smaller than this value
-%                    the iteration is aborted. (Default is 1e-3)
+% Options.set_limit - If the invariant set has a chebychev redius which is
+%                     smaller than this value the iteration is aborted. 
+%                     (Default is 1e-3) 
+% Options.useprojection - if true, uses projections to obtain feasible set. if
+%                         false, feasible sets are obtained by solving a
+%                         multi-parametric program.
+%                         (Default is true)
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used (see help mpt_init)
@@ -71,7 +77,7 @@ function [ctrlStruct,feasibleN,loopCtr] = mpt_oneStepCtrl(sysStruct,probStruct,O
 
 % ---------------------------------------------------------------------------
 % Legal note:
-%          This program is free software; you can redistribute it and/or
+%          This program is free software; you can redistribute it and/or 
 %          modify it under the terms of the GNU General Public
 %          License as published by the Free Software Foundation; either
 %          version 2.1 of the License, or (at your option) any later version.
@@ -131,6 +137,10 @@ end
 if ~isfield(Options,'set_limit'),
     Options.set_limit=1e-3;
 end
+if ~isfield(Options, 'useprojection'),
+    Options.useprojection = 1;
+end
+
 if ~isfield(Options,'scaling'),
     Options.scaling=1;
 elseif(Options.scaling>1)
@@ -221,19 +231,45 @@ if ~isfield(Options, 'Pfinal'),
         tmpProbStruct.N = 1;
         
         % get matrices of the problem
-        [G1,W1,E1]=mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
-   
+        Matrices = mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
+        
         % exit if problem is not feasible
-        if isinf(W1),
+        if isinf(Matrices.W),
             if statusbar,
                 mpt_statusbar;
             end
             error('Problem is infeasible.');
         end
         
-        % compute feasible set via projection
-        P=polytope([-E1 G1],W1);
-        Pfinal=projection(P,(1:size(E1,2)),Options);
+        if Options.useprojection,
+            % compute feasible set via projection
+            
+            % polytope is already in reduced representation, because
+            % mpt_constructMatrices calls reduce(). therefore we just mark the
+            % polytope as being in minimal representation, saving some computational
+            % time.
+            P=polytope([-Matrices.E Matrices.G], Matrices.W, 1, 1);  
+            
+            Pfinal=projection(P,(1:size(Matrices.E,2)),Options);
+            
+            if Options.verbose > 1,
+                fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(P), nconstr(Pfinal));
+            end
+            
+        else
+            % solve multi-parametric program
+            tmpOptions = Options;
+            tmpOptions.verbose = -1;
+            if tmpProbStruct.norm == 2,
+                [Pn,Fi,Gi,activeConstraints,Pfinal]=mpt_mpqp(Matrices, tmpOptions);
+            else
+                [Pn,Fi,Gi,activeConstraints,Pfinal]=mpt_mplp(Matrices, tmpOptions);
+            end
+            
+            if Options.verbose > 1,
+                fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(PfinalOld), nconstr(Pfinal));
+            end
+        end
         
         % algorithm converges when two consequent feasible sets are equal
         if(isfulldim(PfinalOld) & Options.scaling<1)

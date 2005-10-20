@@ -18,6 +18,14 @@ function [P,Vconv]=hull(V,Options)
 % Options.extreme_solver - which method to use for convex hull computation
 %                          (see help mpt_init for details)
 % Options.abs_tol        - absolute tolerance
+% Options.roundat        - if CDD is used, it usually helps to round the
+%                          V-representation of a polytope to certain number of
+%                          decimal places. This option defines at which decimal
+%                          point the representation should be rounded.
+%                          (Default is Options.roundat=14, which means that the
+%                          representation will be rounded to 14 decimal points)
+%                          NOTE! rounding is only used if extreme_solver=3
+%                          NOTE! set Options.roundat=Inf to disable rounding
 %
 % Note: Initial values of the Options variable are given by mptOptions 
 %       (see help mpt_init)
@@ -99,6 +107,10 @@ if ~isfield(Options,'novertred')
     % if set to 1, vertices will not be reduced to kick out non-extreme points
     % before calling cddmex('hull', V) - this may help in certain tricky cases
     Options.novertred = 0;
+end
+if ~isfield(Options, 'roundat'),
+    % to how many decimal points should the input points be rounded for CDD
+    Options.roundat = 14;
 end
 
 P = mptOptions.emptypoly;
@@ -235,8 +247,18 @@ if Options.debug_level>0
             K(iv) = 1 + V(iv,:)*xmid;
         end
         P = polytope(H,K,0,2);               % convex hull is given by {x : q_i x <= 1 + q_i xmid}
-        [H, K] = double(P);
-
+        %[H,K] = double(P);
+        % Reason why the line above is commented out (by Mario Vasak):
+        %
+        % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+        % polytope if cheby radius of P falls below the abs_tol, and that is 
+        % correct. But taking H & K in row 490 then from P brings empty H and K in 
+        % the superimposed function, and this ends in a hull-error (result=1), but 
+        % nothing is really wrong: H and K are hopefully correctly computed, but 
+        % the resulting hull is too small, so H and K should be checked in 
+        % checkhull.m, while hull.m should return an empty polytope if the check 
+        % is all right.
+        
         [result,i] = checkhull(P,H,K,Vconv,Options);
         if result~=0,
             error(['HULL: Point ' num2str(i) ' is not a vertex!'])
@@ -254,6 +276,12 @@ end
 
 %--------------------------------------------------------------------------
 function [P,Vconv,H,K,lowdim]=hull_cddmex(V, Options)
+
+if ~isinf(Options.roundat),
+    % round V-representation to certain number of decimal places
+    roundfactor = 10^Options.roundat;
+    V = round(V*roundfactor) / roundfactor;
+end
 
 Vorig = V;
 vert.V=V;
@@ -372,7 +400,17 @@ if size(V,2)==3,                   % points in 3D space
         P=polytope(H,K,0,2);
         Vconv=V(unique(Vconv),:);      % store extreme points
         P=set(P,'vertices',Vconv);
-        [H, K] = double(P);
+        %[H,K] = double(P);
+        % Reason why the line above is commented out (by Mario Vasak):
+        %
+        % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+        % polytope if cheby radius of P falls below the abs_tol, and that is 
+        % correct. But taking H & K in row 490 then from P brings empty H and K in 
+        % the superimposed function, and this ends in a hull-error (result=1), but 
+        % nothing is really wrong: H and K are hopefully correctly computed, but 
+        % the resulting hull is too small, so H and K should be checked in 
+        % checkhull.m, while hull.m should return an empty polytope if the check 
+        % is all right.
     end
     return
 
@@ -414,7 +452,17 @@ elseif size(V,2)==2,               % points in 2D space
         P = polytope(H,K,0,2);
         Vconv=puni;                     % store extreme points
         P=set(P,'vertices',Vconv);
-        [H, K] = double(P);
+        %[H,K] = double(P);
+        % Reason why the line above is commented out (by Mario Vasak):
+        %
+        % the command P=polytope(H,K,0,2) just a few rows back could return an empty
+        % polytope if cheby radius of P falls below the abs_tol, and that is 
+        % correct. But taking H & K in row 490 then from P brings empty H and K in 
+        % the superimposed function, and this ends in a hull-error (result=1), but 
+        % nothing is really wrong: H and K are hopefully correctly computed, but 
+        % the resulting hull is too small, so H and K should be checked in 
+        % checkhull.m, while hull.m should return an empty polytope if the check 
+        % is all right.
     end
     return
 else

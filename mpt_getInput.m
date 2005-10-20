@@ -23,6 +23,10 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 %                     as a solution to the finite-time optimal control problem
 %                     is returned, i.e. U = [u_0 u_1 ... u_N] where N is the
 %                     prediction horizon
+% Options.recover   - If set to 1 and there is no region associated to the
+%                     current state x0, but the state itself lies in the
+%                     feasible set of the controller, control law of the nearest
+%                     neighbour is used. Default is 0.
 % Options.abs_tol   - absolute tolerance
 % Options.verbose   - Level of verbosity
 %
@@ -107,6 +111,9 @@ if ~isfield(Options,'abs_tol') % absolute tolerance
 end
 if ~isfield(Options,'verbose') % level of verbosity
     Options.verbose=mptOptions.verbose;
+end
+if ~isfield(Options, 'recover')
+    Options.recover = 0;
 end
 
 x0=x0(:);
@@ -321,20 +328,48 @@ cost=-Inf;
 feasible=0;
 region=0;
 
-
-% this is a safe setting, we _could_ eventually abort the search for active
-% region once we find at least one such region, but:
-%  * in PWA / CFTOC / linear norms case it is very likely that the state ends up
-%    on a boundary of multiple regions, therefore we have to compare costs and
-%    pick up region where the cost is minimal
-%  * in minimum-time case we could break after the first found region, because
-%    all regions are already sorted in a "good" way, but what if somebody
-%    modifies the controller with modify() and includes his own regions?
-%
-% bottom line, we don't loose much if we always search through _all_ regions
-locOpt.fastbreak = 0;
-
-[isin, inwhich] = isinside(ctrlStruct.Pn,x0,Options);
+if Options.recover,
+    % if a state lies in the feasible state-space but no region is associated to
+    % it, we take the control law of the nearest neighbour.
+    
+    % check if the given point lies inside of the feasible state-space. use
+    % fastbreak=1 to tell isinside() to abort quickly once it finds a region
+    Options.fastbreak = 1;
+    isin = isinside(ctrlStruct.Pfinal, x0, Options);
+    if ~isin,
+        % the state does not lie in the feasible state-space. we handle this
+        % case later
+    else
+        % x0 does lie in the feasible state space, but maybe in a hole?
+        % check that. use fastbreak=0 such that we can choose region with lowest
+        % cost.
+        locOpt.fastbreak = 0;
+        [isin, inwhich, closest] = isinside(ctrlStruct.Pn,x0,Options);
+        if ~isin,
+            % indeed, the current state x0 lies in a hole, use feedback law of
+            % neighbouring region
+            if Options.verbose>0,
+                fprintf('MPT_GETINPUT: State x = [%s] lies in a hole, taking the nearest neighbour\n',num2str(x0'));
+            end
+            isin = 1;
+            inwhich = closest;
+        end
+    end
+else
+    % this is a safe setting, we _could_ eventually abort the search for active
+    % region once we find at least one such region, but:
+    %  * in PWA / CFTOC / linear norms case it is very likely that the state ends up
+    %    on a boundary of multiple regions, therefore we have to compare costs and
+    %    pick up region where the cost is minimal
+    %  * in minimum-time case we could break after the first found region, because
+    %    all regions are already sorted in a "good" way, but what if somebody
+    %    modifies the controller with modify() and includes his own regions?
+    %
+    % bottom line, we don't loose much if we always search through _all_ regions
+    locOpt.fastbreak = 0;
+    
+    [isin, inwhich] = isinside(ctrlStruct.Pn,x0,Options);
+end
 
 if ~isin
     % no associated control law

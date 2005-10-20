@@ -179,8 +179,6 @@ else
     disp('No terminal cost defined. Using the default.');
 end
 
-
-
 %
 % If no terminal region is given ...
 %
@@ -234,7 +232,6 @@ end
 %
 tmpProbStruct   = probStruct;
 tmpProbStruct.N = 1;           % horizon=1 (step of dyn. programming)
-isOffset = max(cat(2,sysStruct.f{:})) ~= 0;
 
 % create basic data structures
 %
@@ -451,9 +448,7 @@ for k = horizon:-1:1,
                     costOffset = getNoiseOffset(noiseH,noiseK,[],Bi);
                     Ci = Ci + costOffset;
                 end
-                if isOffset(iDyn),
-                    Ci = Ci + Bi*sysStruct.f{iDyn};
-                end
+                Ci = Ci + Bi*sysStruct.f{iDyn};
                 %
                 % modify Matrices
                 %

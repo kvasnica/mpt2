@@ -1,35 +1,37 @@
-function P=unitbox(dimension, boxsize)
-%UNITBOX Creates a unit box centered at origin
-%
-% P=unitbox(dimension, boxsize)
+function value = get(ctrl, name)
+%GET Get MPTCTRL properties
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Creates a unit box (hypercube) of dimension 'dimension' centered at origin
-%   with size 'boxsize'
+% Directly access a field of MPTCTRL objects.
 %
-% i.e. returns a polytope
-%   P=polytope([eye(dimension); -eye(dimension)], boxsize*ones(2*dimension,1))
+% USAGE:
+%   VALUE = GET(ctrl, 'PropertyName')
+%   e.g. value = get(ctrl, 'Pfinal')
+%
+% List of properties that can be accessed:
+%   Pfinal, Pn, Fi, Gi, Ai, Bi, Ci, dynamics, details, overlaps, simplified,
+%   type, sysStruct, probStruct
 %
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% dimension  - dimension of hypercube
-% boxsize    - size of the box (Optional, if not given, we assume 1)
+% ctrl  - An MPTCTRL object
+% name  - String name of a property
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% P     - hypercube in H-representation
+% value - Value of the given property
 %
-% see also POLYTOPE
+% see also SET
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
-%     kvasnica@control.ee.ethz.ch
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -51,13 +53,13 @@ function P=unitbox(dimension, boxsize)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(1,2,nargin));
-
-if dimension<1,
-    error('unitbox: dimension of the hypercube must be greater zero!');
-end
-if nargin < 2,
-    boxsize = 1;
+if ~isa(ctrl, 'mptctrl')
+  error('GET: First argument must be an MPTCTRL object.');
 end
 
-P=polytope([eye(dimension); -eye(dimension)], boxsize*ones(2*dimension,1));
+ctrl = struct(ctrl);
+
+if ~isfield(ctrl, name)
+    error('Non-existing property (field)');
+end
+value=getfield(ctrl, name);

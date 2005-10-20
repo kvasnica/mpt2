@@ -1,4 +1,4 @@
-function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Options)
+function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver7(Matrices,Options)
 %MPT_MPLP Explicitly solves the given linear program (LP)
 %
 % [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options)
@@ -71,9 +71,9 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver6(Matrices,Opti
 
 % see also MPT_CONSTRUCTMATRICES, MPT_MPQP, MPT_OPTCONTROL, MPT_OPTCONTROLPWA
 
-% $Revision: 1.7 $ $Date: 2005/07/14 18:26:14 $
+% Copyright is with the following author(s):
 %    
-% (C) 2004 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
+% (C) 2004-2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %     kvasnica@control.ee.ethz.ch
@@ -484,7 +484,11 @@ while region <= nRegions & nRegions <= MAXREGIONS,
     % borderDirections are normalized
     %
     unexploredBorders = find ( adjacent{region}(:,1) == 0 );
-    [facetPoints,facetR] = getFacetPoints(Pn(region),unexploredBorders,Options);
+    [xCFacets,rCFacets] = facetcircle(Pn(region),unexploredBorders,Options);
+    facetPoints = zeros(size(borderDirections'));
+    facetR = zeros(size(Knr'));
+    facetPoints(:,unexploredBorders) = xCFacets;
+    facetR(unexploredBorders) = rCFacets;
     for border = unexploredBorders',
         if ( facetR(border) < 0 ),
             %
@@ -967,62 +971,6 @@ function [newSearchIdx] = reduceSearchIdx(bordVect,region,searchIdx,BC)
     newSearchIdx = searchIdx(find(dirProd <= 0));
 
 %=============================================
-%
-function [facetPoints,facetR] = getFacetPoints(P, idxUnexplored,Options)
-%
-%=============================================
-%
-% generates points on the facets by projections of an interior point to
-% each of the facets. The interior point is obtained by improving
-% "centrality" of the Chebyshev center
-%
-    
-    [xCheby,rCheby] = chebyball(P);
-    [H,K] = double(P);
-    [nFacets,dim] = size(H);
-    faceDist = K - H * xCheby;
-    facetPoints = (repmat(xCheby',nFacets,1) + repmat(faceDist,1,dim).*H)';
-    if ( dim == 1 ),
-        % patch for 1D systems
-        facetR = zeros(nFacets,1);
-        return;
-    end
-    facetR = -ones(nFacets,1);
-    theOnes = ones(nFacets-1,1); 
-
-    for ii = idxUnexplored(:)',
-        Hi0 = null(H(ii,:));
-        x0  = facetPoints(:,ii);
-        idxOther = 1:nFacets;
-        idxOther(ii) = [];
-        Hother = H(idxOther,:);
-        Kother = K(idxOther);
-        facetH = Hother * Hi0;
-        facetK = Kother - Hother * x0;
-
-        [xopt,fval,lambda,exitflag,how]= ...
-            mpt_solveLPs([zeros(1,dim-1) -1],[facetH theOnes],facetK,[],[],x0, ...
-                         Options.lpsolver);
-
-        rFacet = xopt(end);
-        cFacet = x0 + Hi0 * xopt(1:end-1);
-        if ( strcmp(how,'ok') ),
-            facetPoints(:,ii) = cFacet;
-            facetR(ii) = rFacet;
-        else % LP not feasible
-             % check if the projected Chebyshev center is on the facet and
-             % return that point and corresponding slacks
-             %
-            if ( all(facetK > Options.abs_tol) ),
-                cFacet = x0;
-                rFacet = min(facetK);
-            end
-
-        end
-    end
- %
-%============= END getFacetPoints ===========================   
-
 
 
 %=============================================================================

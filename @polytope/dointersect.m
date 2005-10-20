@@ -1,7 +1,7 @@
-function answer = dointersect(P1,P2)
+function [answer, IA, IB, IAB] = dointersect(P1,P2)
 %DOINTERSECT Checks if two polytopes / polyarrays intersect
 %
-% answer = dointersect(P1,P2)
+% [answer, IA, IB, IAB] = dointersect(P1,P2)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -20,14 +20,21 @@ function answer = dointersect(P1,P2)
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 % answer  - 1 if polytopes / polyarrays intersect, 0 otherwise
+% IA, IB  - index vectors such that P1(IA) & P2(IB) = intersect(P1, P2)
+% IAB     - indeces of intersecting polytopes stored as a n x 2 matrix, where
+%           every row gives indeces of intersecting polytopes. returned as an
+%           empty matrix if no intersections exist. Example:
+%             IAB = [1 1; 2 1; 3 1] means that there exists a full-dimensional
+%             intersection of (P1(1) and P2(1)), (P1(2) and (P2(1)) and (P1(3)
+%             and (P2(1)).
 %
-% see also AND
+% see also AND, INTERSECT
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -62,6 +69,8 @@ if dimension(P1) ~= dimension(P2)
     error('DOINTERSECT: polytopes must have the same dimension!');
 end
 
+IAB = []; IA = []; IB = [];
+
 if lenP1 == 1 & lenP2 == 1
     % special case, both inputs are single polytopes
     
@@ -78,7 +87,13 @@ if lenP1 == 1 & lenP2 == 1
     Kint = [P1.K; P2.K];
     [xcheb, rcheb] = chebyball_f(Hint, Kint, mptOptions);
     answer =  (rcheb > mptOptions.abs_tol);
-
+    if answer,
+        IAB = [1 1];
+        IA = 1;
+        IB = 1;
+    end
+    return
+    
 else
     [H1, K1] = double(P1);
     [H2, K2] = double(P2);
@@ -97,10 +112,21 @@ else
             Hint = [H1{i1}; H2{i2}];
             Kint = [K1{i1}; K2{i2}];
             [xcheb, rcheb] = chebyball_f(Hint, Kint, mptOptions);
-            answer =  (rcheb > mptOptions.abs_tol);
-            if answer == 1,
-                return
+            if (rcheb > mptOptions.abs_tol),
+                answer = 1;
+                if nargout > 1,
+                    IAB = [IAB; i1 i2];
+                else
+                    % exit quickly if we don't care about indeces of
+                    % intersecting regions
+                    return
+                end
             end
         end
     end
+end
+
+if nargout > 1 & ~isempty(IAB),
+    IA = unique(IAB(:,1));
+    IB = unique(IAB(:,2));
 end

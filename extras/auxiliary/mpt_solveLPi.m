@@ -372,7 +372,7 @@ elseif (lpsolver==4)
     [xopt,fval,status,lambda_struct] = glpkmex(1,f(:),[A;Aeq],[B;Beq],ctype,...
         -1e9*ones(size(A,2),1),1e9*ones(size(A,2),1),vartype,param,method,0);
 
-    lambda = lambda_struct.lambda;
+    lambda = -lambda_struct.lambda;
     switch status
         case {180,181,151}   % optimal, feasible
             how = 'ok';
@@ -443,6 +443,7 @@ elseif (lpsolver==7)
     options = optimset('Display','off');
     [xopt,lambda,status]=qsopt(f,A,B,Aeq,Beq);
     fval = f(:)'*xopt;
+    lambda = -lambda;
     if status==1 
         how = 'ok';
         exitflag=1;
@@ -481,7 +482,7 @@ elseif (lpsolver==13)
     [xopt, lambda, exitflag] = clp([], f, A, B, Aeq, Beq);
     
     fval = f(:)'*xopt;
-    
+    lambda = -lambda;
     if exitflag==0,
         how = 'ok';
         exitflag = 1;

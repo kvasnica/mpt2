@@ -20,6 +20,10 @@ function handle=mpt_plotPWA(PA,Fi,Gi,Options)
 % ---------------------------------------------------------------------------
 % Pn                      - Polyhedral partition of the state-space
 % L,C                     - cell arrays containing a PWA function
+% Options.shade           - Level of transparency (0 = fully transparent, 
+%                           1 = solid). Default: 1.
+% Options.edgecolor       - specifies the color of edges. Default: 'k'.
+% Options.edgewidth       - specifies the width of edges. Default: 0.5.
 % Options.extreme_solver  - Which method to use for vertex enumeration 
 %                           (see help extreme)
 % Options.lpsolver        - LP solver to be used
@@ -43,6 +47,8 @@ function handle=mpt_plotPWA(PA,Fi,Gi,Options)
 
 % Copyright is with the following author(s):
 %
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
@@ -116,7 +122,8 @@ end
 if ~isfield(Options,'samecolors')
     Options.samecolors = 0;
 end
-
+    
+    
 index=0;
 
 % if size(Fi{1},2)~=2,
@@ -220,6 +227,7 @@ elseif dimension(PA)==2,
         end
         handle=[handle;h];
     end
+    Jhandles = handle;
     if Options.showPn,
         % we are going to plot the polyhedral partition PA below
         for ii=1:maxlen,
@@ -265,7 +273,23 @@ elseif dimension(PA)==2,
     zlabel('f','Fontsize',16);
     grid;
     h=gcf;
-    set(h, 'Renderer', 'painters');
+    if isfield(Options, 'shade')
+        for ii = 1:length(Jhandles),
+            set(Jhandles, 'FaceAlpha', Options.shade);
+        end
+    else
+        set(h, 'Renderer', 'painters');
+    end
+    if isfield(Options, 'edgecolor')
+        for ii = 1:length(Jhandles),
+            set(Jhandles, 'EdgeColor', Options.edgecolor);
+        end
+    end
+    if isfield(Options, 'edgewidth')
+        for ii = 1:length(Jhandles),
+            set(Jhandles, 'LineWidth', Options.edgewidth);
+        end
+    end
     h1 = get(h,'CurrentAxes');
     set(h1,'Fontname','times');
     set(h1,'Fontsize',14);

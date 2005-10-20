@@ -1,8 +1,10 @@
-function [Pvor, Find] = facetvoronoi(P)
+function [Pvor, Find] = facetvoronoi(P,Idx)
 %FACETVORONOI Computes an equivalent of voronoi diagrams for facets
 %
 % Pvor = facetvoronoi(P)
+% Pvor = facetvoronoi(P,ind)
 % [Pvor, Find] = facetvoronoi(P)
+% [Pvor, Find] = facetvoronoi(P,ind)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -15,6 +17,9 @@ function [Pvor, Find] = facetvoronoi(P)
 % INPUT
 % ---------------------------------------------------------------------------
 % P      - polytope object
+% ind    - optional: to specify a subset of facets, i.e. Pvor(i) is the
+%          set of points that are closer to facet ind(i) than to the other
+%          facets in ind(:).
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -28,6 +33,8 @@ function [Pvor, Find] = facetvoronoi(P)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 
@@ -53,6 +60,8 @@ function [Pvor, Find] = facetvoronoi(P)
 
 global mptOptions
 
+error(nargchk(1,2,nargin));
+
 if ~isstruct(mptOptions),
     mpt_error;
 end
@@ -76,8 +85,14 @@ Hn = P.H;
 Kn = P.K;
 [nc, nx] = size(Hn);
 
-for ii = 1:nc,
-    ind = setdiff(1:nc, ii);
+if nargin<2 | isempty(Idx)
+    Idx = 1:nc;
+end
+
+
+
+for ii = Idx,
+    ind = setdiff(Idx, ii);
 
     hi = Hn(ii, :);
     ki = Kn(ii);
@@ -94,7 +109,7 @@ for ii = 1:nc,
     %  x \in P
     %  -(h_i*x - k_i) <= -(h_j*x - k_j)   \forall j \notequal i
 
-    Q = polytope([Hn; -(repmat(hi, nc-1, 1)-Hj)], [Kn; Kj-ki]);
+    Q = polytope([Hn; -(repmat(hi, length(Idx)-1, 1)-Hj)], [Kn; Kj-ki]);
     if isfulldim(Q),
         Find = [Find ii];
     end

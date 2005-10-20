@@ -1,35 +1,42 @@
-function P=unitbox(dimension, boxsize)
-%UNITBOX Creates a unit box centered at origin
-%
-% P=unitbox(dimension, boxsize)
+function ctrl = set(varargin)
+%SET Set a field of MPTCTRL objects
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Creates a unit box (hypercube) of dimension 'dimension' centered at origin
-%   with size 'boxsize'
+% ctrl = set(ctrl,'PropertyName', PropertyValue....) sets properties (fields) of
+% the controller 'ctrl'
 %
-% i.e. returns a polytope
-%   P=polytope([eye(dimension); -eye(dimension)], boxsize*ones(2*dimension,1))
+% USAGE:
+%   ctrl = set(P,'PropertyName',PropertyValue)
+%   e.g. ctrl = set(ctrl, 'Pfinal', P)
+%
+% List of properties that can be accessed:
+%   Pfinal, Pn, Fi, Gi, Ai, Bi, Ci, dynamics, details, overlaps, simplified,
+%   type, sysStruct, probStruct
+%
+% WARNING:
+%   Using set() can be rather dangerous if you don't know what you are doing!
 %
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% dimension  - dimension of hypercube
-% boxsize    - size of the box (Optional, if not given, we assume 1)
+% ctrl  - MPTCTRL object
+% name  - String giving name of the property
+% value - Value of that property
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% P     - hypercube in H-representation
+% ctrl  - Updated controller object
 %
-% see also POLYTOPE
+% see also GET
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
-%     kvasnica@control.ee.ethz.ch
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -51,13 +58,22 @@ function P=unitbox(dimension, boxsize)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(1,2,nargin));
-
-if dimension<1,
-    error('unitbox: dimension of the hypercube must be greater zero!');
-end
-if nargin < 2,
-    boxsize = 1;
+if ~isa(varargin{1}, 'mptctrl')
+  error('SET: First argument must be an MPTCTRL object,');
 end
 
-P=polytope([eye(dimension); -eye(dimension)], boxsize*ones(2*dimension,1));
+ni = nargin;
+if ~rem(ni, 2)
+   error(['SET: Input arguments following the object name must be pairs', ...
+          ' of the form PropertyName, PropertyValue']);
+end
+
+ctrl = struct(varargin{1});
+
+for ii=2:2:ni
+    if ~isfield(ctrl, varargin{ii})
+        error('SET: Non-existing property (field)');
+    end
+    ctrl = setfield(ctrl, varargin{ii}, varargin{ii+1});
+end
+ctrl = class(ctrl, 'mptctrl');

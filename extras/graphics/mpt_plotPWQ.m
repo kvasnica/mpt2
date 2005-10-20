@@ -1,7 +1,7 @@
-function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
+function h_all=mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 %MPT_PLOTPWQ Plots a PWQ function defined over polyhedral partition
 %
-% mpt_plotPWQ(Pn,Q,L,C,meshgridpoints,Options);
+% handle = mpt_plotPWQ(Pn,Q,L,C,meshgridpoints,Options);
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -24,6 +24,9 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 % Q,L,C             - Cells containing parameters of the PWQ function x'Qx+x'L+C
 % meshgridpoints    - number of grid points in one axis,
 %                     (default: 30)
+% Options.shade     - Level of transparency (0 = fully transparent, 1 = solid)
+% Options.edgecolor - specifies the color of edges. Default: 'k'.
+% Options.edgewidth - specifies the width of edges. Default: 0.5.
 % Options.lpsolver  - Solver for LPs when (and if) computing bounding box of Pn,
 %                     (default: mptOptions.lpsolver)
 % Options.newfigure - If set to 1, opens a new figure window,
@@ -51,19 +54,22 @@ function mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Options);
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% none
+% handle.PWQ        - handle of the PWQ function
+% handle.Pn         - handle of the plotted partition
 %
 % see also MPT_PLOTPWA, MPT_GETPWQLYAPFCT, MPT_GETCOMMONLYAPFCT
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
+% (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%          fjc@control.ee.ethz.ch
+% (c) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
-% (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
-% (C) 2003 Marco Luethi, Automatic Control Laboratory, ETH Zurich,
+% (c) 2003 Marco Luethi, Automatic Control Laboratory, ETH Zurich,
 %          mluethi@ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -98,7 +104,10 @@ if(nargin<5 | isempty(meshgridpoints))
     meshgridpoints=30;
 end
 
-if(nargin<6)
+if isstruct(meshgridpoints) & nargin < 6,
+    Options = meshgridpoints;
+    meshgridpoints = 30;
+elseif nargin<6
     Options=[];
 end
 
@@ -305,9 +314,20 @@ if oneDimCase,
     plot(X(1,:), Z(1,:), 'LineWidth', 3);
     ylabel('f_{PWQ}','Fontsize',16);
 else
-    surf(X,Y,Z,C);
-    set(gcf, 'Renderer', 'painters');
+    h = surf(X,Y,Z,C);
+    if isfield(Options, 'shade'),
+        set(h, 'FaceAlpha', Options.shade);
+    else
+        set(gcf, 'Renderer', 'painters');
+    end
+    if isfield(Options, 'edgecolor')
+        set(h, 'EdgeColor', Options.edgecolor);
+    end    
+    if isfield(Options, 'edgewidth')
+	set(h, 'LineWidth', Options.edgewidth);
+    end
 end
+handle = [];
 if Options.showPn
     hold on
     if Options.samecolors,
@@ -326,3 +346,6 @@ end
 hold off;
 grid on
 drawnow;
+
+h_all.PWQ = h;
+h_all.Pn  = handle;

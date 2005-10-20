@@ -12,6 +12,10 @@ function [R,P,Q]=plus(P,Q,Options)
 % This is useful for computing Minkowski sum of two polytopes that are
 % not of the same dimension.
 %
+% NOTE: If Q ia a polyarray, Q=[Q1 Q2 ... Qn], then Q is considered
+% as the space covered with polytopes Qi, and the plus.m computes P+Q according
+% to the definition P+Q=\{x+y| x\in P and y\in Q\}=[(P+Q1) (P+Q2) ... (P+Qn)] 
+%
 % USAGE:
 %   R=P+Q
 %   R=plus(P,Q,Options)
@@ -40,6 +44,8 @@ function [R,P,Q]=plus(P,Q,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Mario Vasak, FER, Zagreb
+%          mario.vasak@fer.hr  
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
@@ -122,9 +128,10 @@ if isa(P,'polytope') & isa(Q,'polytope')
         return
     end
     if lenQ>0,
-        [R,P,Q.Array{1}]=plus(P,Q.Array{1},Options);
-        for ii=2:lenQ,
-            [R,Rr,Q.Array{ii}] = plus(R,Q.Array{ii},Options);
+        R=mptOptions.emptypoly; %M.V. R=(P+Q1)\bigcup(P+Q2)\bigcup...\bigcup(P+Qn)
+        for ii=1:lenQ,
+            [P_aux,Rr,Q.Array{ii}] = plus(P,Q.Array{ii},Options);
+            R=[R P_aux];
         end
         return
     end

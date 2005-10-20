@@ -1,21 +1,22 @@
-function identfyRegion(P)
-%FJC_IDENTIFYREGION plots the number of the polytopes into the current 
-%                   figure
+function identifyRegion(P,Idx)
+%IDENTIFYREGION plots the number of the polytopes into the current figure
 %
-% fjc_identfyregion(P)
+% identifyRegion(P)
+% identifyRegion(P,Idx)
 %
 % -------------------------------------------------------------------------
 % INPUT
 % -------------------------------------------------------------------------
-% P                 - Polytopes
+% P                 - polytope array
+% Idx               - vector of index numbers to be printed (optional)
 %
 % see also POLYTOPE/PLOT
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2004 Frank J. Christophersen, Automatic Control Lab., ETH Zurich,
-%          fjc@control.ee.ethz.ch
+% (C) 2004-2005 Frank J. Christophersen, Automatic Control Lab., ETH Zurich,
+%               fjc@control.ee.ethz.ch
 
 % -------------------------------------------------------------------------
 % Legal note:
@@ -38,19 +39,35 @@ function identfyRegion(P)
 %
 % -------------------------------------------------------------------------
 
+error(nargchk(1,2,nargin));
 
-global mptOptions;
+global mptOptions
+
+if ~isstruct(mptOptions),
+    mpt_error;
+end
 
 if ~isa(P, 'polytope'),
     error('IDENTIFYREGION: input argument MUST be a polytope');
 end
+if nargin<2
+    Idx = 1:length(P);
+elseif nargin==2
+    if length(P)<length(Idx) | min(Idx)<=0 | max(Idx) > length(P)
+        error('IDENTIFYREGION: Idx must represent a possible list of indices of P.');
+    end
+end
+
+% we use the Idx variable in a for-cycle, thus we have to make sure that it is a
+% row vector
+Idx = Idx(:)';
 
 hold on;
 h = gcf;
 
 n = dimension(P);
 
-for ii=1:length(P)
+for ii= Idx,
   [xc, Rc] = chebyball(P(ii));
   
   if n==2
@@ -58,11 +75,11 @@ for ii=1:length(P)
   elseif n==3
     h2 = text(xc(1), xc(2), xc(3), num2str(ii));
   else
-    error('MPT_IDENTIFYREGION: only for 2D and 3D polytopes');
+    error('IDENTIFYREGION: only for 2D and 3D polytopes');
   end
   
   set(h2,'Color','w');
-  set(h2,'FontSize',8);
+  set(h2,'FontSize',7);
 
 end%ii
 
