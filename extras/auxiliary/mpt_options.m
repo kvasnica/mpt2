@@ -72,6 +72,14 @@ if nargin==1 & isstruct(varargin{1}),
     for ii=1:length(f),
         mptOptions=setfield(mptOptions,f{ii},getfield(opt,f{ii}));
     end
+elseif nargin==1 & isa(varargin{1}, 'char'),
+    % return respective field of mptOptions
+    try
+        out = getfield(mptOptions, varargin{1});
+    catch
+        error(sprintf('No such field "%s" in mptOptions.', varargin{1}));
+    end
+    return
 else
     % check if input arguments consist of pairs PropertyName, PropertyValue
     if rem(nargin, 2)~=0,
