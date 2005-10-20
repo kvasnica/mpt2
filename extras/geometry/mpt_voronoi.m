@@ -22,6 +22,9 @@ function [Pn]=mpt_voronoi(points,Options)
 %                   be bounded by a hypercube as big as 1.5x the maximum
 %                   coordinate of any of the seed points
 % Options.plot   -  If set to 1, plots the voronoi diagram (0 is default)
+% Options.sortcells - If set to 1, resulting Voronoi partition will be ordered
+%                     in a way such that Pn(i) corresponds to seed point i.
+%                     (Default is 1)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -75,6 +78,9 @@ if ~isfield(Options, 'verbose'),
     % this is to keep mpt_mplp silent
     Options.verbose = -1;
 end
+if ~isfield(Options, 'sortcells'),
+    Options.sortcells = 1;
+end
 
 if(nargin==0 | isempty(points))
     points=[];
@@ -105,7 +111,8 @@ points=points+(rand(nopoints,nx)-0.5)*Options.abs_tol;
 G=[];
 W=[];
 E=[];
-for i=1:size(points,1)
+npoints = size(points, 1);
+for i=1:npoints
     E=[E;-2*points(i,:)];
     G=[G;-1];
     W=[W;points(i,:)*points(i,:)'];
@@ -135,12 +142,33 @@ end
 %solve mpLP
 [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options);
 
+if Options.sortcells,
+    % re-order regions such that Pn(i) corresponds to seed "i"
+    Idx = [];
+    for i = 1:npoints,
+        % find which region corresponds to seed "i"
+        [isin, inwhich] = isinside(Pn, points(i, :)');
+        if isin,
+            % actually it shouls never happen that a seed does not belong to any
+            % polytope, but double-check that
+            Idx = [Idx inwhich(1)];
+        else
+            warning(sprintf('MPT_VORONOI: point %d does not belong to any polytope!', i));
+        end
+    end
+    % only re-order polytopes if all regions have an associated seed point
+    if length(Idx) == npoints,
+        Pn = Pn(Idx);
+    else
+        warning('MPT_VORONOI: returning unordered partition.');
+    end
+end
 
 %plot results
 if((nx==2 | nx==3) & Options.plot==1)
 	plot(Pn)
 	hold on
-	for i=1:size(points,1)
+	for i=1:npoints
         if(nx==2)
             plot(points(i,1),points(i,2),'k*','LineWidth',2);
         else
