@@ -795,7 +795,7 @@ while region <= nRegions & nRegions <= MAXREGIONS,
                     % in case the radius of the border is very small we
                     % perform the perturbation only in the size of the
                     % step over the facet
-                    pertvect = bordvect
+                    pertvect = bordvect;
                 else
                     % otherwise, perturbe both the step size and the
                     % direction, relatively to the Chebyshev radius of
