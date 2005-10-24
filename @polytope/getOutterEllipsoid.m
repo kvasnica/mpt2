@@ -13,8 +13,8 @@ function E=getOutterEllipsoid(P,Options)
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-%  E       -   Minimal volume ellipsoid,  (x-x0) E (x - x0) <= 1, covering P,
-%              returned as an ELLIPSOID object
+%  E       -   Minimal volume ellipsoid, (x-x0) E^(-1) (x - x0) <= 1,
+%              covering P, returned as an ELLIPSOID object
 %
 % ---------------------------------------------------------------------------
 % LITERATURE
@@ -90,4 +90,6 @@ if nx==2 & Options.plotresult,
     [xe,ye]=mpt_plotellip(E,x0);%   plots ellipsoid (x-xc)*E*(x-xc) = 1 in R^2
 end
 
-E = ellipsoid(x0, inv(E));
+E = inv(E);
+E = 0.5*(E + E');
+E = ellipsoid(x0, E);

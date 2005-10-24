@@ -16,7 +16,7 @@ function E = getInnerEllipsoid(Pset,E,Options)
 % ---------------------------------------------------------------------------  
 %   Pset    -   Polytope object constraining the ellipsoid
 %   E,x0    -   Optional: input ellipsoid with center x0, i.e.
-%                           (x-x0) E (x - x0) <= rho 
+%                           (x-x0) E^(-1) (x - x0) <= rho 
 %               given as an ELLIPSOID object
 %               The function then computes the maximum rho such that the 
 %               ellipsoid is still contained in Pset.
@@ -116,4 +116,6 @@ if nx==2 & Options.plotresult
     [xe,ye]=mpt_plotellip(E,x0);
 end
 
-E = ellipsoid(x0, inv(E));
+E = inv(E);
+E = 0.5*(E + E');
+E = ellipsoid(x0, E);
