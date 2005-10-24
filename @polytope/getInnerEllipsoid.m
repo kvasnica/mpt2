@@ -92,7 +92,7 @@ else
     m = size(H,1);
     yalmip('clear' ) ;
 
-    B = sdpvar(2,2);
+    B = sdpvar(nx,nx);
     d = sdpvar(nx,1);
     
     myprog = lmi;
