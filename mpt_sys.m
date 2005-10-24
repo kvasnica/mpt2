@@ -374,6 +374,8 @@ elseif isa(obj, 'char')
             SIMCODE = sub_readsimcode(simfile);
         catch
             disp(lasterr);
+            % inform the user that he can use mpt_sys(..., 'nosimulator')
+            sub_print_sim_hints(obj, Options.dohys2pwa);
             error('MPT_SYS: corrupted HYSDEL output, see message above.');
         end
     else
