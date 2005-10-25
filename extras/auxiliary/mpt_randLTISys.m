@@ -24,6 +24,8 @@ function [sysStructCell]=mpt_randLTISys(maxSys,nx,nu,Options)
 %                               (Default: 0)
 %       .maxVal             -   Maximum absolute value of elements in dynamic matrices
 %                               (Default: 2)
+%       .justUnstable       -   If true, only unstable systems will be returned
+%                               (Default: false)
 %       
 %
 % ---------------------------------------------------------------------------
@@ -33,6 +35,8 @@ function [sysStructCell]=mpt_randLTISys(maxSys,nx,nu,Options)
 %   sysStructCell           -   cell array of size "maxSys" containing different sysStructs
 %
 
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
+%          kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich
 %          grieder@control.ee.ethz.ch
 
@@ -102,7 +106,9 @@ if(isfield(Options,'ymin'))
 else
     ymin=-10*ones(nx,1); 
 end
-
+if ~isfield(Options, 'justUnstable')
+    Options.justUnstable = 0;
+end
 
 
 
@@ -115,30 +121,33 @@ rand('state',sum(100*clock));
 
 for sys_ctr=1:maxSys
     notFinished=1;
-        while(notFinished)
-            sysStruct.A = (rand(nx,nx)-0.5)*maxVal;
-            sysStruct.B = (rand(nx,nu)-0.5)*maxVal;
-            if(enforceStability==1 & rank(ctrb(sysStruct.A,sysStruct.B))~=nx)
-                notFinished=1;
-            else
-                notFinished=0;
-            end
+    while(notFinished)
+        sysStruct.A = (rand(nx,nx)-0.5)*maxVal;
+        sysStruct.B = (rand(nx,nu)-0.5)*maxVal;
+        if Options.justUnstable & all(abs(real(eig(sysStruct.A)))<1)
+            notFinished = 1;
+        elseif(enforceStability==1 & (rank(ctrb(sysStruct.A,sysStruct.B))~=nx | ...
+                any(abs(real(eig(sysStruct.A)))>1)))
+            notFinished=1;
+        else
+            notFinished=0;
         end
-       
-        %y(k)=Cx(k)+Du(k)
-        sysStruct.C = eye(nx);
-        sysStruct.D = zeros(nx,nu);
-        
-        %set constraints on output
-        sysStruct.ymin    =   ymin;
-        sysStruct.ymax    =   ymax;
-        
-        %set constraints on input
-        sysStruct.umin    =   umin;
-        sysStruct.umax    =   umax;
-        sysStruct.dumin   =   dumin;
-        sysStruct.dumax   =   dumax;
+    end
     
-        sysStructCell{sys_ctr}=sysStruct;
+    %y(k)=Cx(k)+Du(k)
+    sysStruct.C = eye(nx);
+    sysStruct.D = zeros(nx,nu);
+    
+    %set constraints on output
+    sysStruct.ymin    =   ymin;
+    sysStruct.ymax    =   ymax;
+    
+    %set constraints on input
+    sysStruct.umin    =   umin;
+    sysStruct.umax    =   umax;
+    sysStruct.dumin   =   dumin;
+    sysStruct.dumax   =   dumax;
+    
+    sysStructCell{sys_ctr}=sysStruct;
 end
 
