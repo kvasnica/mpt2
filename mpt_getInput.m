@@ -124,8 +124,8 @@ if ~isfield(Options, 'useXU')
 end
 
 if Options.useXU
-    if isfield(ctrlStruct.details,'XU')
-        if ~isfield(ctrlStruct.details.XU, 'XUset') | ~isfield(ctrlStruct.details.XU, 'Idx_orig'),
+    if isfield(ctrl.details,'XU')
+        if ~isfield(ctrl.details.XU, 'XUset') | ~isfield(ctrl.details.XU, 'Idx_orig'),
             error('MPT_GETINPUT: provide XUset and/or Idx_orig in ctrl.details.XU')
         end
     else

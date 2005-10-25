@@ -137,7 +137,7 @@ else
     error('MPT_GETINPUTXU: provide XUset and/or Idx_orig in ctrl.details.XU')
 end
 XUset = ctrlStruct.details.XU.XUset;
-XU_Idx_orig = ctrlStruct.details.XU.XU_Idx_orig;
+XU_Idx_orig = ctrlStruct.details.XU.Idx_orig;
 
 if ~isa(XUset, 'polytope'),
     error('MPT_GETINPUTXU: first input must be a polytope object.');
