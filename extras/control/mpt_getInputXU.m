@@ -171,6 +171,7 @@ end
 U_all = [];
 region = 0;
 inwhich = [];
+XU_region = 0;
 
 % first find which regions contain given state
 [feasible, inwhich] = isinside(ctrlStruct.Pn, x0);
