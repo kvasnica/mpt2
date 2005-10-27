@@ -80,6 +80,12 @@ end
 if ~isfield(Options, 'forceverify'),
     Options.forceverify = 0;
 end
+if isempty(Options.sysstructname),
+    Options.sysstructname = 'sysStruct';
+end
+if isempty(Options.probstructname),
+    Options.probstructname = 'probStruct';
+end
 
 ssn = Options.sysstructname;
 psn = Options.probstructname;
