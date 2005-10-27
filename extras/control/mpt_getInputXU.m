@@ -220,20 +220,8 @@ for ir = 1:length(inwhich),
     end
     
     if f_r == 0,
-        % XUset(inwhich(is)) does not necessarily contain x0
-        % & in case of numerical problems in the LP solvers
-        if f_max,
-            u_r = [u_max u_max];
-        elseif f_min,
-            u_r = [u_min u_min];
-        else
-            if ir < length(inwhich),
-                % try other regions
-                continue
-            else
-                error('Numerical problems.');
-            end
-        end
+        % Region XUregion does not contain state x0, skip it...
+        continue
     end
     
     U_all = [U_all u_r];
@@ -243,7 +231,7 @@ for ir = 1:length(inwhich),
         % strategy is selected
         U = U_all(:);
         feasible = 1;
-        region = inwhich(1);
+        region = Pn_region;
         return
     end
 end
@@ -300,7 +288,7 @@ end
         
 
 feasible = 1;
-region = inwhich(1);
+region = Pn_region;
 
 
 %----------------------------------------------------------------
