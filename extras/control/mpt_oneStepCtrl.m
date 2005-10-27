@@ -30,6 +30,15 @@ function [ctrlStruct,feasibleN,loopCtr,Piter] = mpt_oneStepCtrl(sysStruct,probSt
 % Options.set_limit - If the invariant set has a chebychev redius which is
 %                     smaller than this value the iteration is aborted. 
 %                     (Default is 1e-3) 
+% Options.Vconverge - A non-zero value will force the algorithm to break if
+%                     relative increase of volume of atractive set at the next
+%                     iteration compared to volume of the set at the previous
+%                     iteration decreases below this value. E.g.
+%                     Options.Vconverge=1 will terminate the procedure if
+%                     (Vnew-Vold)/Vold*100 < 1.
+%                     NOTE! Currently works only for LTI systems!
+%                     NOTE! Value of this option has percents as units!
+%                     NOTE! Should only be used if you are computing Kinf set!!! 
 % Options.useprojection - if true, uses projections to obtain feasible set. if
 %                         false, feasible sets are obtained by solving a
 %                         multi-parametric program.
@@ -147,6 +156,9 @@ elseif(Options.scaling>1)
 elseif(Options.scaling<=0)
     error('Scaling parameter ''Options.scaling'' must be larger than 0')
 end
+if ~isfield(Options, 'Vconverge')
+    Options.Vconverge = 0;
+end 
 
 if ~isfield(Options, 'statusbar'),
     Options.statusbar = 0;
@@ -206,6 +218,11 @@ end
 if ~isfield(Options, 'Pfinal'),
     while notconverged 
 
+        if Options.Vconverge > 0,
+            % compute volume of old set
+            VfinalOld = volume(PfinalOld);
+        end         
+        
         progress = mod(loopCtr, 20) / 20;
         if statusbar,
             if isempty(mpt_statusbar(statbar.handle, progress, 0, 0.5)),
@@ -298,6 +315,23 @@ if ~isfield(Options, 'Pfinal'),
             disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
             break
         end
+
+        if Options.Vconverge > 0,
+            % check whether relative increase of volume of Pfinal is bigger than
+            % some given value. If not, abort the computation.
+            Vfinal = volume(Pfinal);
+            diffV = 100*(Vfinal - VfinalOld)/VfinalOld;
+            if Options.verbose > 1,
+                fprintf('Increase of volume of Kinf: absolute: %e, relative: %.2f %%\n', Vfinal-VfinalOld, diffV);
+            end
+            if diffV < Options.Vconverge,
+                if Options.verbose > -1,
+                    fprintf('Volume difference (%.2f %%) below tolerance (%.2f %%), aborting computation...\n', ...
+                        diffV, Options.Vconverge);
+                end
+                notconverged = 0;
+            end
+        end 
 
         if nargout > 3,
             Piter = [Piter Pfinal];

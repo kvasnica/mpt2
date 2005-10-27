@@ -34,6 +34,15 @@ function [invSet,iterations, Piter] = mpt_maxCtrlSet(sysStruct,Options)
 % Options.maxCtr   - Maximum number of iterations (default is 1000)
 %                    (corresponds to N-step attractive set)
 % Options.verbose  - Optional: level of verbosity
+% Options.Vconverge - A non-zero value will force the algorithm to break if
+%                     relative increase of volume of atractive set at the next
+%                     iteration compared to volume of the set at the previous
+%                     iteration decreases below this value. E.g.
+%                     Options.Vconverge=1 will terminate the procedure if
+%                     (Vnew-Vold)/Vold*100 < 1.
+%                     NOTE! Currently works only for LTI systems!
+%                     NOTE! Value of this option has percents as units!
+%                     NOTE! Should only be used if you are computing Kinf set!!! 
 % Options
 %   .Q, .R, .Tset  - additional problem-depended options
 %   .probStruct    - the whole problem structure can be passed as well
