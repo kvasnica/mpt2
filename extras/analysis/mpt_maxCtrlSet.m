@@ -1,4 +1,4 @@
-function [invSet,iterations] = mpt_maxCtrlSet(sysStruct,Options)
+function [invSet,iterations, Piter] = mpt_maxCtrlSet(sysStruct,Options)
 %MPT_MAXCTRLSET     Computes the maximal  robust control invariant set C_inf
 %                   or the maximal robust attractive set K_inf
 %
@@ -46,6 +46,7 @@ function [invSet,iterations] = mpt_maxCtrlSet(sysStruct,Options)
 % ---------------------------------------------------------------------------
 %  invSet          - maximal control invariant (or attractive set)
 %  iterations      - number of iterations that were required to compute set
+%  Piter           - sets obtained at each iteration
 %
 % ---------------------------------------------------------------------------
 % LITERATURE
@@ -148,17 +149,27 @@ probStruct.y0bounds=Options.y0bounds;
 
 Options.feasset=1; 
 
+Piter = polytope;
+
 if(Options.Kinf) & ~iscell(sysStruct.A)
     %compute maximal attractive set
     if(~isfield(probStruct,'Tset') | ~isfulldim(probStruct.Tset))
         [Matrices]=mpt_constructMatrices(sysStruct,probStruct,Options);  
         probStruct.Tset=Matrices.Pinvset;
     end
-    [invSet,feas,iterations] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+    if nargout>2,
+        [invSet,feas,iterations,Piter] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+    else
+        [invSet,feas,iterations] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+    end
 elseif ~iscell(sysStruct.A)
     %compute maximal control invariant set
     Options.includeLQRset=0;
-    [invSet,feas,iterations] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+    if nargout>2,
+        [invSet,feas,iterations,Piter] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+    else
+        [invSet,feas,iterations] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+    end
 elseif Options.Kinf,
     invSet = mpt_iterativePWA(sysStruct,probStruct,Options);
     iterations = [];

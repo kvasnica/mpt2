@@ -1,4 +1,4 @@
-function [ctrlStruct,feasibleN,loopCtr] = mpt_oneStepCtrl(sysStruct,probStruct,Options)
+function [ctrlStruct,feasibleN,loopCtr,Piter] = mpt_oneStepCtrl(sysStruct,probStruct,Options)
 %MPT_ONESTEPCTRL Computes low complexity controller for LTI systems
 %
 % ctrlStruct = mpt_oneStepCtrl(sysStruct,probStruct)
@@ -140,7 +140,6 @@ end
 if ~isfield(Options, 'useprojection'),
     Options.useprojection = 1;
 end
-
 if ~isfield(Options,'scaling'),
     Options.scaling=1;
 elseif(Options.scaling>1)
@@ -199,9 +198,14 @@ loopCtr=0;
 PfinalOld = probStruct.Tset;
 notconverged=1;
 
+if nargout > 3,
+    % also return sets at individual iterations
+    Piter = PfinalOld;
+end
+
 if ~isfield(Options, 'Pfinal'),
     while notconverged 
-        
+
         progress = mod(loopCtr, 20) / 20;
         if statusbar,
             if isempty(mpt_statusbar(statbar.handle, progress, 0, 0.5)),
@@ -293,6 +297,10 @@ if ~isfield(Options, 'Pfinal'),
         if loopCtr > Options.maxCtr,
             disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
             break
+        end
+
+        if nargout > 3,
+            Piter = [Piter Pfinal];
         end
         
         [x,R]=chebyball(PfinalOld);
