@@ -287,6 +287,14 @@ if(isemptypoly)
     % Calculating control law and region definition
     %--------------------------------------------------------
     [Pn,Fi,Gi,kr]=sub1_computelaw(ii,nu,nx,Matrices,Options);
+    if ~isfulldim(Pn),
+        Pn=polytope;
+        Phard=polytope;
+        Fi=[]; Gi=[]; activeConstraints=[];
+        details.Ai = {}; details.Bi = {}; details.Ci = {};
+        disp('mpt_mpqp:  Infeasible optimization problem from the begining');
+        return
+    end
     for reg_ctr=1:length(Fi)
         keptrows{nR} = kr{reg_ctr};
         isemptypoly = ~isfulldim(Pn);
@@ -1135,6 +1143,9 @@ function [Pn,Fi,Gi,activeConstraints] = mpt_adjustCellSize(Pn,Fi,Gi,activeConstr
 
 ctr=1;
 PPn = polytope;
+FFn = {};
+GGn = {};
+constr = {};
 for i=1:length(Pn)
     if isfulldim(Pn(i)),
         PPn = [PPn Pn(i)];
