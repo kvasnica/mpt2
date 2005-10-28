@@ -9,7 +9,7 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options)
 % Multiparametric linear programming
 %
 % Solves the problem
-%   V(x) = min H U
+%   V(x) = min H U + F x
 %           U
 %   s.t.   G U <= W + E x
 %          bndA*x <= bndb

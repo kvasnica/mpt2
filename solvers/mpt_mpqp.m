@@ -7,7 +7,7 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mpqp(Matrices,Options)
 % DESCRIPTION
 % ---------------------------------------------------------------------------
 % Solves the following QP as a multiparametric program:
-% min_U  0.5 U' H U + (x(0) F + Cf) U + x(0)' Y x(0) + Cx x + Cc
+% min_U  0.5 U' H U + (x(0)' F + Cf) U + x(0)' Y x(0) + Cx x + Cc
 % subj. to  GU <= W + Ex     (constraints)
 %        bndA*x<= bndb       (bound exploration space)
 % ---------------------------------------------------------------------------
