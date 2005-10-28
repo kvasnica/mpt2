@@ -9,7 +9,9 @@ function [nx,nu,ny,ndyn,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct)
 % Returns number of states, inputs, outputs and number of dynamics contained in
 % a given system structure
 %
-% internal function
+% When run with no output arguments, displays textual information about a given
+% system, i.e.
+%   mpt_sysStructInfo(sysStruct)
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -68,14 +70,15 @@ if ~isfield(sysStruct,'verified')
     sysStruct=mpt_verifySysStruct(sysStruct,verOpt);
 end
 
-if iscell(sysStruct.A),
+ispwa = iscell(sysStruct.A);
+if ispwa,
     % PWA system
     ndyn = length(sysStruct.A);
     nx = size(sysStruct.A{end},2);
     nu = size(sysStruct.B{end},2);
     ny = size(sysStruct.C{end},1);
 else
-    % PWA system
+    % LTI system
     ndyn = 1;
     nx = size(sysStruct.A,2);
     nu = size(sysStruct.B,2);
@@ -84,6 +87,42 @@ end
 nbool = 0;
 ubool = [];
 
+if nargout==0,
+    % display textual information
+    if ispwa,
+        systype = sprintf('PWA system (%d dynamics)', ndyn);
+    else
+        systype = 'LTI system';
+    end
+    plurx = [num2str(nx) ' state' repmat('s', 1, (nx>1))];
+    pluru = [num2str(nu) ' input' repmat('s', 1, (nu>1))];
+    plury = [num2str(ny) ' output' repmat('s', 1, (ny>1))];   
+    fprintf('\n%s, %s, %s, %s\n', systype, plurx, pluru, plury);
+    if ispwa,
+        % print information about each dynamics
+        for idyn = 1:ndyn,
+            gC = sysStruct.guardC{idyn};
+            nc = length(gC);
+            if isfield(sysStruct, 'guardX'),
+                gX = sysStruct.guardX{idyn};
+            else
+                gX = zeros(nc, nx);
+            end
+            if isfield(sysStruct, 'guardU'),
+                gU = sysStruct.guardU{idyn};
+            else
+                gU = zeros(nc, nu);
+            end
+            fprintf('\nGuards of dynamics %d:\n', idyn);
+            for ii = 1:nc,
+                fprintf('%s\n', char(mptaffexpr(nx, nu, gX(ii, :), gU(ii, :), gC(ii, :))))
+            end
+        end
+    end
+    fprintf('\n');
+    clear nx
+end
+    
 if nargout <= 4,
     return
 end
