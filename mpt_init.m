@@ -453,6 +453,28 @@ executesolver = 1;
 %   mpt_init('lpsolver', 'cdd', ..., 'save')
 dosave = 0;
 
+% how many "rescue" LP solvers should be considered? increasing the value too
+% musch can also lead to slow-downs!
+nrescue.lp = 2;
+nrescue.qp = 0;
+nrescue.milp = 0;
+nrescue.miqp = 0;
+nrescue.extreme = sub_maxsolvers('extreme');
+
+% set prefered solvers, list organized according to solver's speed on a given
+% problem
+prefered.lp = [0 9 3 15 2 8 14 7 1 13 5 10 11 12];
+prefered.qp = [0 1 9 2 8 4 5 6 7 10];
+prefered.milp = [0 7 6 3 2 4 5 1];
+prefered.miqp = [0 5 4 2 3 1];
+prefered.extreme = [3 4 0 2 1];
+
+% extend list of solvers which should be excluded from run tests
+dontcheck.lp = [dontcheck.lp(:); 6]; % do not check SeDuMi - leads to a crash with Matlab 6.5
+dontcheck.qp = [dontcheck.qp(:); 3]; % do not check SeDuMi - leads to a crash with Matlab 6.5
+dontcheck.milp = dontcheck.milp(:);
+dontcheck.miqp = dontcheck.miqp(:);
+dontcheck.extreme = [];
 
 nargs = nargin;
 vargs = varargin;
@@ -583,19 +605,7 @@ try
         end
 
         sub_printcopyright(mpt_ver);
-        
-        s_lpsolver = mpt_solverInfo('lp', mptOptions.lpsolver);
-        s_qpsolver = mpt_solverInfo('qp', mptOptions.qpsolver);
-        s_milpsolver = mpt_solverInfo('milp', mptOptions.milpsolver);
-        s_miqpsolver = mpt_solverInfo('miqp', mptOptions.miqpsolver);
-        s_exsolver = mpt_solverInfo('extreme', mptOptions.extreme_solver);
-        
-        disp(['         LP solver: ' s_lpsolver]);
-        disp(['         QP solver: ' s_qpsolver]);
-        disp(['       MILP solver: ' s_milpsolver]);
-        disp(['       MIQP solver: ' s_miqpsolver]);
-        disp(['Vertex enumeration: ', s_exsolver]);
-        fprintf('\n');
+        sub_printsolvers(mptOptions);
         
         % check the MPT web-page for updates if desired
         % only available in Matlab 6.5 and Matlab 7
@@ -674,50 +684,16 @@ if executesolver,
     fprintf('looking for available solvers...\n');
 end
 
-solvers.lp = [];
-% do not check SeDuMi - leads to a crash with Matlab 6.5
-dontcheck.lp = [dontcheck.lp(:); 6];
-allLPsolvers = setdiff(0:sub_maxsolvers('lp'), dontcheck.lp); 
-for solver = allLPsolvers
-    if test_lp(solver, executesolver),
-        solvers.lp = [solvers.lp solver];
-    end
-end
-
-solvers.qp = [];
-% do not check SeDuMi - leads to a crash with Matlab 6.5
-dontcheck.qp = [dontcheck.qp(:); 3];
-allQPsolvers = setdiff(0:sub_maxsolvers('qp'), dontcheck.qp); 
-for solver = allQPsolvers
-    % do not check SeDuMi - leads to a crash with Matlab 6.5
-    if test_qp(solver, executesolver),
-        solvers.qp = [solvers.qp solver];
-    end
-end
-
-solvers.milp = [];
-dontcheck.milp = dontcheck.milp(:);
-allMILPsolvers = setdiff(0:sub_maxsolvers('milp'), dontcheck.milp);
-for solver = allMILPsolvers,
-    if test_milp(solver, executesolver),
-        solvers.milp = [solvers.milp solver];
-    end
-end
-
-solvers.miqp = [];
-dontcheck.miqp = dontcheck.miqp(:);
-allMIQPsolvers = setdiff(0:sub_maxsolvers('miqp'), dontcheck.miqp);
-for solver = allMIQPsolvers,
-    if test_miqp(solver, executesolver),
-        solvers.miqp = [solvers.miqp solver];
-    end
-end
+solvers.lp = test_solvers('lp', prefered.lp, sub_maxsolvers('lp'), dontcheck.lp, nrescue.lp, executesolver);
+solvers.lp_all = solvers.lp;
+solvers.qp = test_solvers('qp', prefered.qp, sub_maxsolvers('qp'), dontcheck.qp, nrescue.qp, executesolver);
+solvers.milp = test_solvers('milp', prefered.milp, sub_maxsolvers('milp'), dontcheck.milp, nrescue.milp, executesolver);
+solvers.miqp = test_solvers('miqp', prefered.miqp, sub_maxsolvers('miqp'), dontcheck.miqp, nrescue.miqp, executesolver);
 
 if isempty(solvers.lp),
     clear global mptOptions
     error('mpt_init: No supported LP solver available on your system, cannot proceed!');
 end
-
 if isempty(solvers.qp)
     solvers.qp = -1;
     mptOptions.qpsolver = -1; % NONE
@@ -725,41 +701,16 @@ if isempty(solvers.qp)
     disp('You will not be able to solve problems with quadratic cost function.');
     disp('Please be sure that you set ''probStruct.norm = 1'' before calling any control routine!');
 end
-
 if isempty(solvers.milp),
     warning('mpt_init: No supported MILP solver available on your system.');
 end
-
 if isempty(solvers.miqp),
     warning('mpt_init: No supported MIQP solver available on your system.');
 end
 
-
-% set prefered solvers, list organized according to solver's speed on a given
-% problem
-lp_pref = [0 9 3 15 2 8 14 7 1 13 5 10 11 12];
-qp_pref = [0 1 9 2 8 4 5 6 7 10];
-milp_pref = [0 7 6 3 2 4 5 1];
-miqp_pref = [0 5 4 2 3 1];
-extreme_pref = [3 0 2 1];
-
-solvers.lp = choosepreferred(solvers.lp, lp_pref);
-solvers.qp = choosepreferred(solvers.qp, qp_pref);
-solvers.milp = choosepreferred(solvers.milp, milp_pref);
-solvers.miqp = choosepreferred(solvers.miqp, miqp_pref);
-
-
-% this takes a maximum of 3 "rescue" solvers
-% we might want to remove this limitation in the future
-% originally introduced to remove glpk from the list since it is very
-% unreliable in some cases
-solvers.lp_all = solvers.lp;
-solvers.lp = solvers.lp(1:min(length(solvers.lp),3));
-
 if isempty(mptOptions.lpsolver),
     mptOptions.lpsolver = solvers.lp(1);
 end
-
 if isempty(mptOptions.qpsolver),
     mptOptions.qpsolver = solvers.qp(1);
 end
@@ -768,7 +719,6 @@ if ~isempty(solvers.milp) & isempty(mptOptions.milpsolver),
 elseif isempty(mptOptions.milpsolver),
     mptOptions.milpsolver = -1;
 end
-
 if ~isempty(solvers.miqp) & isempty(mptOptions.miqpsolver),
     mptOptions.miqpsolver = solvers.miqp(1);
 elseif isempty(mptOptions.miqpsolver),
@@ -864,19 +814,7 @@ end
 
 mptOptions.emptypoly = polytope;
 
-solvers.extreme = [];
-for solver = [0 1 2 3],
-    if test_extreme(solver),
-        solvers.extreme = [solvers.extreme; solver];
-    end
-end
-solvers.extreme = choosepreferred(solvers.extreme, extreme_pref);
-cddpos = find(solvers.extreme==3);
-if ~isempty(cddpos),
-    extsol1 = solvers.extreme(1:cddpos);
-    extsol2 = solvers.extreme(cddpos+1:end);
-    solvers.extreme = [extsol1 4 extsol2];
-end
+solvers.extreme = test_solvers('extreme', prefered.extreme, sub_maxsolvers('extreme'), dontcheck.extreme, nrescue.extreme, executesolver);
 
 if ischar(mptOptions.extreme_solver),
     str_solver = mptOptions.extreme_solver;
@@ -903,8 +841,6 @@ if ~test_extreme(mptOptions.extreme_solver)
     error('Error: cannot proceed with mpt_init');
 end
 
-solvers = fixpreferred(solvers, mptOptions); 
-
 mptOptions.solvers = solvers;
 
 sub_printcopyright(mpt_ver);
@@ -918,24 +854,7 @@ end
 
 out=mptOptions;
 
-s_lpsolver = mpt_solverInfo('lp', mptOptions.lpsolver);
-s_qpsolver = mpt_solverInfo('qp', mptOptions.qpsolver);
-s_milpsolver = mpt_solverInfo('milp', mptOptions.milpsolver);
-s_miqpsolver = mpt_solverInfo('miqp', mptOptions.miqpsolver);
-s_exsolver = mpt_solverInfo('extreme', mptOptions.extreme_solver);
-
-if mptOptions.newfigure==1,
-    s_newfigure = 'Yes';
-else
-    s_newfigure = 'No';
-end
-
-disp(['         LP solver: ' s_lpsolver]);
-disp(['         QP solver: ' s_qpsolver]);
-disp(['       MILP solver: ' s_milpsolver]);
-disp(['       MIQP solver: ' s_miqpsolver]);
-disp(['Vertex enumeration: ', s_exsolver]);
-fprintf('\n');
+sub_printsolvers(mptOptions);
 
 % check the MPT web-page for updates if desired
 % only available in Matlab 6.5 and Matlab 7
@@ -1176,7 +1095,7 @@ end
 
 
 %------------------------------------------------------------------------
-function success=test_extreme(solver)
+function success=test_extreme(solver, executesolver)
 
 options.extreme_solver = solver;
 if ~exist('cddmex', 'file') & solver==3,
@@ -1188,14 +1107,6 @@ try
     P = hull([-1 -1; -1 1; 1 -1; 1 1],options);
     success = 1;
 end
-
-
-%------------------------------------------------------------------------
-function selected = choosepreferred(available, prefs)
-
-installed = ismember(prefs, available);
-selected = prefs(installed);
-
 
 
 %------------------------------------------------------------------------
@@ -1251,3 +1162,64 @@ fprintf('\nMPT toolbox %s initialized...\n', mpt_ver);
 fprintf('Copyright (C) 2003-2005 by M. Kvasnica, P. Grieder and M. Baotic\n');
 fprintf('\nSend bug reports, questions or comments to mpt@control.ee.ethz.ch\n');
 fprintf('For news, visit the MPT web page at http://control.ee.ethz.ch/~mpt/\n');
+
+
+%------------------------------------------------------------------------
+function sub_printsolvers(mptOptions)
+
+s_lpsolver = mpt_solverInfo('lp', mptOptions.lpsolver);
+s_qpsolver = mpt_solverInfo('qp', mptOptions.qpsolver);
+s_milpsolver = mpt_solverInfo('milp', mptOptions.milpsolver);
+s_miqpsolver = mpt_solverInfo('miqp', mptOptions.miqpsolver);
+s_exsolver = mpt_solverInfo('extreme', mptOptions.extreme_solver);
+
+disp(['         LP solver: ' s_lpsolver]);
+disp(['         QP solver: ' s_qpsolver]);
+disp(['       MILP solver: ' s_milpsolver]);
+disp(['       MIQP solver: ' s_miqpsolver]);
+disp(['Vertex enumeration: ', s_exsolver]);
+fprintf('\n');
+
+
+%------------------------------------------------------------------------
+function S = test_solvers(type, prefered, maxsol, dontcheck, nrescue, executesolver)
+% tests each solver
+
+% connect list of prefered solvers and include all solvers not listed among
+% 'prefered' solvers:
+allsolvers = [prefered setdiff(0:maxsol, prefered)];
+
+% now remove solvers marked for not checking:
+toremove = [];
+for ii = 1:length(allsolvers),
+    if any(allsolvers(ii) == dontcheck),
+        toremove = [toremove ii];
+    end
+end
+
+% sort the set difference back
+allsolvers(toremove) = [];
+
+S = [];
+for solver = allsolvers,
+    switch lower(type),
+        case 'lp',
+            t = test_lp(solver, executesolver);
+        case 'qp',
+            t = test_qp(solver, executesolver);
+        case 'milp',
+            t = test_milp(solver, executesolver);
+        case 'miqp',
+            t = test_miqp(solver, executesolver);
+        case 'extreme',
+            t = test_extreme(solver, executesolver);
+    end
+    if t,
+        % solver exists and works correctly
+        S = [S solver];
+        if length(S) > nrescue,
+            % enough rescue solvers found, break
+            break
+        end
+    end
+end
