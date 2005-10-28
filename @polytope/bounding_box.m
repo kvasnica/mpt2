@@ -19,6 +19,10 @@ function [R,l,u,lv,uv]=bounding_box(P,Options,lookahead,A,b)
 % Options.lpsolver      - LP solver to use (see help mpt_solveLP)
 % Options.noPolyOutput  - if set to 1, the bounding box will NOT be returned as
 %                         a polytope object
+%                         (Default: 0)
+% Options.bboxvertices  - if set to 1, computes vertices of the bounding box and
+%                         returns them as first output argument
+%                         (Default: 0)
 % lookahead         - specify at which future iteration to compute the box, if
 %                     the dynamics given by (A,b) are applied. Set 0 by default.
 % A,b               - System dynamics  x(k+1)=Ax+b, only needed if lookahead > 0;
@@ -29,7 +33,8 @@ function [R,l,u,lv,uv]=bounding_box(P,Options,lookahead,A,b)
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-% R                 - Bounding Box Polytope (=Hypercube)
+% R                 - Bounding Box Polytope (if Options.noPolyOutput=0)
+%                   - Vertices of the bounding box (if Options.bboxvertices=1)
 % "l,u"             - The two extreme vertices of the hypercube R, i.e. "l" is 
 %		      the vertex which minimizes the LP objective "x" (smallest
 %		      state) and "u" is the vertex which minimizes the LP 
@@ -86,17 +91,22 @@ if ~isfield(Options,'noPolyOutput'),
     % if set to 1, the bounding box will NOT be returned as a polytope object
     Options.noPolyOutput = 0;
 end
+if ~isfield(Options, 'bboxvertices'),
+    % if set to 1, returns all vertices of the bounding box as first output
+    % argument (only makes sense with Options.noPolyOutput=1
+    Options.bboxvertices = 0;
+end
 if(nargin<3)
     lookahead=0;
 end
 
+dimP = dimension(P);
 lenP = length(P.Array);
 if lenP>0,
     if lookahead > 0,
         error('Non-zero lookahead not supported for polyarrays.');
     end
     forcerecompute = Options.noPolyOutput==1;
-    dimP = dimension(P);
     allbboxes = zeros(dimP, lenP*2);
     for ii = 1:lenP,
         bbox = P.Array{ii}.bbox;
@@ -130,7 +140,11 @@ if lenP>0,
     end
     if Options.noPolyOutput,
         % we don't need the bounding box as a polytope object
-        R = [];
+        if Options.bboxvertices,
+            R = sub_fullbbox(l, u, dimP);
+        else
+            R = [];
+        end
     else
         R=polytope([eye(dimP); -eye(dimP)],[u;-l]);
     end
@@ -139,7 +153,11 @@ end
 
 if ~isfulldim(P),
     % fast exit if polytope is empty
-    R = mptOptions.emptypoly;
+    if Options.noPolyOutput,
+        R = [];
+    else
+        R = mptOptions.emptypoly;
+    end
     l = [];
     u = [];
     lv = [];
@@ -154,6 +172,9 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
     if Options.noPolyOutput == 0,
         n = size(P.H,2);
         R=polytope([eye(n); -eye(n)],[u;-l]);
+    elseif Options.bboxvertices,
+        % compute all vertices of the bounding box            
+        R = sub_fullbbox(l, u, dimP);
     else
         R=[];
     end
@@ -170,14 +191,14 @@ u=zeros(n,1);               % Upper bounds
 
 %Build Objective Matrices
 if(lookahead>0)
-        Bb=zeros(n,1);
-        for j=0:lookahead-1,
-          Bb=Bb+A^((lookahead-1)-j)*b;
-        end
-      Aa=A^lookahead;
+    Bb=zeros(n,1);
+    for j=0:lookahead-1,
+        Bb=Bb+A^((lookahead-1)-j)*b;
+    end
+    Aa=A^lookahead;
 else
-      Bb=zeros(n,1);  
-      Aa=eye(n);
+    Bb=zeros(n,1);  
+    Aa=eye(n);
 end
 
 % Determine external box ; minimize x_i
@@ -212,6 +233,27 @@ end
 if Options.noPolyOutput == 0,
     R=polytope([eye(n); -eye(n)],[u;-l]);
     R.bbox = [l u];
+elseif Options.bboxvertices,
+    % compute all vertices of the bounding box
+    R = sub_fullbbox(l, u, dimP);
 else
     R=[];
+end
+
+
+
+%---------------------------------------------------------------------------
+function boxPoints = sub_fullbbox(BoxMin, BoxMax, n)
+
+binaryOne = dec2bin(1);
+boxPoint = zeros(n, 2^n);
+for j=1:2^n
+    index=dec2bin(j-1,n);
+    for k=1:n
+        if(index(k)==binaryOne)
+            boxPoints(k, j)=BoxMax(k);
+        else
+            boxPoints(k, j)=BoxMin(k);
+        end
+    end
 end
