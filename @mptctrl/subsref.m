@@ -4,13 +4,16 @@ function fval = subsref(ctrl, X)
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Allows to access each field of the MPTCTRL object directly using the standard
-% structure-like indexing, e.g.
+% Indexing of controller objects can perform one opf the following things:
 %
-%   ctrl.Pn
-%   ctrl.details
+% 1. If "u=ctrl(x0)" is used, the controller is evaluated for a given state x0,
+%    i.e. it will return "u" such that u=mpt_getInput(ctrl, x0). 
+%    If "ctrl(x0, Options)" is used, it corresponds to 
+%    u=mpt_getInput(ctrl, x0, Options)
 %
-% and so on. Type 'struct(ctrl)' to see all accessible fields.
+% 2. If "ctrl.fieldname" is used, it will return the value of field "fieldname",
+%    e.g. "ctrl.Pn" returns the polyhedral partition of the controller. Type
+%    'struct(ctrl)' to see all accessible fields.
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -20,7 +23,7 @@ function fval = subsref(ctrl, X)
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
 %
-% see also SUBSASGN, END
+% see also SUBSASGN, MPT_GETINPUT
 %
 
 % Copyright is with the following author(s):
@@ -53,25 +56,44 @@ if numel(X)>1,
 else
     XX = X;
 end
-if ~strcmp(XX.type,'.'),
+dotindex = strcmp(XX.type, '.');
+evalindex = strcmp(XX.type, '()');
+if ~(dotindex | evalindex),
     error(['Indexing with ''' X.type ''' not supported!']);
 end
 
-ctrl_str = struct(ctrl);
-if length(X)==1,
-    fname = X.subs;
-else
-    fname = X(1).subs;
-end
-if isfield(ctrl_str, fname)
-    fval = getfield(ctrl_str, fname);
-else
-    error(['??? Reference to non-existent field ''' fname '''.']);
-end
-if length(X)>1,
+if evalindex,
+    % evaluate the controller for given state
+    x0 = X.subs{1};
+    if length(X.subs) > 1,
+        Options = X.subs{2};
+    else
+        Options = [];
+    end
     try
-        fval = subsref(fval, X(2:end));
+        fval = mpt_getInput(ctrl, x0, Options);
     catch
         rethrow(lasterror);
+    end
+    
+else
+    % extract value of given field of the controller structure
+    ctrl_str = struct(ctrl);
+    if length(X)==1,
+        fname = X.subs;
+    else
+        fname = X(1).subs;
+    end
+    if isfield(ctrl_str, fname)
+        fval = getfield(ctrl_str, fname);
+    else
+        error(['??? Reference to non-existent field ''' fname '''.']);
+    end
+    if length(X)>1,
+        try
+            fval = subsref(fval, X(2:end));
+        catch
+            rethrow(lasterror);
+        end
     end
 end
