@@ -96,7 +96,7 @@ if ~isa(x0, 'double')
     error('MPT_GETINPUT: second argument must be vector!');
 end
 
-if nargin==3 & ~isstruct(Options)
+if nargin==3 & ~(isstruct(Options) | isempty(Options))
     error('MPT_GETINPUT: third argument must be an Options structure!');
 end
 
