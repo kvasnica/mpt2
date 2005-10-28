@@ -75,9 +75,10 @@
 %   subsref      - Indexed referencing for polytope objects
 %
 % Other functions
-%   facetcircle  - Returns largest circle inside facet 'ind' of polytope P
-%   reduceunion  - Removes some redundant elements from a polytope array
-%   volume       - Calculates volume of a polytope
+%   distribpoints - Distribute n points such that distances between them are maximized
+%   facetcircle   - Returns largest circle inside facet 'ind' of polytope P
+%   reduceunion   - Removes some redundant elements from a polytope array
+%   volume        - Calculates volume of a polytope
 %
 %
 % see help mpt
