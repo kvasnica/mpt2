@@ -85,7 +85,7 @@ function [G,W,E,H,F,Y,Cf,Cx,Cc,symmetric,bndA,bndb,Pinvset]=mpt_constructMatrice
 %
 % G,W,E,H,F,Y,Cf,Cx,Cc  - matrices of the problem, i.e. 
 %
-%       J=min_U  (0.5 U' H U + (x(0) F + Cf) U + x(0) Y x(0) + Cx x + Cc)
+%       J=min_U  (0.5 U' H U + (x(0)' F + Cf) U + x(0) Y x(0) + Cx x + Cc)
 %       G U <= W + E x(0)
 %
 %  symmetric   0/1 if constraints are symmetric
