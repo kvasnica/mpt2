@@ -141,7 +141,7 @@ if lenP>0,
     if Options.noPolyOutput,
         % we don't need the bounding box as a polytope object
         if Options.bboxvertices,
-            R = sub_fullbbox(l, u, dimP);
+            R = bboxvertices(l, u, dimP);
         else
             R = [];
         end
@@ -174,7 +174,7 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
         R=polytope([eye(n); -eye(n)],[u;-l]);
     elseif Options.bboxvertices,
         % compute all vertices of the bounding box            
-        R = sub_fullbbox(l, u, dimP);
+        R = bboxvertices(l, u, dimP);
     else
         R=[];
     end
@@ -235,25 +235,7 @@ if Options.noPolyOutput == 0,
     R.bbox = [l u];
 elseif Options.bboxvertices,
     % compute all vertices of the bounding box
-    R = sub_fullbbox(l, u, dimP);
+    R = bboxvertices(l, u, dimP);
 else
     R=[];
-end
-
-
-
-%---------------------------------------------------------------------------
-function boxPoints = sub_fullbbox(BoxMin, BoxMax, n)
-
-binaryOne = '1';
-boxPoint = zeros(n, 2^n);
-for j=1:2^n
-    index=dec2bin(j-1,n);
-    for k=1:n
-        if(index(k)==binaryOne)
-            boxPoints(k, j)=BoxMax(k);
-        else
-            boxPoints(k, j)=BoxMin(k);
-        end
-    end
 end
