@@ -100,13 +100,13 @@ if(nargin<3)
     lookahead=0;
 end
 
-dimP = dimension(P);
 lenP = length(P.Array);
 if lenP>0,
     if lookahead > 0,
         error('Non-zero lookahead not supported for polyarrays.');
     end
     forcerecompute = Options.noPolyOutput==1;
+    dimP = dimension(P);    
     allbboxes = zeros(dimP, lenP*2);
     for ii = 1:lenP,
         bbox = P.Array{ii}.bbox;
@@ -160,6 +160,7 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
         R=polytope([eye(n); -eye(n)],[u;-l]);
     elseif Options.bboxvertices,
         % compute all vertices of the bounding box            
+        dimP = dimension(P);        
         R = bboxvertices(l, u, dimP);
     else
         R = P;
@@ -235,6 +236,7 @@ if Options.noPolyOutput == 0,
     R.bbox = [l u];
 elseif Options.bboxvertices,
     % compute all vertices of the bounding box
+    dimP = dimension(P);    
     R = bboxvertices(l, u, dimP);
 else
     P.bbox = [l u];
