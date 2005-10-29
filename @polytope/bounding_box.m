@@ -245,7 +245,7 @@ end
 %---------------------------------------------------------------------------
 function boxPoints = sub_fullbbox(BoxMin, BoxMax, n)
 
-binaryOne = dec2bin(1);
+binaryOne = '1';
 boxPoint = zeros(n, 2^n);
 for j=1:2^n
     index=dec2bin(j-1,n);
