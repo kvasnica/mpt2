@@ -64,16 +64,13 @@ if ~isa(P1, 'polytope') | ~isa(P2, 'polytope'),
     error('DOINTERSECT: both input arguments must be polytope objects!');
 end
 
-lenP1 = length(P1);
-lenP2 = length(P2);
-
 if dimension(P1) ~= dimension(P2)
     error('DOINTERSECT: polytopes must have the same dimension!');
 end
 
 IAB = []; IA = []; IB = [];
 
-if lenP1 == 1 & lenP2 == 1
+if isempty(P1.Array) & isempty(P2.Array),
     % special case, both inputs are single polytopes
 
     if ~isempty(P1.bbox) & ~isempty(P2.bbox)
@@ -108,6 +105,8 @@ else
         H2 = {H2};
         K2 = {K2};
     end
+    lenP1 = length(H1);
+    lenP2 = length(H2);
     
     answer = 0;    
     bboxOpt.noPolyOutput = 1;  % do not return the bounding box as a polytope object
