@@ -115,8 +115,9 @@ if lenP1>0 | lenP2>0,
 else
     havebboxes = 0;
     if ~isempty(P1.bbox) & ~isempty(P2.bbox)
+        bbox_tol = Options.abs_tol*1e4;
         havebboxes = 1;
-        if all(P1.bbox(:,2) < P2.bbox(:,1)) | all(P1.bbox(:,1) > P2.bbox(:,2))
+        if any(P1.bbox(:,2) + bbox_tol < P2.bbox(:,1)) | any(P2.bbox(:,2) + bbox_tol < P1.bbox(:,1))
             % bounding boxes do not intersect => polytopes do not intersect
             fulldim = 0;
             R=mptOptions.emptypoly;
@@ -149,7 +150,7 @@ else
     if havebboxes,
         l = max([P1.bbox(:,1) P2.bbox(:,1)]')';
         u = min([P1.bbox(:,2) P2.bbox(:,2)]')';      
-        cand = find(~((HH>0).*HH*(u-l) - (KK-HH*l) < -mptOptions.abs_tol));
+        cand = find(~((HH>0).*HH*(u-l) - (KK-HH*l) < -bbox_tol));
         if ~all(cand)
             cand = find(cand)
             HH = HH(cand,:);
