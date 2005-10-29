@@ -151,20 +151,6 @@ if lenP>0,
     return
 end
 
-if ~isfulldim(P),
-    % fast exit if polytope is empty
-    if Options.noPolyOutput,
-        R = [];
-    else
-        R = mptOptions.emptypoly;
-    end
-    l = [];
-    u = [];
-    lv = [];
-    uv = [];
-    return
-end
-
 if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
     % quick return if bounding box was already computed and stored
     l = P.bbox(:,1);
@@ -178,6 +164,20 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
     else
         R = P;
     end
+    return
+end
+
+if ~isfulldim(P),
+    % fast exit if polytope is empty
+    if Options.noPolyOutput,
+        R = [];
+    else
+        R = mptOptions.emptypoly;
+    end
+    l = [];
+    u = [];
+    lv = [];
+    uv = [];
     return
 end
 
