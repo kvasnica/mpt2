@@ -58,6 +58,8 @@ function [answer, IA, IB, IAB] = dointersect(P1,P2)
 
 global mptOptions;
 
+bbox_tol = 1e4*mptOptions.abs_tol;
+
 if ~isa(P1, 'polytope') | ~isa(P2, 'polytope'),
     error('DOINTERSECT: both input arguments must be polytope objects!');
 end
@@ -73,9 +75,10 @@ IAB = []; IA = []; IB = [];
 
 if lenP1 == 1 & lenP2 == 1
     % special case, both inputs are single polytopes
-    
+
     if ~isempty(P1.bbox) & ~isempty(P2.bbox)
-        if all(P1.bbox(:,2) < P2.bbox(:,1)) | all(P1.bbox(:,1) > P2.bbox(:,2))
+        if any(P1.bbox(:,2) + bbox_tol < P2.bbox(:,1)) | ...
+                any(P1.bbox(:,1) - bbox_tol > P2.bbox(:,2))
             % even bounding boxes of the two polytopes do not intersect, abort
             % quickly
             answer = 0;
@@ -106,7 +109,16 @@ else
         K2 = {K2};
     end
     
-    answer = 0;
+    answer = 0;    
+    bboxOpt.noPolyOutput = 1;  % do not return the bounding box as a polytope object
+    [d, b1min, b1max] = bounding_box(P1, bboxOpt); 
+    [d, b2min, b2max] = bounding_box(P2, bboxOpt);
+    if any(b1max+bbox_tol < b2min) | any(b2max+bbox_tol < b1min),
+        % even bounding boxes of the two polytopes do not intersect, abort
+        % quickly
+        return
+    end
+
     for i1 = 1:lenP1,
         for i2 = 1:lenP2,
             Hint = [H1{i1}; H2{i2}];
