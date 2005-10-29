@@ -115,7 +115,7 @@ if lenP>0,
                 % this element does not have a bounding box information stored,
                 % recompute it
                 bboxOpt.noPolyOutput = 1;
-                [R, low, up] = bounding_box(P.Array{ii}, struct('noPolyOutput', 1));
+                [P.Array{ii}, low, up] = bounding_box(P.Array{ii}, struct('noPolyOutput', 1));
                 bbox = [low up];
             else
                 % just exit with no result if bounding box information does not
@@ -143,7 +143,7 @@ if lenP>0,
         if Options.bboxvertices,
             R = bboxvertices(l, u, dimP);
         else
-            R = [];
+            R = P;
         end
     else
         R=polytope([eye(dimP); -eye(dimP)],[u;-l]);
@@ -176,7 +176,7 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
         % compute all vertices of the bounding box            
         R = bboxvertices(l, u, dimP);
     else
-        R=[];
+        R = P;
     end
     return
 end
@@ -237,5 +237,6 @@ elseif Options.bboxvertices,
     % compute all vertices of the bounding box
     R = bboxvertices(l, u, dimP);
 else
-    R=[];
+    P.bbox = [l u];
+    R = P;
 end
