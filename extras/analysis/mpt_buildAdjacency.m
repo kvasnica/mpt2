@@ -27,9 +27,9 @@ function [adjList] = mpt_buildAdjacency(Pi,Options)
 
 % Copyright is with the following author(s):
 %
-%(C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
+%(c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %         fjc@control.ee.ethz.ch
-%(C) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
+%(c) 2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %         baric@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -191,3 +191,20 @@ for polyIdx = 1:nPoly,
        end % end FOR extraIdx
    end  % end FOR (facets)
 end  % end FOR (polytopes)
+
+
+% clean neighborlist data from numerical inaccuracies
+% if Pi is convex, one can remove columns in neighbor list that consist only of
+% -Inf or 0
+[status_convex] = isconvex(Pi);
+if status_convex
+    for kk=1:length(adjList)
+        for ll=1:length(adjList{kk}(1,:))
+            if all(adjList{kk}(:,ll)<=0)
+                adjList{kk}(:,ll) = [];
+            end
+        end
+    end
+end
+ 
+return
