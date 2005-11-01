@@ -6,14 +6,19 @@ function [adjList] = mpt_buildAdjacency(Pi,Options)
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% For a colection of non-overlaping polytopes Pi generates adjacency list.
+% For a collection of non-overlaping polytopes Pi generates adjacency list.
 % Fast and dirty implementation.
 %
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% Pi               - polytope array (must be non-overlapping!)
-% Options.abs_tol  - absolute tolerance (default is 1e-9)
+% Pi                 - polytope array (must be non-overlapping!)
+% Options.abs_tol    - absolute tolerance (default is 1e-9)
+% Options.remove_inf - if 1, forced cleaning of adjList data from numerical 
+%                      inaccuracies, one can remove columns in neighbor list 
+%                      that consist only of -Inf or 0. (default 0)
+%                      [this can always be performed if Pi is convex]
+%
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -59,6 +64,9 @@ if nargin < 2,
 end
 if ( ~isfield(Options,'abs_tol') ),
     Options.abs_tol = 1e-9;
+end
+if ( ~isfield(Options,'remove_inf') ),
+    Options.remove_inf = 0;
 end
 absTol   = min(Options.abs_tol,1e-9);   
 stepSize = Options.abs_tol * 10;
@@ -196,7 +204,12 @@ end  % end FOR (polytopes)
 % clean neighborlist data from numerical inaccuracies
 % if Pi is convex, one can remove columns in neighbor list that consist only of
 % -Inf or 0
-[status_convex] = isconvex(Pi);
+if Options.remove_inf
+    status_convex = 1;
+else
+    [status_convex] = isconvex(Pi);
+end
+
 if status_convex
     for kk=1:length(adjList)
         for ll=1:length(adjList{kk}(1,:))
