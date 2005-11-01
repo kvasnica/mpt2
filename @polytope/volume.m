@@ -112,6 +112,9 @@ else
     for i=1:size(nconv,1)
         vert=vertices(nconv(i,:),:);
         Vnew=[vert(1:end-1,:)-repmat(vert(end,:),nx,1)]; %shift simplex to origin  
-        V=V+det(Vnew*Vnew)^0.5/factorial(nx);
+        D = det(Vnew*Vnew);
+        if D > 0,
+            V=V+D^0.5/factorial(nx);
+        end
     end
 end
