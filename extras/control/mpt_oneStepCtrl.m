@@ -27,6 +27,8 @@ function [ctrlStruct,feasibleN,loopCtr,Piter] = mpt_oneStepCtrl(sysStruct,probSt
 %                    set. (Default: Options.scaling = 1) 
 % Options.PWQlyap  - if set to 1, compute PWQ Lyapunov function (default)
 % Options.verbose  - Optional: level of verbosity
+% Options.Kinf     - If set to 1, then K_inf will be computed. If set to 0,
+%                    C_inf will be computed. (default is 0)
 % Options.set_limit - If the invariant set has a chebychev redius which is
 %                     smaller than this value the iteration is aborted. 
 %                     (Default is 1e-3) 
@@ -105,9 +107,7 @@ function [ctrlStruct,feasibleN,loopCtr,Piter] = mpt_oneStepCtrl(sysStruct,probSt
 % ---------------------------------------------------------------------------
 
 error(nargchk(2,3,nargin));
-
 global mptOptions;
-
 if ~isstruct(mptOptions),
     mpt_error;
 end
@@ -116,7 +116,6 @@ if ~isfield(sysStruct,'verified'),
     verOpt.verbose=1;
     sysStruct=mpt_verifySysStruct(sysStruct,verOpt);
 end
-
 if ~isfield(probStruct,'verified'),
     verOpt.verbose=1;
     probStruct=mpt_verifyProbStruct(probStruct,verOpt);
@@ -140,9 +139,6 @@ if ~isfield(Options,'feasset'),
     % controller
     Options.feasset=0;
 end
-if ~isfield(Options,'abs_tol'),
-    Options.abs_tol=mptOptions.abs_tol;
-end
 if ~isfield(Options,'set_limit'),
     Options.set_limit=1e-3;
 end
@@ -159,20 +155,6 @@ end
 if ~isfield(Options, 'Vconverge')
     Options.Vconverge = 0;
 end 
-
-if ~isfield(Options, 'statusbar'),
-    Options.statusbar = 0;
-end
-if ~isfield(Options, 'closestatbar')
-    Options.closestatbar = 1;
-end
-closestatbar = Options.closestatbar;
-Options.closestatbar = 0;
-statusbar = Options.statusbar;
-if statusbar,
-    Options.statusbar = 0;
-end
-
 
 if ~isfield(Options,'ispwa'),
     % even though this function does not provide a full support for PWA systems,
@@ -192,175 +174,30 @@ if Options.ispwa==0,
     if strcmp(sysStruct.type,'PWA') | sysStruct.type==1,
         error('Sorry, this function handles LTI systems only!');
     end
-    %     if probStruct.norm~=2,
-    %         error('Sorry, this function supports only 2-norm problems!');
-    %     end
 end
 
 starttime = cputime;
-
-if statusbar,
-    statbar.handle = mpt_statusbar('Computing...');
-    statbar.progress = 0;
-    Options.verbose = -1;
-end
-
-%initialize
-loopCtr=0;
-PfinalOld = probStruct.Tset;
-notconverged=1;
-
-if nargout > 3,
-    % also return sets at individual iterations
-    Piter = PfinalOld;
-end
-
-if ~isfield(Options, 'Pfinal'),
-    while notconverged 
-
-        if Options.Vconverge > 0,
-            % compute volume of old set
-            VfinalOld = volume(PfinalOld);
-        end         
-        
-        progress = mod(loopCtr, 20) / 20;
-        if statusbar,
-            if isempty(mpt_statusbar(statbar.handle, progress, 0, 0.5)),
-                mpt_statusbar;
-                error('Break...');
-            end
-        end
-        
-        loopCtr=loopCtr+1;
-        if Options.verbose>1,
-            fprintf('Iteration %d      \r',loopCtr);
-        else
-            if mod(loopCtr,20)==0 | loopCtr==1,
-                if Options.verbose > -1,
-                    fprintf('Iteration %d       \r',loopCtr);
-                end
-            end
-        end
-        
-        % construct the problem - one step solution to previously computed target
-        % set
-        Options.includeLQRset = 0;
-        tmpProbStruct = probStruct;
-        tmpProbStruct.Tset = PfinalOld;
-        tmpProbStruct.Tconstraint = 2;
-        tmpProbStruct.subopt_lev = 0;
-        tmpProbStruct.N = 1;
-        
-        % get matrices of the problem
-        Matrices = mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
-        
-        % exit if problem is not feasible
-        if isinf(Matrices.W),
-            if statusbar,
-                mpt_statusbar;
-            end
-            error('Problem is infeasible.');
-        end
-        
-        if Options.useprojection,
-            % compute feasible set via projection
-            
-            % polytope is already in reduced representation, because
-            % mpt_constructMatrices calls reduce(). therefore we just mark the
-            % polytope as being in minimal representation, saving some computational
-            % time.
-            P=polytope([-Matrices.E Matrices.G], Matrices.W, 1, 1);  
-            
-            Pfinal=projection(P,(1:size(Matrices.E,2)),Options);
-            
-            if Options.verbose > 1,
-                fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(P), nconstr(Pfinal));
-            end
-            
-        else
-            % solve multi-parametric program
-            tmpOptions = Options;
-            tmpOptions.verbose = -1;
-            if tmpProbStruct.norm == 2,
-                [Pn,Fi,Gi,activeConstraints,Pfinal]=mpt_mpqp(Matrices, tmpOptions);
-            else
-                [Pn,Fi,Gi,activeConstraints,Pfinal]=mpt_mplp(Matrices, tmpOptions);
-            end
-            
-            if Options.verbose > 1,
-                fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(PfinalOld), nconstr(Pfinal));
-            end
-        end
-        
-        % algorithm converges when two consequent feasible sets are equal
-        if(isfulldim(PfinalOld) & Options.scaling<1)
-            %set is being "shrunk" from the outside in; only applies for computation of Cinf
-            notconverged=~ge(Pfinal,PfinalOld,Options);       % Pfinal => PfinalOld
-        elseif(isfulldim(PfinalOld) & Options.scaling==1)
-            %no scaling, hence convergence is reached when sets are eual
-            %this option can apply to the computation of Kinf and Cinf
-            notconverged=~eq(Pfinal,PfinalOld,Options);       % Pfinal == PfinalOld
-        else
-            notconverged=1;
-        end
-        %notconverged = ~eq(Pfinal,PfinalOld,Options);
-        %plot(PfinalOld,Pfinal);
-        
-        if Options.scaling<1,
-            PfinalOld = Pfinal*Options.scaling;
-        else
-            PfinalOld = Pfinal;
-        end
-        if loopCtr > Options.maxCtr,
-            disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
-            break
-        end
-
-        if Options.Vconverge > 0,
-            % check whether relative increase of volume of Pfinal is bigger than
-            % some given value. If not, abort the computation.
-            Vfinal = volume(Pfinal);
-            diffV = 100*(Vfinal - VfinalOld)/VfinalOld;
-            if Options.verbose > 1,
-                fprintf('Increase of volume of Kinf: absolute: %e, relative: %.2f %%\n', Vfinal-VfinalOld, diffV);
-            end
-            if diffV < Options.Vconverge,
-                if Options.verbose > -1,
-                    fprintf('Volume difference (%.2f %%) below tolerance (%.2f %%), aborting computation...\n', ...
-                        diffV, Options.Vconverge);
-                end
-                notconverged = 0;
-            end
-        end 
-
-        if nargout > 3,
-            Piter = [Piter Pfinal];
-        end
-        
-        [x,R]=chebyball(PfinalOld);
-        if(~isfulldim(PfinalOld) | R<=Options.set_limit)
-            disp(['The invariant set for this system (if it exists) has a chebychev radius smaller than Options.set_limit (=' num2str(Options.set_limit) ') !!'])
-            disp('Aborting iteration...')
-            if Options.feasset,
-                ctrlStruct = polytope;
-                feasibleN = [];
-            else
-                ctrlStruct = [];
-                feasibleN = 0; 
-            end
-            return
-        end
-    end
-else
+if isfield(Options, 'Pfinal'),
+    % use user-defined target set
     Pfinal = Options.Pfinal;
+else
+    % compute Cinf/Kinf set
+    Options.probStruct = probStruct;
+    if nargout > 3,
+        [Pfinal, loopCtr, Piter] = mpt_maxCtrlSet(sysStruct,Options);
+    else
+        [Pfinal, loopCtr] = mpt_maxCtrlSet(sysStruct,Options);
+    end
 end
-
+feasibleN = isfulldim(Pfinal);
 if Options.feasset,
     ctrlStruct = Pfinal;
     feasibleN = [];
+    loopCtr = [];
+    Piter = [];
     return
 end
-
+    
 % generate regions by enforcing x(1) \in Pfinal
 Options.includeLQRset = 0;
 Options.setHorizon = 1;
@@ -369,21 +206,7 @@ probStruct.Tconstraint = 2;
 probStruct.subopt_lev = 0;
 ctrlStruct = mpt_optControl(sysStruct,probStruct,Options);
 
-if statusbar,
-    if isempty(mpt_statusbar(statbar.handle, 1, 0, 0.5)),
-        mpt_statusbar;
-        error('Break...');
-    end
-end
-
 lyapOptions = Options;
-if statusbar,
-    lyapOptions.statusbar = 1;
-    lyapOptions.status_min = 0.5;
-    lyapOptions.status_max = 1;
-    lyapOptions.status_handle = statbar.handle;
-    lyapOptions.closestatbar = 0;
-end
 
 if isfulldim(sysStruct.noise)
     disp('System is subject to additive noise, calculating Quadratic Lyapunov function...');
@@ -419,20 +242,8 @@ elseif Options.PWQlyap,
     ctrlStruct.details.lyapunov.feasible = feasibleN;
 end
 
-if statusbar,
-    if isempty(mpt_statusbar(statbar.handle, 1)),
-        mpt_statusbar;
-        error('Break...');
-    end
-end
-
-ctrlStruct.details.loopCtr = loopCtr;
-
 endtime = cputime;
+ctrlStruct.details.loopCtr = loopCtr;
 ctrlStruct.details.runTime = endtime-starttime;
 ctrlStruct.sysStruct = origSysStruct;
 ctrlStruct.probStruct = origProbStruct;
-
-if closestatbar,
-    mpt_statusbar;
-end

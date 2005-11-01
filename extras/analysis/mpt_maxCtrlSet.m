@@ -34,6 +34,10 @@ function [invSet,iterations, Piter] = mpt_maxCtrlSet(sysStruct,Options)
 % Options.maxCtr   - Maximum number of iterations (default is 1000)
 %                    (corresponds to N-step attractive set)
 % Options.verbose  - Optional: level of verbosity
+% Options.scaling  - Scaling the set at each iteration with a parameter 
+%                    0 < lambda < 1 guarantees finite time convergence to a
+%                    robust invariant subset of the maximal control invariant
+%                    set. (Default: Options.scaling = 1) 
 % Options.Vconverge - A non-zero value will force the algorithm to break if
 %                     relative increase of volume of atractive set at the next
 %                     iteration compared to volume of the set at the previous
@@ -43,6 +47,13 @@ function [invSet,iterations, Piter] = mpt_maxCtrlSet(sysStruct,Options)
 %                     NOTE! Currently works only for LTI systems!
 %                     NOTE! Value of this option has percents as units!
 %                     NOTE! Should only be used if you are computing Kinf set!!! 
+% Options.set_limit - If the invariant set has a chebychev redius which is
+%                     smaller than this value the iteration is aborted. 
+%                     (Default is 1e-3) 
+% Options.useprojection - if true, uses projections to obtain feasible set. if
+%                         false, feasible sets are obtained by solving a
+%                         multi-parametric program.
+%                         (Default is true)
 % Options
 %   .Q, .R, .Tset  - additional problem-depended options
 %   .probStruct    - the whole problem structure can be passed as well
@@ -117,6 +128,13 @@ end
 if ~isfield(Options,'y0bounds'),
     Options.y0bounds=1;
 end
+if ~isfield(Options, 'Vconverge')
+    Options.Vconverge = 0;
+end 
+
+if Options.Vconverge > 0 & Options.Kinf==0,
+    error('Cannot use volume convergence checks unless Options.Kinf=1.');
+end
 
 [nx,nu,ny,ndyn,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct);
 
@@ -167,17 +185,17 @@ if(Options.Kinf) & ~iscell(sysStruct.A)
         probStruct.Tset=Matrices.Pinvset;
     end
     if nargout>2,
-        [invSet,feas,iterations,Piter] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+        [invSet,iterations,Piter] = mpt_maxCtrlSetLTI(sysStruct,probStruct,Options);
     else
-        [invSet,feas,iterations] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+        [invSet,iterations] = mpt_maxCtrlSetLTI(sysStruct,probStruct,Options);
     end
 elseif ~iscell(sysStruct.A)
     %compute maximal control invariant set
     Options.includeLQRset=0;
     if nargout>2,
-        [invSet,feas,iterations,Piter] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+        [invSet,iterations,Piter] = mpt_maxCtrlSetLTI(sysStruct,probStruct,Options);
     else
-        [invSet,feas,iterations] = mpt_oneStepCtrl(sysStruct,probStruct,Options);
+        [invSet,iterations] = mpt_maxCtrlSetLTI(sysStruct,probStruct,Options);
     end
 elseif Options.Kinf,
     invSet = mpt_iterativePWA(sysStruct,probStruct,Options);
@@ -187,6 +205,154 @@ else
 end
 return
 
+
+%=====================================================================
+function [Pfinal,loopCtr,Piter] = mpt_maxCtrlSetLTI(sysStruct, probStruct, Options)
+% compute Cinf/Kinf sets for LTI systems
+
+if(~isfield(Options,'maxCtr'))
+    Options.maxCtr=1000;
+end
+if ~isfield(Options,'set_limit'),
+    Options.set_limit=1e-3;
+end
+if ~isfield(Options, 'useprojection'),
+    Options.useprojection = 1;
+end
+if ~isfield(Options,'scaling'),
+    Options.scaling=1;
+elseif(Options.scaling>1)
+    error('Scaling parameter ''Options.scaling'' must be smaller than 1')
+elseif(Options.scaling<=0)
+    error('Scaling parameter ''Options.scaling'' must be larger than 0')
+end
+
+%initialize
+loopCtr=0;
+PfinalOld = probStruct.Tset;
+notconverged=1;
+
+if nargout > 2,
+    % also return sets at individual iterations
+    Piter = PfinalOld;
+end
+
+while notconverged 
+    
+    if Options.Vconverge > 0,
+        % compute volume of old set
+        VfinalOld = volume(PfinalOld);
+    end         
+    
+    loopCtr=loopCtr+1;
+    if Options.verbose>1,
+        fprintf('Iteration %d      \r',loopCtr);
+    else
+        if mod(loopCtr,20)==0 | loopCtr==1,
+            if Options.verbose > -1,
+                fprintf('Iteration %d       \r',loopCtr);
+            end
+        end
+    end
+    
+    % construct the problem - one step solution to previously computed target
+    % set
+    Options.includeLQRset = 0;
+    tmpProbStruct = probStruct;
+    tmpProbStruct.Tset = PfinalOld;
+    tmpProbStruct.Tconstraint = 2;
+    tmpProbStruct.subopt_lev = 0;
+    tmpProbStruct.N = 1;
+    
+    % get matrices of the problem
+    Matrices = mpt_constructMatrices(sysStruct,tmpProbStruct,Options); 
+    
+    % exit if problem is not feasible
+    if isinf(Matrices.W),
+        error('Problem is infeasible.');
+    end
+    
+    if Options.useprojection,
+        % compute feasible set via projection
+        
+        % polytope is already in reduced representation, because
+        % mpt_constructMatrices calls reduce(). therefore we just mark the
+        % polytope as being in minimal representation, saving some computational
+        % time.
+        P=polytope([-Matrices.E Matrices.G], Matrices.W, 1, 1);  
+        
+        Pfinal=projection(P,(1:size(Matrices.E,2)),Options);
+        
+        if Options.verbose > 1,
+            fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(P), nconstr(Pfinal));
+        end
+        
+    else
+        % solve multi-parametric program
+        tmpOptions = Options;
+        tmpOptions.verbose = -1;
+        if tmpProbStruct.norm == 2,
+            [Pn,Fi,Gi,activeConstraints,Pfinal]=mpt_mpqp(Matrices, tmpOptions);
+        else
+            [Pn,Fi,Gi,activeConstraints,Pfinal]=mpt_mplp(Matrices, tmpOptions);
+        end
+        
+        if Options.verbose > 1,
+            fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(PfinalOld), nconstr(Pfinal));
+        end
+    end
+    
+    % algorithm converges when two consequent feasible sets are equal
+    if(isfulldim(PfinalOld) & Options.scaling<1)
+        %set is being "shrunk" from the outside in; only applies for computation of Cinf
+        notconverged=~ge(Pfinal,PfinalOld,Options);       % Pfinal => PfinalOld
+    elseif(isfulldim(PfinalOld) & Options.scaling==1)
+        %no scaling, hence convergence is reached when sets are eual
+        %this option can apply to the computation of Kinf and Cinf
+        notconverged=~eq(Pfinal,PfinalOld,Options);       % Pfinal == PfinalOld
+    else
+        notconverged=1;
+    end
+    
+    if Options.scaling<1,
+        PfinalOld = Pfinal*Options.scaling;
+    else
+        PfinalOld = Pfinal;
+    end
+    if loopCtr > Options.maxCtr,
+        disp('Maximum number of iterations reached without convergence! Increase value of Options.maxCtr');
+        break
+    end
+    
+    if Options.Vconverge > 0,
+        % check whether relative increase of volume of Pfinal is bigger than
+        % some given value. If not, abort the computation.
+        Vfinal = volume(Pfinal);
+        diffV = 100*(Vfinal - VfinalOld)/VfinalOld;
+        if Options.verbose > 1,
+            fprintf('Increase of volume of Kinf: absolute: %e, relative: %.2f %%\n', Vfinal-VfinalOld, diffV);
+        end
+        if diffV < Options.Vconverge,
+            if Options.verbose > -1,
+                fprintf('Volume difference (%.2f %%) below tolerance (%.2f %%), aborting computation...\n', ...
+                    diffV, Options.Vconverge);
+            end
+            notconverged = 0;
+        end
+    end 
+    
+    if nargout > 2,
+        Piter = [Piter Pfinal];
+    end
+    
+    [x,R]=chebyball(PfinalOld);
+    if(~isfulldim(PfinalOld) | R<=Options.set_limit)
+        disp(['The invariant set for this system (if it exists) has a chebychev radius smaller than Options.set_limit (=' num2str(Options.set_limit) ') !!'])
+        disp('Aborting iteration...')
+        Pfinal = polytope;
+        return
+    end
+end
 
 
 
@@ -222,9 +388,6 @@ if ~isfield(Options,'maxiterations'),
 end
 if ~isfield(Options,'verbose'),
     Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options,'abs_tol')
-    Options.abs_tol = mptOptions.abs_tol;
 end
 
 if ~iscell(sysStruct.A),
@@ -424,11 +587,8 @@ for horizon = 2:Options.maxiterations+1,
     if oldSets==newSets
         converged = 1;
         break
-        %     elseif newSets >= oldSets,
-        %         converged = 1;
-        %         break
     end
-end % horizon
+end
 
 if ~converged
     error('mpt_maxCtrlSet: maximum number of iterations reached without convergence!');
