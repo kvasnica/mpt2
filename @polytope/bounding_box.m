@@ -20,8 +20,12 @@ function [R,l,u,lv,uv]=bounding_box(P,Options,lookahead,A,b)
 % Options.noPolyOutput  - if set to 1, the bounding box will NOT be returned as
 %                         a polytope object
 %                         (Default: 0)
+% Options.Voutput       - if set to 1, first output will be a matrix consisting
+%                         of the lower and upper vertices, i.e. E = [l u]
+%                         (Default: 0)
 % Options.bboxvertices  - if set to 1, computes vertices of the bounding box and
-%                         returns them as first output argument
+%                         returns them as first output argument. You must use
+%                         Options.Voutput=1 in order to use this option
 %                         (Default: 0)
 % lookahead         - specify at which future iteration to compute the box, if
 %                     the dynamics given by (A,b) are applied. Set 0 by default.
@@ -91,10 +95,15 @@ if ~isfield(Options,'noPolyOutput'),
     % if set to 1, the bounding box will NOT be returned as a polytope object
     Options.noPolyOutput = 0;
 end
-if ~isfield(Options, 'bboxvertices'),
-    % if set to 1, returns all vertices of the bounding box as first output
-    % argument (only makes sense with Options.noPolyOutput=1
-    Options.bboxvertices = 0;
+if ~isfield(Options, 'Voutput'),
+    Options.Voutput = 0;
+end
+if Options.Voutput,
+    if ~isfield(Options, 'bboxvertices'),
+        % if set to 1, returns all vertices of the bounding box as first output
+        % argument (only makes sense with Options.noPolyOutput=1
+        Options.bboxvertices = 0;
+    end
 end
 if(nargin<3)
     lookahead=0;
@@ -105,7 +114,7 @@ if lenP>0,
     if lookahead > 0,
         error('Non-zero lookahead not supported for polyarrays.');
     end
-    forcerecompute = Options.noPolyOutput==1;
+    forcerecompute = Options.noPolyOutput | Options.Voutput;
     dimP = dimension(P);    
     allbboxes = zeros(dimP, lenP*2);
     for ii = 1:lenP,
@@ -140,10 +149,12 @@ if lenP>0,
     end
     if Options.noPolyOutput,
         % we don't need the bounding box as a polytope object
+        R = P;
+    elseif Options.Voutput,
         if Options.bboxvertices,
             R = bboxvertices(l, u, dimP);
         else
-            R = P;
+            R = [l u];
         end
     else
         R=polytope([eye(dimP); -eye(dimP)],[u;-l]);
@@ -155,13 +166,17 @@ if ~isempty(P.bbox) & lookahead==0 & nargout < 4,
     % quick return if bounding box was already computed and stored
     l = P.bbox(:,1);
     u = P.bbox(:,2);
-    if Options.noPolyOutput == 0,
+    if ~(Options.noPolyOutput | Options.Voutput),
         n = size(P.H,2);
         R=polytope([eye(n); -eye(n)],[u;-l]);
-    elseif Options.bboxvertices,
-        % compute all vertices of the bounding box            
-        dimP = dimension(P);        
-        R = bboxvertices(l, u, dimP);
+    elseif Options.Voutput,
+        if Options.bboxvertices,
+            % compute all vertices of the bounding box            
+            dimP = dimension(P);        
+            R = bboxvertices(l, u, dimP);
+        else
+            R = [l u];
+        end
     else
         R = P;
     end
@@ -170,7 +185,7 @@ end
 
 if ~isfulldim(P),
     % fast exit if polytope is empty
-    if Options.noPolyOutput,
+    if Options.noPolyOutput | Options.Voutput,
         R = [];
     else
         R = mptOptions.emptypoly;
@@ -231,13 +246,17 @@ for i=1:n,
 end
 
 %compute polytope
-if Options.noPolyOutput == 0,
+if ~(Options.noPolyOutput | Options.Voutput),
     R=polytope([eye(n); -eye(n)],[u;-l]);
     R.bbox = [l u];
-elseif Options.bboxvertices,
-    % compute all vertices of the bounding box
-    dimP = dimension(P);    
-    R = bboxvertices(l, u, dimP);
+elseif Options.Voutput,
+    if Options.bboxvertices,
+        % compute all vertices of the bounding box
+        dimP = dimension(P);    
+        R = bboxvertices(l, u, dimP);
+    else
+        R = [l u];
+    end
 else
     P.bbox = [l u];
     R = P;
