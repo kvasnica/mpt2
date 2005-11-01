@@ -153,12 +153,6 @@ else
     urange = uind;
 end
 
-if Options.newfigure,
-   figure;  % open new figure window
-else
-   newplot; % get current figure (or create new figure)
-end
-
 maxlen=length(PA);
 minu=Inf;
 locOpt = Options;
@@ -188,7 +182,7 @@ Options.fastbreak=1;
 if nx==1
     for num_u = urange,
         % handle range of inputs
-        if isempty(uind),
+        if isempty(uind) & nu > 1,
             % open new subplot only if we have more than one input
             subplot(nu, 1, num_u);
         end
@@ -214,7 +208,8 @@ if nx==1
     
 else
     for num_u=urange            % Addition by Arne Linder for dealing with models with multiple inputs
-        if isempty(uind),
+        if isempty(uind) & nu > 1,
+            % open new subplot only if we have more than one input            
             subplot(nu,1,num_u);
         end
         

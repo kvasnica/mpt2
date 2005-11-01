@@ -117,10 +117,6 @@ end
 
 if Options.newfigure,
     figure;
-else
-    newplot;
-    subplot(1,1,1);
-    hold off
 end
 
 

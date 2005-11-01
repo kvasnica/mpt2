@@ -133,8 +133,6 @@ index=0;
 
 if Options.newfigure,
    figure;  % open new figure window
-else
-   newplot; % get current figure (or create new figure)
 end
 
 handle=[];
