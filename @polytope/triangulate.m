@@ -167,7 +167,10 @@ function [vol]=sub_computeSimplexVol(vert)
     nx=size(vert,2);
     vol=0;
     Vnew=[vert(1:end-1,:)-repmat(vert(end,:),nx,1)]; %shift simplex to origin  
-    vol=det(Vnew*Vnew)^0.5/factorial(nx);
+    D = det(Vnew*Vnew);
+    if D > 0,
+        vol=D^0.5/factorial(nx);
+    end
     
     return
  
