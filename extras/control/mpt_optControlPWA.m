@@ -860,7 +860,11 @@ ctrlStruct.details.roRunTime = roTime;
 for k = 1:horizon,
     ctrlStruct.details.Horizon{k} = ...
         Step{horizon-k+1}.mergedCtrlStruct;
-    ctrlStruct.details.Horizon{k}.Pfinal = polytope;
+    if ~isfield(ctrlStruct.details.Horizon{k}, 'Pfinal'),
+        ctrlStruct.details.Horizon{k}.Pfinal = polytope;
+    elseif ~isa(ctrlStruct.details.Horizon{k}.Pfinal, 'polytope'),
+        ctrlStruct.details.Horizon{k}.Pfinal = polytope;
+    end
     for pfin_idx = 1:Step{horizon-k+1}.nPartitions,
         ctrlStruct.details.Horizon{k}.Pfinal = ...
             [ctrlStruct.details.Horizon{k}.Pfinal, ...
