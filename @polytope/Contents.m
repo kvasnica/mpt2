@@ -79,6 +79,7 @@
 %   facetcircle   - Returns largest circle inside facet 'ind' of polytope P
 %   reduceunion   - Removes some redundant elements from a polytope array
 %   volume        - Calculates volume of a polytope
+%   pelemfun      - Execute an arbitrary function on each element of a polyarray
 %
 %
 % see help mpt
