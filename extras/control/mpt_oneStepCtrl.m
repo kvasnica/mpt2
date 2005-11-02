@@ -180,6 +180,7 @@ starttime = cputime;
 if isfield(Options, 'Pfinal'),
     % use user-defined target set
     Pfinal = Options.Pfinal;
+    loopCtr = 0;
 else
     % compute Cinf/Kinf set
     Options.probStruct = probStruct;
