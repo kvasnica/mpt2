@@ -100,6 +100,7 @@ minVol=Options.rel_tol;         %simplices with a volume smaller than this are c
 
 
 vert=extreme(P,Options);        %compute/extract extreme vertices  
+P.vertices = vert;              % update extreme points
 adj = delaunayn(vert);          %compute delaunay triangulation using qhull
 nx=size(vert(adj(1,:)',:),2);   %number of states
 %compute V representation of simplices
