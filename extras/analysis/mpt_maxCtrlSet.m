@@ -133,7 +133,8 @@ if ~isfield(Options, 'Vconverge')
 end 
 
 if Options.Vconverge > 0 & Options.Kinf==0,
-    error('Cannot use volume convergence checks unless Options.Kinf=1.');
+    fprintf('Computing Kinf set because Options.Vconverge>0...\n');
+    Options.Kinf = 1;
 end
 
 [nx,nu,ny,ndyn,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct);
