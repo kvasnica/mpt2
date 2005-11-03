@@ -1,7 +1,7 @@
-function [A, B, Aeq, Beq] = mpt_ineq2eq(A, B)
+function [A, B, Aeq, Beq, ind_eq] = mpt_ineq2eq(A, B)
 %MPT_INEQ2EQ Detects inequality constraints whihc form equalities
 %
-% [Ain, Bin, Aeq, Beq] = mpt_ineq2eq(A, B)
+% [Ain, Bin, Aeq, Beq, ind_eq] = mpt_ineq2eq(A, B)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -28,6 +28,9 @@ function [A, B, Aeq, Beq] = mpt_ineq2eq(A, B)
 % ---------------------------------------------------------------------------
 % Ain,Bin     - new system of inequalities
 % Aeq,Beq     - system of equalities
+% ind_eq      - indicies of equality constraints. ind_eq(i, :)=[k m] indicates
+%               that inequalities A(k, :)-B(k) and A(m, :)-B(m) form one
+%               equality constraint
 %
 
 % Copyright is with the following author(s):
