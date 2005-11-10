@@ -22,7 +22,8 @@ function R=mtimes(P,Q,Options)
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-%
+% P     - polytope / scalar / matrix
+% Q     - polytope / scalar / matrix
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
@@ -31,8 +32,10 @@ function R=mtimes(P,Q,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2005 Mato Baotic, FER Zagreb
+%          mato.baotic@fer.hr
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -77,45 +80,9 @@ end
 
 % P is a double, Q is a polytope
 if isa(P,'double') & isa(Q,'polytope'),
-    if all(size(P)==[1 1]),
-        % scaling with a scalar
-        
-        if P==1,
-            % special case - scaling with 1 = no scaling [issue112]
-            R = Q;
-            return
-        end
-        
-        % handle polyarrays:
-        if length(Q.Array)>0,
-            R = polytope;
-            for ii=1:length(Q.Array),
-                [nc, nx] = size(Q.Array{ii}.H);
-                if ~isinside(Q.Array{ii}, zeros(nx,1)),
-                    % origin is not included --> error
-                    error('MTIMES: when scaling with a scalar, origin has to be included in the polytope');
-                else
-                    % origin is included, do the scaling
-                    R = [R polytope(Q.H/P, Q.K)];
-                end
-            end
-            return
-        end
-                
-        [nc, nx] = size(Q.H);
-        if ~isinside(Q, zeros(nx,1)),
-            % origin is not included --> error
-            error('MTIMES: when scaling with a scalar, origin has to be included in the polytope');
-        else
-            % origin is included, do the scaling
-            R = polytope(Q.H/P, Q.K);
-            return
-        end
-    else
-        % P is a matrix, perform affine transformation
-        R = range(Q,P);
-        return
-    end
+    dummy = P;
+    P = Q;
+    Q = dummy;
 end
 
 % P is a polytope, Q is a double
@@ -127,33 +94,39 @@ if isa(Q,'double') & isa(P,'polytope'),
             % special case - scaling with 1 = no scaling [issue112]
             R = P;
             return
+        elseif Q==0,
+            % special case - scaling with zero = empty polytope
+            R = polytope;
+            return
         end
 
         % handle polyarrays:
         if length(P.Array)>0,
             R = polytope;
             for ii=1:length(P.Array),
-                [nc, nx] = size(P.Array{ii}.H);
-                if ~isinside(P.Array{ii}, zeros(nx,1)),
-                    % origin is not included --> error
-                    error('MTIMES: when scaling with a scalar, origin has to be included in the polytope');
-                else
-                    % origin is included, do the scaling
-                    R = [R polytope(P.H/Q, P.K)];
+                % make sure the polytope is in minimal and normalized
+                % representation 
+                A = P.Array{ii};
+                if ~isminrep(A),
+                    A = reduce(A);
                 end
+                if ~isnormal(A),
+                    A = normalize(A);
+                end
+                R = [R polytope(A.H*sign(Q), A.K*abs(Q), 1, 1);];
             end
             return
         end
                 
-        [nc, nx] = size(P.H);
-        if ~isinside(P, zeros(nx,1)),
-            % origin is not included --> error
-            error('MTIMES: when scaling with a scalar, origin has to be included in the polytope');
-        else
-            % origin is included, do the scaling
-            R = polytope(P.H/Q, P.K);
-            return
+        % make sure the polytope is in minimal and normalized representation
+        if ~isminrep(P),
+            P = reduce(P);
         end
+        if ~isnormal(P),
+            P = normalize(P);
+        end
+        R = polytope(P.H*sign(Q), P.K*abs(Q), 1, 1);
+        return
     else
         % P is a matrix, perform affine transformation
         R = range(P,Q);
