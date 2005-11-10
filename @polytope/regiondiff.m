@@ -113,6 +113,8 @@ if ~isfield(Options,'presolved'),
 end
 if ~isfield(Options,'infbox'),
     Options.infbox=mptOptions.infbox;
+else
+    Options.infbox=min(mptOptions.infbox,Options.infbox); % internal infbox cannot exceed MPT infbox
 end
 
 abs_tol = Options.abs_tol;
