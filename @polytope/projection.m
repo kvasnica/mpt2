@@ -95,6 +95,9 @@ end
 if ~isfield(Options,'lpsolver')
     Options.lpsolver = mptOptions.lpsolver;
 end
+if ~isfield(Options, 'verbose'),
+    Options.verbose = mptOptions.verbose;
+end
 
 if ~isfulldim(PA),
     % exit quickly if input polytope is not fully dimensional
@@ -103,18 +106,14 @@ if ~isfulldim(PA),
 end
 
 d=dimension(PA);
+dim = dim(:)';
 orig_dim = dim;
 dim = setdiff(1:d,dim);   % from this point, dim denotes dimension to eliminate
 
-[m,n]=size(dim);
-if ~(d>=n & m==1)
-    error('PROJECTION: Dimensions must agree');
-else
-    for i=1:length(dim)
-        if dim(i)>d
-            error('PROJECTION: Index of dim bigger than dimension of P');
-        end
-    end
+if length(dim) > d,
+    error('PROJECTION: Dimensions must agree.');
+elseif any(dim > d) | any(dim < 0)
+    error('PROJECTION: Proejction dimensions exceed polytope dimension.');
 end
 
 if ~isfield(Options,'psolvers')
@@ -127,17 +126,12 @@ if ~isfield(Options,'psolvers')
     elseif length(dim)<=d/2
         if dimension(PA)<=3,
             % use block-elimination for lower dimensions
-            Options.psolvers = [3 4 5 6 2 1 0];
+            Options.psolvers = [3 0 5 6 2 1 4];
         else
-            Options.psolvers = [4 5 6 3 1 2 0];
+            Options.psolvers = [5 6 4 3 1 2 0];
         end
     else
-        if length(orig_dim)<=2,
-            % use iterative hull for lower dimensions
-            Options.psolvers = [2 5 3 6 1 4 0];
-        else
-            Options.psolvers = [5 4 6 2 3 1 0];
-        end
+        Options.psolvers = [5 6 2 3 4 1 0];
     end
 end
 if isfield(Options,'projection')
@@ -156,144 +150,170 @@ p_strings = {'Vertex Enumeration',...
         'Fourier-Motzkin (mex version)',...
         'Fourier-Motzkin (mex version, fast)' };
 
-if (isempty(PA.Array) & ~PA.minrep & Options.noReduce==0) %| (~P.minrep & Options.projection==1),
+if (isempty(PA.Array) & ~PA.minrep & Options.noReduce==0)
     PA = reduce(PA);
 end
 
-if length(PA.Array)>0,
-    P = polytope;
-    for ii=1:length(Options.psolvers),
+if isempty(PA.Array),
+    % make a polytope array out of a single polytope
+    PA.Array{1} = PA;
+end
+
+P = mptOptions.emptypoly;
+
+for reg = 1:length(PA.Array),
+    for ii = 1:length(Options.psolvers),
         try
-            for reg=1:length(PA.Array),
-                if nconstr(PA.Array{reg})<=dimension(PA.Array{reg}) & Options.psolvers(ii)==2,
-                    % skip iterativehull if only one constraint - otherwise
-                    % an infinite loop can occur
-                    continue
-                end
-                if Options.psolvers(ii)==0,
-                    Q = sub_extreme_hull(PA.Array{reg},dim,Options);
-                elseif Options.psolvers(ii)==1
-                    Q = sub_fouriermotzkin(PA.Array{reg},dim,Options);
-                elseif Options.psolvers(ii)==2
-                    Q = sub_iterativehull(PA.Array{reg},dim,Options);
-                elseif Options.psolvers(ii)==3
-                    Q = sub_blockelimination(PA.Array{reg},dim,Options);
-                elseif Options.psolvers(ii)==4,
+            switch Options.psolvers(ii),
+                case 0,
+                    % vertex enumeration + convex hull
+                    Q = sub_extreme_hull(PA.Array{reg},orig_dim,Options);
+                case 1,
+                    % matlab implementation of fourier-motzkin
+                    Q = sub_fouriermotzkin(PA.Array{reg},orig_dim,dim,Options);
+                case 2,
+                    % iterative hull
+                    if nconstr(PA.Array{reg})<=dimension(PA.Array{reg}),
+                        % skip iterativehull if only one constraint - otherwise
+                        % an infinite loop can occur
+                        continue
+                    end
+                    Q = sub_iterativehull(PA.Array{reg},orig_dim,dim,Options);
+                case 3,
+                    % projection-cone method
+                    Q = sub_blockelimination(PA.Array{reg},orig_dim,dim,Options);
+                case 4,
+                    % ESP method
                     Q = mpt_esp(PA.Array{reg},orig_dim);
-                elseif Options.psolvers(ii)==6,
+                case 5,
+                    % use mex implementation of fourier-motzkin elimination (safe
+                    % version with eliminating one dimension after each other)
+                    Opt = Options;
+                    Opt.oneshot = 0;
+                    Q = sub_mexfourier(PA.Array{reg}, orig_dim, Opt);
+                case 6,
                     % use mex implementation of fourier-motzkin elimination (fast
-                    % version)
-                    if ~isminrep(PA),
-                        PA = reduce(PA);
-                    end
-                    HK = double(PA);
-                    projHK = fourier(HK, orig_dim, Options.four_tol);
-                    Q = polytope(projHK(:, 1:end-1), projHK(:, end));
-                else
-                    % use mex implementation of fourier-motzkin elimination
-                    I = PA.Array{reg};
-                    if ~isminrep(I),
-                        I = reduce(I);
-                    end
-                    for qq=length(dim):-1:2,
-                        D = fourier(double(I),[orig_dim dim(1:qq-1)],Options.four_tol);
-                        I = polytope(D(:,1:end-1), D(:,end));
-                        I = polytope(H, K);
-                    end
-                    D = fourier(double(I),orig_dim,Options.four_tol);
-                    Q = polytope(D(:,1:end-1), D(:,end));
-                end
-                P = [P Q];
+                    % version with eliminating all dimensions at the same time)
+                    Opt = Options;
+                    Opt.oneshot = 1;
+                    Q = sub_mexfourier(PA.Array{reg}, orig_dim, Opt);
+                otherwise,
+                    error('PROJECTION: unknown ptojection method selected!');
             end
-            return
+            if ~isbounded(Q),
+                if isbounded(PA.Array{reg}),
+                    % if P is bounded, projection of P must be bounded as well
+                    error('PROJECTION: projected polytope must be bounded!');
+                end
+            end
+            P = [P Q];
+            break
         catch
-            if length(Options.psolvers) > ii,
-                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed, trying ' p_strings{Options.psolvers(ii+1)+1} '...']);
-            else
-                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed...']);
+            if Options.verbose > 1 & length(Options.psolvers) > ii,
+                disp(['PROJECTION: ' p_strings{Options.psolvers(ii)+1} ' failed, trying ' p_strings{Options.psolvers(ii+1)+1} '...']);
+            elseif Options.verbose > 1,
+                disp(['PROJECTION: ' p_strings{Options.psolvers(ii)+1} ' failed...']);
             end 
-        end
-    end
-else
-    for ii=1:length(Options.psolvers),
-        try
-            if nconstr(PA)<=dimension(PA) & Options.psolvers(ii)==2,
-                % skip iterativehull if only one constraint - otherwise
-                % an infinite loop can occur
-                continue
-            end
-            if Options.psolvers(ii)==0,
-                P = sub_extreme_hull(PA,dim,Options);
-            elseif Options.psolvers(ii)==1
-                P = sub_fouriermotzkin(PA,dim,Options);
-            elseif Options.psolvers(ii)==2
-                P = sub_iterativehull(PA,dim,Options);
-            elseif Options.psolvers(ii)==3
-                P = sub_blockelimination(PA,dim,Options);
-            elseif Options.psolvers(ii)==4,
-                P = mpt_esp(PA,orig_dim);
-            elseif Options.psolvers(ii)==6,
-                % use mex implementation of fourier-motzkin elimination (fast
-                % version)
-                if ~isminrep(PA),
-                    PA = reduce(PA);
-                end
-                HK = double(PA);
-                projHK = fourier(HK, orig_dim, Options.four_tol);
-                P = polytope(projHK(:, 1:end-1), projHK(:, end));
-            else
-                % use mex implementation of fourier-motzkin elimination
-                if ~isminrep(PA),
-                    PA = reduce(PA);
-                end
-                P = PA;
-                H = P.H;
-                K = P.K;
-                xrand = randn(size(H,2),1)*10;
-                HK = [H K+H*xrand];
-                for qq=length(dim):-1:2,
-                    D = fourier(HK,[orig_dim dim(1:qq-1)],Options.four_tol);
-                    P = polytope(D(:,1:end-1), D(:,end));
-                    H = P.H;
-                    K = P.K;
-                    HK = [H K];
-                end
-                D = fourier(HK,orig_dim,Options.four_tol);
-                H = D(:,1:end-1);
-                K = D(:,end);
-                K = K - H*xrand([orig_dim]);
-                P = polytope(H, K);
-            end
-            return
-        catch
-            if length(Options.psolvers) > ii,
-                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed, trying ' p_strings{Options.psolvers(ii+1)+1} '...']);
-            else
-                disp(['projection: ' p_strings{Options.psolvers(ii)+1} ' failed...']);
-            end
-            % method failed, try the next one
         end
     end
 end
 
-fprintf('\nLast error: %s\n',lasterr);
-if length(Options.psolvers)==1,
-    error('PROJECTION: couldn''t compute projection, selected method failed!');
-else
-    error('PROJECTION: couldn''t compute projection, all methods failed!');
+if ~isfulldim(P),
+    % projection couldn't be computed
+    fprintf('\nLast error: %s\n',lasterr);
+    if length(Options.psolvers)==1,
+        error('PROJECTION: couldn''t compute projection, selected method failed!');
+    else
+        error('PROJECTION: couldn''t compute projection, all methods failed!');
+    end
+elseif length(P) < length(PA),
+    fprintf('PROJECTION: projection of %d polytopes failed\n', length(PA)-length(P));
 end
 
 
 %----------------- sub-functions ---------------------------------------
 
+function P = sub_mexfourier(P, orig_dim, Options)
+
+if Options.noReduce==0,
+    if any(~isminrep(P)),
+        P = reduce(P);
+    end
+end
+
+Pdim = dimension(P);
+dim = setdiff(1:Pdim, orig_dim);
+
+% first reorder the H matrix such that dimensions to which we want to project
+% become first. e.g. if we want to project on [3 1] and we have a polytope in
+% 4D, the new H matrix will consists of 3rd, 1st, 2nd and 4th column of the old
+% H matrix. otherwise we would need to fiddle around when calling fourier().
+
+H = P.H(:, [orig_dim dim]);
+K = P.K;
+ndim = length(orig_dim);
+orig_dim = 1:ndim;
+dim = ndim+1:Pdim;
+
+if Options.oneshot,
+    % compute the projection in one shot (fast but unreliable!)
+    HK = [H K];
+    projHK = fourier(HK, orig_dim, Options.four_tol);
+    if isempty(projHK),
+        error('Projected polytope is R^n');
+    end
+    if Options.noReduce,
+        % user doesn't want to remove redundant constraints
+        P = polytope(projHK(:, 1:end-1), projHK(:, end), 0, 2);
+    else
+        P = polytope(projHK(:, 1:end-1), projHK(:, end));
+    end
+    return
+end
+
+% compute the projection by eliminating one dimension after each other (slow but
+% quite safe).
+
+% perturb the H-representation by a random value to prevent numerical problems
+xrand = randn(size(H,2),1)*10;
+HK = [H K+H*xrand];
+
+for qq=length(dim):-1:2,
+    % project one dimension at a time
+    D = fourier(HK,[orig_dim dim(1:qq-1)],Options.four_tol);
+    if isempty(D),
+        error('Projected polytope is R^n');
+    end
+    P = polytope(D(:,1:end-1), D(:,end));
+    H = P.H;
+    K = P.K;
+    HK = [H K];
+end
+D = fourier(HK,orig_dim,Options.four_tol);
+if isempty(D),
+    error('Projected polytope is R^n');
+end
+H = D(:,1:end-1);
+K = D(:,end);
+K = K - H*xrand([orig_dim]);
+if Options.noReduce,
+    % user doesn't want to remove redundant constraints    
+    P = polytope(H, K, 0, 2);
+else
+    P = polytope(H, K);
+end
+
+
+%-------------------------------------------------------------------
 function P = sub_extreme_hull(P,dim,Options)
 
 Vert=extreme(P,Options);
-Vert(:,dim)=[];
-P=hull(Vert,Options);
-return;
+P=hull(Vert(:, dim),Options);
+return
 
-function P = sub_fouriermotzkin(P,dim,Options)
+
+%-------------------------------------------------------------------
+function P = sub_fouriermotzkin(P,orig_dim,dim,Options)
 
 % Fourier-Motzkin Elimination
 if ~isminrep(P),
@@ -333,36 +353,33 @@ for i=dim
 
     P.minrep=logical(0);
     if Options.noReduce,
+        % user doesn't want to remove redundant constaints
     else
         P=reduce(P); 
     end
-    %P=reduce(P); 
 end
 
 P.bbox = [];
-P.H(:,dim)=[];
+P.H = P.H(:, orig_dim);
 if Options.noReduce,
-    P=polytope(P.H,P.K,2,2);
+    % user doesn't want to remove redundant constaints
+    P=polytope(P.H,P.K,0,2);
 else
     P=polytope(P.H,P.K);
 end
 return;
     
-
-function P = sub_iterativehull(P,dim,Options)
+%-------------------------------------------------------------------
+function P = sub_iterativehull(P,ydim,dim,Options)
 
 % Iterative Hull
-% disp('Method2');
 
 xdim = 1:dimension(P);              % Dimension of polytope
-ydim = xdim;                        % Dimension of the projection
-ydim(dim) = [];
 lpsolver = Options.lpsolver;
 abs_tol = Options.abs_tol;
 
 if length(ydim)==1
     
-    %LPi%f1=zeros(length(xdim),1);
     f1=zeros(1,length(xdim));
     f1(ydim)=1;
     f2=-f1;
@@ -383,9 +400,7 @@ else
     Vert=[];
     cnt = 0;
     while ~OK
-        %LPi%f1=randn(length(ydim),1);
         f1=randn(1,length(ydim));
-        %LPi%f=zeros(length(xdim),1);
         f=zeros(1,length(xdim));
         f(ydim)=f1;
         
@@ -437,7 +452,6 @@ else
             if length(k)==1
                 xopt = HP(k,size(P1.H,2)+2 : size(P1.H,2)+size(Vert,2)+1);
             else
-                %LPi%f=zeros(length(xdim),1);
                 f=zeros(1,length(xdim));
                 f(ydim)=f1;
                 [xopt]=(mpt_solveLPi(-f,P.H,P.K,[],[],[],lpsolver))';
@@ -468,13 +482,10 @@ else
 end 
 
 
-function P = sub_blockelimination(P,dim,Options)
+%-------------------------------------------------------------------
+function P = sub_blockelimination(P,ydim,dim,Options)
 
 % Block Elimination
-
-xdim = 1:dimension(P);              % Dimension of polytope
-ydim = xdim;                        % Dimension of the projection
-ydim(dim) = [];
 
 % Description of the system
 H1=P.H(:,ydim);
