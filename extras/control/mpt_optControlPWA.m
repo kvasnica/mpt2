@@ -880,6 +880,11 @@ if Options.details<1,
     ctrlStruct.details = details;
 end
 
+if nPWA==1,
+    % indicate that there are no overlaps if we have just one dynamics
+    ctrlStruct.overlaps = 0;
+end
+
 if closestatbar,
     mpt_statusbar;
 end
