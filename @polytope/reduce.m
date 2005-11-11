@@ -73,7 +73,6 @@ if ~isa(P, 'polytope')
 end
 
 global mptOptions;
-
 if ~isstruct(mptOptions),
     mpt_error;
 end
@@ -81,23 +80,12 @@ end
 if nargin<2,
     Options=[];
 end
-
 if nargin<3,
     lambda=[];
 end
 
-
-%if ~isfield(Options,'abs_tol')
 abs_tol = mptOptions.abs_tol;    % absolute tolerance
-%else
-%abs_tol = Options.abs_tol;
-%end
-
-%if ~isfield(Options,'lpsolver')
 lpsolver=mptOptions.lpsolver;
-%else
-%lpsolver = Options.lpsolver;
-%end
 
 keptrows = [];
 lenP=length(P.Array);
@@ -108,11 +96,6 @@ if lenP>0,
     return
 end
 
-% if P.minrep
-%    disp('Warning (reduce.m): Polytope is already in a minimal representation!');
-%    keptrows = 1:size(P.H,1);
-%    return
-% end
 P.minrep=logical(1);
 
 if ~P.normal
@@ -184,7 +167,6 @@ end
 
 
 %--------------------------------------------------------------------------
-%if (nc/2>2*nx)
 %Use a bounding box to discard certain hyperplanes a priori
 
 % Initialize Values
@@ -216,9 +198,6 @@ H=H(keptrows,:);
 K=K(keptrows);
 nc = numel(K);
 P.bbox = [l u];
-%else
-%keptrows=(1:nc)';
-%end
 %--------------------------------------------------------------------------
 
 
@@ -226,7 +205,6 @@ P.bbox = [l u];
 % error
 
 [a,b] = unique([H K],'rows');
-
 kb = keptrows(b);
 if nc~=numel(kb)
     keptrows = kb;
@@ -234,8 +212,6 @@ if nc~=numel(kb)
     K=K(b);
     nc = numel(K);
 end
-
-%cand=ones(length(keptrows),1);
 cand=ones(nc,1);
 
 
@@ -243,7 +219,6 @@ cand=ones(nc,1);
 % hit and run
 x0 = xCheb;
 n = nx;
-%n = length(x0);
 r = nc/2;
 tol10 = 10*abs_tol;
 keep = zeros(1,2*r);
@@ -323,7 +298,6 @@ else
 %         end
 
     % initialize set of non-redundant hyperplanes
-    %nonredundant=logical(ones(size(K)));  
     nonredundant=logical(ones(nc,1));  
     removerow=[];
 
