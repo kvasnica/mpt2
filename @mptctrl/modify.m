@@ -170,17 +170,26 @@ if nkeep > 0,
     % fields are mostly important for plotting purposes.
     if isfield(ctrl.details, 'regionHorizon'),
         % infinite-time solution for LTI systems
-        ctrl.details.regionHorizon = ctrl.details.regionHorizon(keep);
+        nrh = length(ctrl.details.regionHorizon);
+        if  nrh >= nkeep & all(keep <= nrh),
+            ctrl.details.regionHorizon = ctrl.details.regionHorizon(keep);
+        end
     end
     if isfield(ctrl.details, 'IterStore'),
         % minimum-time solution for LTI systems
-        ctrl.details.IterStore = ctrl.details.IterStore(keep);
+        nis = length(ctrl.details.IterStore);
+        if nis >= nkeep & all(keep <= nis)
+            ctrl.details.IterStore = ctrl.details.IterStore(keep);
+        end
     end
     if isfield(ctrl.details, 'activeConstraints'),
         % mpqp solutions
-        ac = cell(1, nkeep);
-        [ac{:}] = deal(ctrl.details.activeConstraints{keep});
-        ctrl.details.activeConstraints = ac;
+        nac = length(ctrl.details.activeConstraints);
+        if nac >= nkeep & all(keep <= nac),
+            ac = cell(1, nkeep);
+            [ac{:}] = deal(ctrl.details.activeConstraints{keep});
+            ctrl.details.activeConstraints = ac;
+        end
     end
     if isfield(ctrl.details, 'Horizon'),
         % cftoc for pwa systems - open loop solution
