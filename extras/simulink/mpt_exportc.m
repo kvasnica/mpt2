@@ -48,7 +48,7 @@ function mpt_exportc(ctrl, fname)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(1,1,nargin)); 
+error(nargchk(1,2,nargin)); 
 
 global mptOptions
 if ~isstruct(mptOptions)
