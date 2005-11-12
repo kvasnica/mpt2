@@ -205,6 +205,7 @@ P.bbox = [l u];
 % error
 
 [a,b] = unique([H K],'rows');
+b = sort(b);        % we must sort, otherwise we don't respect order of hyperplanes
 kb = keptrows(b);
 if nc~=numel(kb)
     keptrows = kb;
