@@ -106,7 +106,8 @@ end
 
 H = P.H;
 K = P.K;
-
+Horig = H;
+Korig = K;
 
 
 % If any boundary is -Inf polytope P is empty
@@ -165,7 +166,6 @@ if RCheb<abs_tol
 end
 
 
-
 %--------------------------------------------------------------------------
 %Use a bounding box to discard certain hyperplanes a priori
 
@@ -191,11 +191,11 @@ for i=1:nx,
 end
 
 % Eliminating HP out the BB
-cand = ~((H>0).*H*(u-l) - (K-H*l) < -max(1e-4,abs_tol));
+cand = ~((Horig>0).*Horig*(u-l) - (Korig-Horig*l) < -max(1e-4,abs_tol));
 
 keptrows = find(cand); %keep only the candidates
-H=H(keptrows,:);
-K=K(keptrows);
+H=Horig(keptrows,:);
+K=Korig(keptrows);
 nc = numel(K);
 P.bbox = [l u];
 %--------------------------------------------------------------------------
@@ -206,13 +206,10 @@ P.bbox = [l u];
 
 [a,b] = unique([H K],'rows');
 b = sort(b);        % we must sort, otherwise we don't respect order of hyperplanes
-kb = keptrows(b);
-if nc~=numel(kb)
-    keptrows = kb;
-    H=H(b,:);
-    K=K(b);
-    nc = numel(K);
-end
+keptrows = keptrows(b);
+H = Horig(keptrows, :);
+K = Korig(keptrows, :);
+nc = length(K);
 cand=ones(nc,1);
 
 
