@@ -77,9 +77,10 @@
 % Other functions
 %   distribpoints - Distribute n points such that distances between them are maximized
 %   facetcircle   - Returns largest circle inside facet 'ind' of polytope P
-%   reduceunion   - Removes some redundant elements from a polytope array
-%   volume        - Calculates volume of a polytope
 %   pelemfun      - Execute an arbitrary function on each element of a polyarray
+%   reduceunion   - Removes some redundant elements from a polytope array
+%   unique        - Keeps only unique elements of a polytope array
+%   volume        - Calculates volume of a polytope
 %
 %
 % see help mpt
