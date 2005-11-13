@@ -893,6 +893,9 @@ end
 %
 if ( isfield(sysStruct,'noise') ),
     Pw = sysStruct.noise;
+    if ~isa(Pw, 'polytope'),
+        error('Only polytopic noise is supported by this function.');
+    end
     if ( isfulldim(Pw) ),
         isNoisy = 1;
         if ( ~(Options.SProcForNoise) ),
