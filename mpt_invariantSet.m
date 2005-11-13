@@ -153,16 +153,24 @@ end
 % call mpt_infsetPWA to compute invariant subset
 [Pninv,dynamics]=mpt_infsetPWA(Pn, Acell, Fcell, Wnoise, Options);
 
-ctrl = struct(ctrl);
-invCtrl = ctrl;
-invCtrl.Pn = Pninv;
-invCtrl.Pfinal = Pninv;
-invCtrl.Fi = {ctrl.Fi{dynamics}};
-invCtrl.Gi = {ctrl.Gi{dynamics}};
-invCtrl.Ai = {ctrl.Ai{dynamics}};
-invCtrl.Bi = {ctrl.Bi{dynamics}};
-invCtrl.Ci = {ctrl.Ci{dynamics}};
-invCtrl.dynamics = ctrl.dynamics(dynamics);
-invCtrl.details.isinvariant = 1;
-invCtrl.simplified = 0;
-invCtrl = mptctrl(invCtrl);
+if ~isfulldim(Pninv) | isempty(dynamics)
+    % no invariant set exists
+    if Options.verbose > 0,
+        fprintf('Invariant set is empty\n');
+    end
+    ctrl = mptctrl;
+else
+    ctrl = struct(ctrl);
+    invCtrl = ctrl;
+    invCtrl.Pn = Pninv;
+    invCtrl.Pfinal = Pninv;
+    invCtrl.Fi = {ctrl.Fi{dynamics}};
+    invCtrl.Gi = {ctrl.Gi{dynamics}};
+    invCtrl.Ai = {ctrl.Ai{dynamics}};
+    invCtrl.Bi = {ctrl.Bi{dynamics}};
+    invCtrl.Ci = {ctrl.Ci{dynamics}};
+    invCtrl.dynamics = ctrl.dynamics(dynamics);
+    invCtrl.details.isinvariant = 1;
+    invCtrl.simplified = 0;
+    invCtrl = mptctrl(invCtrl);
+end

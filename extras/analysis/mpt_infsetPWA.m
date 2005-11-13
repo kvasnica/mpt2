@@ -35,10 +35,19 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 %                     on number of separating hyperplanes.
 % Options.mergefinal - If set to true (default), tries to simplify
 %                      final result by merging regions
+% Options.simplify_target - If set to true, tries to merge regions between
+%                           iteration steps, after Minkowski calculations, 
+%                           and after detecting a non-convex union of more than
+%                           two polytopes in iterations. Default value is set to
+%                           TRUE if system is subject to noise, and to FALSE
+%                           otherwise.
+% Options.simplify_method - valid only if .simplify_target set; 'greedy'
+%                           (default) - uses greedy merging, other string -
+%                           uses optimal merging
 %
 % NOTE: Length of Pn, A, f must be identical
 %
-% Note: If Options is missing or some of the fiels are not defined, the default
+% Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
 %
 % ---------------------------------------------------------------------------
@@ -63,6 +72,8 @@ function [Pn,dynamics,invCtrl]=mpt_infsetPWA(Pn,A,f,Wnoise,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Mario Vasak, FER, Zagreb
+%          mario.vasak@fer.hr 
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2005 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -101,20 +112,26 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
-if nargin<5,
-    Options.verbose=1;
-end
-if(nargin<4 | isempty(Wnoise))
+if nargin<4         % | isempty(Wnoise)) M.V. later if we find out that the noise is hidden in ctrlStruct, we override this
     Wnoise=polytope;
 end
 
 nargs = nargin;
 if nargin==2
-    if isstruct(A),
+    if isa(Pn,'polytope') & nargin<3 %M.V. to fix the issue with giving a PWL model (i.e. only Pn and A)
+        f=cell(length(A),1);
+        Options={};
+    elseif isstruct(A), % if we give ctrlStruct and Options, again everything is handeled
         Options = A;
+        nargs = 1;
     end
     nargs = 1;
 end
+
+if (nargin>2 & nargin<5) | nargin==1
+    Options={};
+end
+
 if ~isfield(Options,'verbose'),
     Options.verbose=mptOptions.verbose;
 end
@@ -149,11 +166,17 @@ if sphratio == 0,
     % to avoid "division by zero" warnings
     sphratio = 1e-9;
 end
+if ~isfield(Options,'simplify_method')
+    Options.simplify_method = 'greedy';
+end
 
 maxIter = Options.maxIter;
 
 if nargs==1,
     ctrl = Pn;
+    if isa(ctrl,'polytope')
+        error('You should provide additional fields defining autonomous dynamics of a PWA system!')
+    end
     if isa(ctrl, 'mptctrl')
         if ~isexplicit(ctrl),
             error('This function supports only explicit controllers!');
@@ -167,7 +190,7 @@ if nargs==1,
         error('mpt_infsetPWA: First argument has to be a valid controller structure! See mpt_control for details.');
     end
     sysStruct = ctrlStruct.sysStruct;
-    if isfulldim(sysStruct.noise)
+    if mpt_isnoise(sysStruct.noise)
         Wnoise = sysStruct.noise;
     end
     Pn = ctrlStruct.Pn;
@@ -212,12 +235,30 @@ emptypoly=polytope;
 %%%NOW COMPUTE INVARIANT SUBSET
 iter=1;
 dynamics=1:length(Pn);
+dynamicsX=dynamics; %M.V. according to Rakovic, Grieder et al., see Algorithm 4.1 and relation (9)
+PnX=Pn;             %M.V. according to Rakovic, Grieder et al.
 notConverged=1;
 
-if(isfulldim(Wnoise))
-    targetPn=Pn-Wnoise;
+mergeOpt.verbose=0;
+mergeOpt.greedy = strcmpi(Options.simplify_method, 'greedy'); 
+
+if ~isfield(Options,'simplify_target') 
+    Options.simplify_target = mpt_isnoise(Wnoise);
+end
+
+if Options.simplify_target,
+    P_merg=merge(Pn,mergeOpt);
 else
-    targetPn=Pn;
+    P_merg=Pn;
+end
+
+if mpt_isnoise(Wnoise),
+    targetPn=P_merg-Wnoise;
+    if Options.simplify_target
+        targetPn=merge(targetPn,mergeOpt);
+    end
+else
+    targetPn=P_merg;
 end
 
 if ~isfield(Options, 'statusbar')
@@ -255,9 +296,8 @@ if statusbar,
     end     
 end
 
-mergeOpt = Options;
-mergeOpt.statusbar = 0;
-mergeOpt.verbose = -1;
+empty_dynamics=[]; %M.V.
+
 while(notConverged>0 & iter<maxIter)
     
     if statusbar,
@@ -268,7 +308,15 @@ while(notConverged>0 & iter<maxIter)
             error('Break...');
         end     
     end
+    Pn_past=Pn;             %M.V. according to Rakovic, Grieder et al. (need this for convergence detection)
+    dynamics_past=dynamics; %M.V. according to Rakovic, Grieder et al. (need this for convergence detection)
     
+                     
+    dynamics=setdiff(dynamicsX,empty_dynamics);     %M.V. according to Rakovic, Grieder et al.
+    Pn=PnX(dynamics);                               %M.V. according to Rakovic, Grieder et al., we always do the transitions from X
+                                                    %we remove dynamics
+                                                    %that do not yield any
+                                                    %transition
     
     if Options.verbose>-1,
         disp(['Iteration Number ' num2str(iter)])
@@ -317,7 +365,7 @@ while(notConverged>0 & iter<maxIter)
     end
     
     for i=1:lenPn
-        
+        notConverged_before=notConverged;   %M.V.
         if statusbar,
             if isempty(mpt_statusbar(Options.status_handle, (i-1)/length(Pn), prog_min, prog_max)),
                 mpt_statusbar;
@@ -344,10 +392,11 @@ while(notConverged>0 & iter<maxIter)
                 [Px,dummy,feasible]=domain(targetPn(j),A{dynamics(i)},f{dynamics(i)},Pn(i)); %compute set of states Pn(i)->targetPn(j)
                 if(feasible) 
                     %transition exists
-                    if Px~=Pn(i),
-                        convCtr=convCtr+1;
-                        notConverged=notConverged+1;
-                    end
+                    %if Px~=Pn(i), %M.V. we don't use this any more, since
+                    %Pn is the polytope of initial X
+                    convCtr=convCtr+1;
+                    notConverged=notConverged+1;
+                    %end
                     trans=trans+1;          %one more transition found
                     tP=[tP Px];             %store transition polytope
                 end
@@ -363,8 +412,25 @@ while(notConverged>0 & iter<maxIter)
         
         %try to merge regions
         if(trans>0)
+
             if Options.verbose>1,
                 fprintf('iteration=%d region=%d transitions=%d\n', iter, i, trans);
+            end
+            
+            P_to_compare_candidates=Pn_past(find(dynamics_past==dynamics(i)));
+%             P_to_compare=polytope;
+%             for kk=1:length(P_to_compare_candidates)
+%                 if dointersect(P_to_compare_candidates(kk),tP)
+%                     P_to_compare=P_to_compare_candidates(kk);
+%                     break;
+%                 end
+%             end
+            
+            if ~isfulldim(P_to_compare_candidates) %debug check - this shouldn't happen
+                disp('Strange: \Omega_{k+1}\varsubsetneq\Omega_k');
+                disp('Discarding this transition; assuming numerical difficulties.');
+                notConverged=notConverged_before;
+                continue;
             end
             
             if Options.nounion==1,
@@ -373,12 +439,21 @@ while(notConverged>0 & iter<maxIter)
                 [Pu,how]=union(tP,Options);
                 if how,
                     % union is convex
-                    PuPn_equal = (Pu == Pn(i));
+                    %PuPn_equal = (Pu == Pn(i));
+                    PuPn_equal = (length(P_to_compare_candidates)==1) & (P_to_compare_candidates<=Pu);
+                    %M.V. according to Rakovic, Grieder et al., this implies that P_to_compare_candidates==Pu,
+                    %since the other direction P_to_compare_candidates>=Pu
+                    %we know holds for this iterative way of constructing
+                    %invariant set (see Rakovic,Grieder, page 3:
+                    %\Omega_{k+1}\subseteq\Omega_k, and thus in each
+                    %dynamics i we have
+                    %\Omega_{k+1}\cup\Q_i^*\subseteq\Omega_{k}\cup\Q_i^*)
                 end
             end
             if(how)
                 %union is convex (or simplified using greedy merging) => overwrite old set
-                if trans>1 & PuPn_equal,
+                %if trans>1 & PuPn_equal,
+                if PuPn_equal   %allways if PuPn_equal do the subtarction, trans==1 is not a special case any more
                     notConverged=notConverged-convCtr;%union is identical to original set; reduce transition counter again
                 end
                 transP = [transP Pu];
@@ -387,22 +462,64 @@ while(notConverged>0 & iter<maxIter)
                 end
             else
                 %union is not convex
-                transP = [transP tP];
-                for kk=1:trans
+                if Options.simplify_target & trans>=3      %M.V. issue b)
+                    tP=merge(tP,mergeOpt);
+                end
+                
+                if P_to_compare_candidates<=tP
+                    %M.V. according to Rakovic, Grieder et al., this implies that P_to_compare_candidates==Pu,
+                    %since the direction P_to_compare_candidates>=Pu
+                    %we know holds for this iterative way of constructing
+                    %invariant set (see Rakovic,Grieder, page 3: \Omega_{k+1}\subseteq\Omega_k,
+                    %and thus in each dynamics i we have
+                    %\Omega_{k+1}\cup\Q_i^*\subseteq\Omega_{k}\cup\Q_i^*)
+                    notConverged=notConverged-convCtr;
+                    if length(P_to_compare_candidates)<length(tP)
+                        tP=P_to_compare_candidates;
+                    end
+                end
+
+                transP = [transP tP];  
+                for kk=1:length(tP)
                     tdyn(end+1)=dynamics(i);             %dynamics of new polytope are same as original polytope at t-1
                 end
             end
+        else
+            empty_dynamics(end+1)=dynamics(i);
+%            P_to_compare_candidates=Pn_past(find(dynamics_past==dynamicsX(i)));
+%            if isfulldim(P_to_compare_candidates)
+            notConverged=notConverged+1;        %M.V. if there are no transitions from some dynamics, and in the previous step there were some transitions, then convergence did not occur
+ %           end
         end
     end
     
-    Pn=transP;      %write results for next iteration
+    Pn=transP;      %write results for next iteration (M.V. for convergence checking)
     dynamics=tdyn;
-    if(isfulldim(Wnoise))
-        targetPn=Pn-Wnoise;
-    else
-        targetPn=Pn;
+
+    
+    if ~notConverged | iter==maxIter  %M.V. so as not to calculate Minkdiff when convergence is detected
+        break;
     end
 
+    if ~isfulldim(Pn)
+        break;     %M.V. if there are no feasible transitions, invariant set is empty!
+    end
+    
+    if Options.simplify_target %M.V. issue b)
+        P_merg=merge(Pn,mergeOpt);
+    else
+        P_merg=Pn;
+    end
+
+	if mpt_isnoise(Wnoise),
+        targetPn=P_merg-Wnoise;
+        if Options.simplify_target
+            targetPn=merge(targetPn,mergeOpt);
+        end
+    else
+        targetPn=P_merg;
+    end
+    
     iter=iter+1;
 end
 

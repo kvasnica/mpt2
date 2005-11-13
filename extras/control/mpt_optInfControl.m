@@ -181,7 +181,7 @@ maxHorizon=Options.maxHorizon;
 DEBUG=Options.debug_level;
 
 if isfield(sysStruct,'noise'),
-    if isfulldim(sysStruct.noise),
+    if mpt_isnoise(sysStruct.noise),
         error('mpt_optInfControl: Additive disturbances not supported in infinite-time control!');
     end
 end

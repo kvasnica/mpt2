@@ -73,6 +73,9 @@ end
 if ~isfield(Options, 'guierrors'),
     Options.guierrors = 0;
 end
+if isempty(Options.sysstructname),
+    Options.sysstructname = 'sysStruct';
+end
 
 ssn = Options.sysstructname;
 
@@ -612,5 +615,19 @@ if isfield(sysStruct, 'dymax'),
         error(sprintf('"%s.dymax" and "%s.dymin" must be of same length.', ssn, ssn));
     end
 end
-       
+
+% check if noise has correct dimension
+if isfield(sysStruct, 'noise'),
+    if mpt_isnoise(sysStruct.noise),
+        if isa(sysStruct.noise, 'polytope'),
+            noisedim = dimension(sysStruct.noise);
+        else
+            noisedim = size(sysStruct.noise, 1);
+        end
+        if noisedim ~= nx
+            error(sprintf('"%s.noise" has wrong dimension.', ssn));
+        end
+    end
+end
+
 sysStruct.verified=1;

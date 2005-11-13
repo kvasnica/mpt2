@@ -209,7 +209,7 @@ ctrlStruct = mpt_optControl(sysStruct,probStruct,Options);
 
 lyapOptions = Options;
 
-if isfulldim(sysStruct.noise)
+if mpt_isnoise(sysStruct.noise)
     disp('System is subject to additive noise, calculating Quadratic Lyapunov function...');
     [lyapunovP, drho, feasibleN] = mpt_getQuadLyapFct(ctrlStruct, lyapOptions);
     if feasibleN==0

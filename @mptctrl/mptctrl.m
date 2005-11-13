@@ -221,7 +221,7 @@ elseif nargin==2 | nargin==3
     
     % =========================================================================
     % check if on-line solution can be computed
-    if isfulldim(sysStruct.noise) & iscell(sysStruct.A)
+    if mpt_isnoise(sysStruct.noise) & iscell(sysStruct.A)
         error('MPTCTRL: no on-line solution for PWA systems with additive noise!');
     elseif isfield(sysStruct, 'Aunc') & iscell(sysStruct.A)
         error('MPTCTRL: no on-line solution for PWA systems with parametric uncertainty!');

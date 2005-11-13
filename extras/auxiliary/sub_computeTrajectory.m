@@ -35,6 +35,11 @@ error(nargchk(2,4,nargin));
 
 if nargin<1
     help sub_computeTrajectory
+elseif nargin < 3
+    N = Inf;
+    Options = [];
+elseif nargin < 4
+    Options = [];
 end
 
 sysStruct = ctrl.sysStruct;
@@ -265,18 +270,33 @@ else
     
     % get the maximum value of noise (additive disturbance)
     addnoise = 0;
-    if (finalboxtype==2 | finalboxtype==3) & Options.randdist & isfulldim(sysStruct.noise),
+    if Options.randdist & mpt_isnoise(sysStruct.noise),
         % noise is added only for state regulation, otherwise we cannot
         % guarantee convergence detection
-        [Hnoise,Knoise]=double(sysStruct.noise);
         if Options.verbose>0,
             disp('Assuming noise is hyperrectangle... trajectory is wrong if this is not true.')
         end
-        deltaNoise=Knoise(1:length(Knoise)/2)+Knoise(length(Knoise)/2+1:end);
-        maxNoise=Knoise(1:length(Knoise)/2);
-        if dimension(finalbox)==dimension(sysStruct.noise),
-            finalbox = finalbox + sysStruct.noise;
-            addnoise = 1;
+        if isa(sysStruct.noise, 'polytope'),
+            Vnoise = extreme(sysStruct.noise);
+        else
+            % NOTE! remember that a V-represented noise has vertices stored
+            % column-wise!
+            Vnoise = sysStruct.noise';
+        end
+        noisedim = size(Vnoise, 2);
+        deltaNoise = zeros(noisedim, 1);
+        middleNoise = zeros(noisedim, 1);
+        for idim = 1:noisedim,
+            Vdim = Vnoise(:, idim);
+            deltaNoise(idim) = (max(Vdim) - min(Vdim))/2;
+            middleNoise(idim) = (max(Vdim) + min(Vdim))/2;
+        end
+        addnoise = 1;
+        if (finalboxtype==2 | finalboxtype==3),
+            if dimension(finalbox)==noisedim,
+                finalbox = finalbox + sysStruct.noise;
+                addnoise = 1;
+            end
         end
     end
     
@@ -358,7 +378,13 @@ else
         %-----------------------------------------------------------------------
         % if noise is specified, we take some random value within of noise bounds
         if addnoise,
-            noise=maxNoise-rand(nx,1).*deltaNoise;
+            noiseVal = randn(nx, 1);
+            % bound noiseVal to +/- 1
+            noiseVal(find(noiseVal>1)) = 1;
+            noiseVal(find(noiseVal<-1)) = -1;
+            % compute the noise, use safety scaling of 0.99 to be sure that we
+            % do not exceed allowed limits
+            noise = middleNoise + 0.99*noiseVal.*deltaNoise;
             xn = (xn(:) + noise)';
             D = [D; noise'];
         end

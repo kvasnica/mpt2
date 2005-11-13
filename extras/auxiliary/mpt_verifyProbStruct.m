@@ -73,6 +73,9 @@ end
 if ~isfield(Options, 'guierrors'),
     Options.guierrors = 0;
 end
+if isempty(Options.probstructname),
+    Options.probstructname = 'probStruct';
+end
 
 psn = Options.probstructname;
 

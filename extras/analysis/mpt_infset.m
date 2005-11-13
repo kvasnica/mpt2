@@ -52,7 +52,7 @@ function [Oinf,tstar,fd,isemptypoly] = mpt_infset(A,X,tmax,Pnoise,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -103,8 +103,15 @@ if ~isfield(Options,'verbose'),
 end
 if(nargin<4 | isempty(Pnoise))
     addNoise=0;
-elseif(isfulldim(Pnoise))
-    [Hnoise,Knoise]=double(Pnoise);
+elseif(mpt_isnoise(Pnoise))
+    if isa(Pnoise, 'polytope'),
+        % remember that noise can also be in V-representation
+        [Hnoise,Knoise]=double(Pnoise);
+        polynoise = 1;
+    else
+        Vnoise = Pnoise;
+        polynoise = 0;
+    end
     addNoise=1;
     X=X-Pnoise;
 else
@@ -141,26 +148,31 @@ while (fd == 0) & (t+1 <= tmax)
     for k=1:length(A) %got through all dynamics in cell array A
         Hnew = H*A{k}^(t+1);
         for i = 1:s
-             if(~addNoise)
+            if(~addNoise)
                 %do nothing
-             else
-               HAnew=H*(A{k}^t);
-               %LPi%[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(HAnew(i,:)',Hnoise,Knoise,[],[],[],Options.lpsolver);
-               [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(HAnew(i,:),Hnoise,Knoise,[],[],[],Options.lpsolver);
-               noiseVal(i)=noiseVal(i)+HAnew(i,:)*xopt;
-             end
-             isred=sub_isredundant([HH; Hnew(i,:)],[hh; h(i)+noiseVal(i)],length(hh)+1,Options.abs_tol,Options.lpsolver);
-             if(isred==0)
+            else
+                HAnew=H*(A{k}^t);
+                if polynoise,
+                    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(HAnew(i,:),Hnoise,Knoise,[],[],[],Options.lpsolver);
+                    noiseVal(i)=noiseVal(i)+HAnew(i,:)*xopt;
+                else
+                    % V-represented noise, we can just plug in vertices.
+                    % NOTE! vertices are stored column-wise!!!
+                    noiseVal(i) = noiseVal(i) + min(HAnew(i,:)*Vnoise);
+                end
+            end
+            isred=sub_isredundant([HH; Hnew(i,:)],[hh; h(i)+noiseVal(i)],length(hh)+1,Options.abs_tol,Options.lpsolver);
+            if(isred==0)
                 fd = 0; % if new constraint not redundant then not finished yet
                 HH = [HH; Hnew(i,:)]; % and add new constraint to previous constraints
                 hh = [hh; h(i)+noiseVal(i)];
-             elseif(isred==2)
+            elseif(isred==2)
                 disp('mpt_infset: No invariant set exists');   
                 Oinf=polytope;
                 isemptypoly=1;
                 tstar=t;
                 return
-             end
+            end
         end
     end
     t = t + 1;

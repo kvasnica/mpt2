@@ -222,10 +222,19 @@ else
     pwasystem=0;
 end
 
-if isfield(sysStruct,'noise') & isfulldim(sysStruct.noise)
-    [Hnoise,Knoise]=double(sysStruct.noise);
-    noiseVertex=extreme(sysStruct.noise);
+if isfield(sysStruct,'noise') & mpt_isnoise(sysStruct.noise)
+    if isa(sysStruct.noise, 'polytope'),
+        [Hnoise,Knoise]=double(sysStruct.noise);
+        noiseVertex=extreme(sysStruct.noise);
+    else
+        % remember that V-represented noise has vertices stored column-wise,
+        % therefore we need to convert them to a row-wise setup, since that's
+        % what extreme() does.
+        noiseVertex = sysStruct.noise';
+    end
+    havenoise = 1;
 else
+    havenoise = 0;    
     Hnoise=[];
     Knoise=[];    
     noiseVertex=zeros(1,size(Acell{1},2));
@@ -240,7 +249,7 @@ catch
     error('mpt_getQuadLyapFct: You need to download and install Yalmip for this function to work');
 end
 
-if(~isempty(Hnoise))
+if havenoise,
 	Hn={};
 	Kn={};
 	Fi={};

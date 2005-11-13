@@ -284,7 +284,7 @@ else
                     elseif mplpver < 4 | Options.qpsolver==-1,
                         useoptcontrol = 1;
                     elseif isfield(sysStruct, 'noise'),
-                        if isfulldim(sysStruct.noise),
+                        if mpt_isnoise(sysStruct.noise),
                             useoptcontrol = 1;
                         end
                     end
