@@ -104,7 +104,7 @@ if ~isfield(Options, 'mplpver')
 end
 
 if Options.mplpver < 4,
-    warning('older version of mpLP solver specified, switching to different algorithm...\n');
+    warning('older version of mpLP solver specified, switching to different algorithm...');
     ctrlStruct = mpt_optControlPWAold(sysStruct, probStruct, Options);
     return
 end

@@ -476,7 +476,7 @@ if Options.coregen,
                 if statusbar,
                     mpt_statusbar;
                 end
-                error('mpt_optInfoControlPWA: no regions found in this iteration (numerical problems)');
+                error('mpt_optInfControlPWA: no regions found in this iteration (numerical problems)');
             end
             Step{nn} = nonovlCS;
         end
