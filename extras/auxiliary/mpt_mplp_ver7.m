@@ -185,7 +185,7 @@ CHEBY_TOL        = Options.step_size;       % tolerance for
 %-----------------------------------------------------
 
 MAXREGIONS    = Options.max_regions;
-ALPHA         = min(Options.step_size,1e-5);
+ALPHA         = min(Options.step_size,1e-6);
 ALPHAmax      = max(Options.step_size,1e-6);  % maximum step
 ALPHAit       = 50;                           % number of iterations
 ALPHAinc      = ALPHAmax/(ALPHA*ALPHAit);
