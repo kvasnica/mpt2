@@ -363,8 +363,11 @@ while region<=nR,
         % Create a point close to the border
         %-----------------------------------------------
         [xBorder,RBorder]=facetcircle(Pn(region),border,Options);
-        if(RBorder<0) & Options.verbose>=1,
-            disp('mpt_mpqp: Polyhedron does not exist => EMPTY REGION WAS STORED !!')
+        if(RBorder<0),
+            if Options.verbose>1,
+                disp('mpt_mpqp: Polyhedron does not exist => EMPTY REGION WAS STORED !!')
+            end
+            continue
             % Checkpoint !Should be taken into account!
         end %(RBorder<0)
         [Hp,Kp] = double(Pn(region));
@@ -920,7 +923,7 @@ end
 
 
 if(~isempty(NoSolutionToPoint2))        
-    if Options.verbose>-1
+    if Options.verbose>0
         disp('****************************************************************************************')
         disp('mpt_mpqp: Points where QP have no feasible solution inside the hull:')
         disp(num2str(NoSolutionToPoint2));
