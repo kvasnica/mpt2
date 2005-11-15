@@ -187,13 +187,13 @@ for idx = 1:nFacets,
     if problem_infeasible,
         % try different LP solver
         disp('FACETCIRCLE:   ERROR: No feasible solution found (problem is infeasible)');
-        return;
+        continue
     elseif problem_negativeR,
         disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (radius is negative)');
-        return;
+        continue
     elseif problem_constraints,
         disp('FACETCIRCLE:   ERROR: Numerical problems with LP solver (constraints not satisfied)');
-        return;
+        continue
     else
         xc = x0 + Hi0 * xopt(1:end-1); % Chebyshev center of the facet
         % project the point to the facet, this is just to annulate all numerical
