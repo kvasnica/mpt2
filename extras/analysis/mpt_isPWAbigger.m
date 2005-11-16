@@ -158,6 +158,17 @@ nV    = cnt;
 Jdiff = [];
 Options.abs_tol = Jdiff_tol;
 
+J1 = struct(J1);
+J2 = struct(J2);
+if ~isfield(J1,'Bi')
+    J1.Bi = J1.details.Bi;
+    J1.Ci = J1.details.Ci;
+end
+if ~isfield(J2,'Bi')    
+    J2.Bi = J2.details.Bi;
+    J2.Ci = J2.details.Ci;    
+end
+
 for ii=1:nV
   V  = [V_total(ii,:)]';
   vect = [];
