@@ -111,10 +111,14 @@ dim = dim(:)';
 orig_dim = dim;
 dim = setdiff(1:d,dim);   % from this point, dim denotes dimension to eliminate
 
-if length(dim) > d,
+if isempty(orig_dim),
+    error('PROJECTION: Projection dimensions cannot be empty.');
+end
+if length(orig_dim) > d,
     error('PROJECTION: Dimensions must agree.');
-elseif any(dim > d) | any(dim < 0)
-    error('PROJECTION: Proejction dimensions exceed polytope dimension.');
+end
+if any(orig_dim > d) | any(orig_dim < 1)
+    error('PROJECTION: Projection dimensions exceed polytope dimension.');
 end
 
 if ~isfield(Options,'psolvers')
