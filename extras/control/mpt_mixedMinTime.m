@@ -211,7 +211,7 @@ else
     Pn=probStruct.Tset;
     fprintf('\n')
     disp('Using User-Defined Target Set...')
-    disp('Warning: this may not guarantee stability')
+    disp('WARNING: this may not guarantee stability')
     if ~isfield(probStruct, 'P_N'),
         error('Penalty on final state "probStruct.P_N" must be given!');
     end
