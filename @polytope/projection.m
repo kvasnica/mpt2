@@ -321,7 +321,7 @@ end
 % quite safe).
 
 % perturb the H-representation by a random value to prevent numerical problems
-xrand = randn(size(H,2),1)*10;
+xrand = randn(size(H,2),1)*0.1;
 HK = [H K+H*xrand];
 
 for qq=length(dim):-1:2,
