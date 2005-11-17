@@ -29,6 +29,7 @@ function [P]= projection(PA,dim,Options)
 % Options.projection=5  - Fourier-Motzkin Elimination (mex implementation)
 % Options.projection=6  - Fourier-Motzkin Elimination (mex implementation) -
 %                         fast but eventualy unreliable
+% Options.projection=7  - Use approach based on mpLPs
 %
 % Note: If Options.projection is not set, best method is selected automatically
 %
@@ -48,8 +49,8 @@ function [P]= projection(PA,dim,Options)
 % ---------------------------------------------------------------------------
 % $Version: 1.1 $ $Date: 2005/06/13 12:30:44 $
 %
-% (C) 2004 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2004 Raphael Suard, Automatic Control Laboratory, ETH Zurich,
 %          suardr@ee.ethz.ch
 %
@@ -119,19 +120,19 @@ end
 if ~isfield(Options,'psolvers')
     if length(orig_dim)<=2,
         % use iterative hull for lower dimensions
-        Options.psolvers = [2 5 6 3 1 4 0];
+        Options.psolvers = [2 5 7 3 1 4 0];
     elseif length(dim)<=2,
         % only 1 or 2 dimensions to eliminate -> use fourier-motzkin
-        Options.psolvers = [5 1 4 6 2 3 0];
+        Options.psolvers = [5 1 4 7 2 3 0];
     elseif length(dim)<=d/2
         if dimension(PA)<=3,
             % use block-elimination for lower dimensions
-            Options.psolvers = [3 0 5 6 2 1 4];
+            Options.psolvers = [3 0 5 7 2 1 4];
         else
-            Options.psolvers = [5 6 4 3 1 2 0];
+            Options.psolvers = [5 7 4 3 1 2 0];
         end
     else
-        Options.psolvers = [5 6 2 3 4 1 0];
+        Options.psolvers = [5 7 2 3 4 1 0];
     end
 end
 if isfield(Options,'projection')
@@ -197,6 +198,9 @@ for reg = 1:length(PA.Array),
                     Opt = Options;
                     Opt.oneshot = 1;
                     Q = sub_mexfourier(PA.Array{reg}, orig_dim, Opt);
+                case 7,
+                    % use mpLP to solve projection
+                    Q = sub_mplp_proj(PA.Array{reg}, orig_dim, dim, Options);
                 otherwise,
                     error('PROJECTION: unknown ptojection method selected!');
             end
@@ -233,6 +237,44 @@ end
 
 %----------------- sub-functions ---------------------------------------
 
+function P = sub_mplp_proj(P, orig_dim, dim, Options)
+
+% solve projection by multi-parametric programming.
+% note that an mpLP is stated as:
+%
+%   min    H U + F x
+%   s.t.   G U <= W + E x
+%
+% if we consider that the polytope to project is written as
+%   C*y + D*x <= B
+% where C=H(:, dim), D=H(:, orig_dim), B=K, then we can use
+% G = C, W = B, E = -D and solve the problem as an mpLP. this would give as two
+% things:
+%   1. critical regions which we don't need
+%   2. characterization of the feasible set, which is exactly equal to the
+%   projection of the ([-E G],W) polytope onto the x-space
+
+Opt = Options;
+Opt.verbose = -1;    % to keep mpt_mplp() silent
+[H, K] = double(P);
+M.G = H(:, dim);
+M.E = -H(:, orig_dim);
+M.W = K;
+M.bndA = [];
+M.bndb = [];
+M.H = rand(1, length(dim));  % use random cost to avoid degeneracies
+M.F = zeros(1, length(orig_dim));
+[Pn, Fi, Gi, AC, Phard] = mpt_mplp(M, Opt);
+if ~isfulldim(Phard)
+    % sometimes we can return Phard as an empty polytope if there are missing
+    % regions on the boundary
+    error('PROJECTION: mplp approach failed.');
+else
+    P = Phard;   % projection is equal to the feasible set
+end
+
+
+%-------------------------------------------------------------------
 function P = sub_mexfourier(P, orig_dim, Options)
 
 if Options.noReduce==0,
