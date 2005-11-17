@@ -119,7 +119,6 @@ if isa(P,'polytope') & isa(Q,'polytope')
                 if ~isfulldim(RP)
                     Opt = Options;
                     Opt.msolver = 1;
-                    Opt.projection = [5 1 4];
                     [RP,P.Array{ii},Q]=plus(P.Array{ii},Q,Opt);
                 end
             end

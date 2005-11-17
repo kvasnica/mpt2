@@ -194,13 +194,6 @@ if ~iscell(sysStruct.A),
     sysStruct = mpt_lti2pwa(sysStruct);
 end
 [nx,nu,ny,nPWA,nbool,ubool,intInfo] = mpt_sysStructInfo(sysStruct);
-if ~isfield(Options,'projection'),
-    if nx>3,
-        Options.projection = [5 4 1 3 2];
-    else
-        Options.projection = [3 2 5 4 1];
-    end
-end
 
 ssInfo.nx = nx;
 ssInfo.nu = nu;
