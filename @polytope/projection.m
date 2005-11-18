@@ -293,6 +293,13 @@ function P = sub_mplp_proj(P, orig_dim, dim, Options)
 
 Opt = Options;
 Opt.verbose = -1;    % to keep mpt_mplp() silent
+if isfield(Opt, 'projection'),
+    Opt = rmfield(Opt, 'projection');
+end
+if isfield(Opt, 'psolvers'),
+    Opt = rmfield(Opt, 'psolvers');
+end
+
 [H, K] = double(P);
 M.G = H(:, dim);
 M.E = -H(:, orig_dim);
