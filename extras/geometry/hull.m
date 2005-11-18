@@ -277,6 +277,9 @@ end
 %--------------------------------------------------------------------------
 function [P,Vconv,H,K,lowdim]=hull_cddmex(V, Options)
 
+% change almost-zero elements to zero
+V(abs(V)<1e-12) = 0;
+
 if ~isinf(Options.roundat),
     % round V-representation to certain number of decimal places
     roundfactor = 10^Options.roundat;
