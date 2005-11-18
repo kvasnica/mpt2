@@ -19,12 +19,16 @@ function [xopt,lambda,flag,fval]=esp_LP(f,H,He,x0)
 %  NOTE: Defaulting to linprog!
 %
 
+global mptOptions
+
 if(nargin < 4) x0 = []; end;
 if(nargin < 3) He = []; end;
 
 [A,B]     = a2s(H);
 [Aeq,Beq] = a2s(He);
-[xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0);
+% use the "rescue" mode which guarantees that if one solver fails, other LP
+% solver will be used automatically. greatly improves reliability!
+[xopt,fval,lambda,exitflag,how]=mpt_solveLPs(f,A,B,Aeq,Beq,x0,mptOptions.lpsolver);
 lambda = lambda(1:length(B));
 
 % Ensure we get the flags that esp is expecting independent of the lp solver used
