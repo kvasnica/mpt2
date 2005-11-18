@@ -132,23 +132,23 @@ if ~isfield(Options,'psolvers')
         else
             % vertex-based methods are not very efficient when projecting from
             % higher dimensions 
-            Options.psolvers = [2 7 4 5 3 6 1 0];
+            Options.psolvers = [2 4 7 5 3 6 1 0];
         end
     elseif dimension(PA)<=5,
         % use block elimination for lower dimensions. any vertex-based method
         % should work well
-        Options.psolvers = [3 5 7 0 4 2 1 6];
+        Options.psolvers = [3 5 0 4 7 2 1 6];
     elseif length(dim)<=1,
         % only 1 dimension to eliminate -> use fourier-motzkin
         Options.psolvers = [5 1 6 4 7 2 3 0];
     elseif length(dim)<=2,
         % only 2 dimensions to eliminate -> use mex fourier-motzkin (matlab
         % fourier motzkin can be very slow)
-        Options.psolvers = [5 4 7 6 1 2 3 0];
+        Options.psolvers = [5 4 6 7 1 2 3 0];
     elseif length(orig_dim)<=d/2
         % eliminating many dimensions, the mplp-based method seems to be a good
         % compromise between reliability and speed
-        Options.psolvers = [4 7 5 6 3 1 2 0];
+        Options.psolvers = [4 5 7 6 3 1 2 0];
     else
         % prefer esp otherwise
         Options.psolvers = [4 7 5 2 3 1 0 6];
@@ -160,11 +160,10 @@ if ~isfield(Options,'psolvers')
     end
     if length(dim) > 3,
         % give lowest priority to fourier-motzkin if we are eliminating more
-        % than 3 dimensions
+        % than 3 dimensions. but keep mex fourier-motzkin, just as a last resort
         Options.psolvers(find(Options.psolvers==1)) = [];
-        Options.psolvers(find(Options.psolvers==5)) = [];
         Options.psolvers(find(Options.psolvers==6)) = [];
-        Options.psolvers = [Options.psolvers 5 6 1];
+        Options.psolvers = [Options.psolvers 6 1];
     end
     if length(orig_dim) > 5,
         % don't even try iterative hull if we are projecting on more than 5
