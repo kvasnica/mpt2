@@ -56,6 +56,8 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 %
 % ---------------------------------------------------------------------------
 
+error(nargchk(3,4,nargin));
+
 global mptOptions
 if ~isstruct(mptOptions),
     mpt_error;
@@ -103,7 +105,7 @@ end
 
 lpsolver = Options.lpsolver;
 abs_tol = Options.abs_tol;
-large_tol = 10*abs_tol;
+large_tol = 1e3*abs_tol;
 maxsph = Options.maxsph;
 
 lenP = length(Pn);
@@ -115,7 +117,7 @@ end
 
 % Vertex enumeration
 for is=1:lenP
-    [E, R, Pn(is)] = extreme(Pn(is));
+    [E, R, Pn(is)] = extreme(Pn(is), Options);
     % round almost-zero elements
     E(find(abs(E) < 1e-12)) = 0;
     E = E';
@@ -129,7 +131,7 @@ for is=1:lenP
 end
 if havetarget,
     for is=1:lenTarget
-        E = extreme(targetPn(is));
+        E = extreme(targetPn(is), Options);
         % round almost-zero elements
         E(find(abs(E) < 1e-12)) = 0;
         ext{is} = E';
