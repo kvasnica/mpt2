@@ -353,9 +353,10 @@ end
 % compute the projection by eliminating one dimension after each other (slow but
 % quite safe).
 
-% perturb the H-representation by a random value to prevent numerical problems
-xrand = randn(size(H,2),1)*0.1;
-HK = [H K+H*xrand];
+% shift the polytope such that it contains the origin in its interior (helps to
+% prevent numerical problems):
+[xcheb, rcheb] = chebyball(P);
+HK = [H K+H*xcheb];
 
 for qq=length(dim):-1:2,
     % project one dimension at a time
@@ -374,7 +375,7 @@ if isempty(D),
 end
 H = D(:,1:end-1);
 K = D(:,end);
-K = K - H*xrand([orig_dim]);
+K = K - H*xcheb([orig_dim]);
 if Options.noReduce,
     % user doesn't want to remove redundant constraints    
     P = polytope(H, K, 0, 2);
