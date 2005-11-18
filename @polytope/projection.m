@@ -148,7 +148,7 @@ if ~isfield(Options,'psolvers')
     elseif length(orig_dim)<=d/2
         % eliminating many dimensions, the mplp-based method seems to be a good
         % compromise between reliability and speed
-        Options.psolvers = [7 4 5 3 1 2 0 6];
+        Options.psolvers = [4 7 5 6 3 1 2 0];
     else
         % prefer esp otherwise
         Options.psolvers = [4 7 5 2 3 1 0 6];
