@@ -343,6 +343,10 @@ if isempty(P.vertices) | nargout>=4,
     % if no vertices are stored in the internal structure, compute them
     % also perform the computation if adjancency information is requested
     
+    % change almost-zero elements to zero
+    P.H(abs(P.H)<1e-12) = 0;
+    P.K(abs(P.K)<1e-12) = 0;
+    
     if ~isinf(Options.roundat),
         % round H-representation to certain number of decimal places
         roundfactor = 10^Options.roundat;
