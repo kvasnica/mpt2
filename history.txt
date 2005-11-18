@@ -1,17 +1,173 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.5 16-Sep-2005
+% Version 2.5 23-Nov-2005
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
 
+Version 2.5 (23-Nov-2005)
+-------------------------
+
+[NEW] ellipsoidal toolbox now included
+
+[NEW] latest version of YALMIP included
+
+[NEW] support for lower-dimensional noise polytopes
+
+[NEW] mex files for the GLNXA64 platform (64-bit linux for AMD processors)
+
+[NEW] mpt_sysStructInfo can now display textual information about a
+given system when called with no output arguments
+
+[NEW] mptctrl: allow to evaluate the control law for state x0 more easily by 
+'ctrl(x0)'
+
+[NEW] mptctrl/get, mptctrl/set: set/get methods for MPTCTRL objects
+
+[NEW] mptctrl/modify: modify a controller in certain way (e.g. remove
+certain regions)
+
+[NEW] mpt_buildAdjacency: computes which regions are adjacent
+
+[NEW] mpt_maxCtrlSet: allow to break computation of Kinf sets based on
+volume increase (Options.Vconverge)
+
+[NEW] mpt_maxCtrlSet: make mpt_maxCtrlSet() return sets obtained at each
+iteration
+
+[NEW] mpt_maxCtrlSet: allow to call mpt_maxCtrlSet with custom
+problem-dependent parameters (Options.probStruct)
+
+[NEW] mpt_sys: do not generate HYSDEL simulator if user tells so
+(mpt_sys('hysdelfile.hys', 'nosimulator'))
+
+[NEW] mpt_options: allow to return individual settings
+
+[NEW] recompiled mex files on linux (issue157)
+
+[NEW] mpt_voronoi: sort voronoi cells according to seed points
+
+[NEW] mpt_iterativePWA: allow to specify which Lyapunov function to
+compute (Options.lyapunov_type={'any', 'pwq', 'pwa', 'none'})
+
+[NEW] mpt_plotPWA, mpt_plotPWQ: allow color of edges to be specified
+(Options.edgecolor)
+
+[NEW] mpt_plotPWA, mpt_plotPWQ: allow to specify level of transparency
+(Options.shade)
+
+[NEW] unitbox: unitbox(n) now produces the same output as unitbox(n, 1)
+
+[NEW] mpt_getInput: allow to use a "recovery" mode (Options.recover=1)
+
+[NEW] mpt_voronoi: allow to pass a "bounding polytope" when computing
+voronoi cells (Options.pbound)
+
+[NEW] polytope/distribpoints: distribure points in a polytope
+
+[NEW] polytope/dointersect: return indicies of intersecting regions
+
+[NEW] polytope/facetcircle: now allows to pass a vector of facets to explore
+
+[NEW] polytope/facetvoronoi: Computes an equivalent of voronoi diagrams
+for facets of a polytope
+
+[NEW] polytope/getInnerEllipsoid, polytope/getOutterEllipsoid: now return
+ellipsoid objects
+
+[NEW] polytope/minus: allow to simplify minkowski difference
+representation by merging (Options.merge)
+
+[NEW] polytope/pelemfun: execute arbitrary functions on each element of
+a polyarray
+
+[NEW] polytope/plot: allow colormap to be specified for polytope plots
+(Options.colormap)
+
+[NEW] polytope/plot: allow gradient coloring (Options.gradcolor=1)
+
+[NEW] polytope/projection: can now solve projection by mplp 
+(Options.projection=7)
+
+[NEW] polytope/unique: remove redundant entries of a polytope array
+
+[PATCH] polytope/bounding_box: allows to return all vertices of a
+bounding box
+
+[PATCH] polytope/bounding_box: change behavior with Options.noPolyOutput
+
+[PATCH] polytope/extreme, hull: allow rounding to increase numerical
+robustness for CDD (Options.roundat)
+
+[PATCH] polytope/facetcircle: properly normalize vectors of normals
+
+[PATCH] polytope/minus, polytope/plus: treat polytope arrays as a union
+of polytopes, not as single polytopes
+
+[PATCH] polytope/mtimes: allow scaling even when origin is not included
+
+[PATCH] polytope/projection: fix problems with fourier-motzkin
+C-implementation
+
+[PATCH] polytope/projection: fix handling of dimensions which are not sorted
+
+[PATCH] polytope/reduce: always return correct keptrows
+
+[PATCH] polytope/reduce: preserve order of hyperplanes
+
+[PATCH] polytope/regiondiff: fix problems with Options.infbox being too
+large
+
+[PATCH] polytope/triangulate: properly update extreme points
+
+[PATCH] polytope/triangulate: do not return volume as a complex number
+
+[PATCH] polytope/volume: do not return volume as a complex number
+
+[PATCH] mpt_computeTrajectory: fixed computation of closed-loop cost for
+systems with deltaU constraints
+
+[PATCH] mpt_exportc: allows to specify name of output file
+
+[PATCH] mpt_getInput: don't check regions twice
+
+[PATCH] mpt_infsetPWA: properly detect cases where invariant set is empty
+
+[PATCH] mpt_invariantSet: speed improvements
+
+[PATCH] mpt_invariantSet: allow to simplify intermediate steps using
+greedy merging
+
+[PATCH] mpt_init: improve speed
+
+[PATCH] mpt_mplp: fix problems with cycling
+
+[PATCH] mpt_mplp: fix random perturbations for 1D systems
+
+[PATCH] mpt_mplp: fix problems with "xBeyond violates more than one bounds"
+
+[PATCH] mpt_optControlPWA: fixed handling of 1D systems
+
+[PATCH] mpt_optControlPWA: always return Pfinal as a polytope array
+
+[PATCH] mpt_plotPWA, mpt_plotPartition, mpt_plotU: respect user's choice
+of subplots
+
+[PATCH] mpt_plotU: fixed handling of 1D systems with multiple inputs
+
+[PATCH] mpt_solveQP: properly impose equality constraints for NAG QP solver
+
+[PATCH] mpt_voronoi: make mpt_mplp() silent
+
+
+
 Version 2.0.4 (16-Sep-2005)
 ---------------------------
 
 [PATCH] fix computation of extreme points for cyclic polytopes
 
-[PATCH] mpt_iterativePWA: allow user-define target sets even if no dynamics 
+[PATCH] mpt_iterativePWA: allow user-defined target sets even if no dynamics 
 contains the origin
 
 [PATCH] remove ghost legends in mpt_plotTimeTrajectory
