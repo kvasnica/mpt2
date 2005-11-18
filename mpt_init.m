@@ -459,7 +459,7 @@ nrescue.lp = 2;
 nrescue.qp = 0;
 nrescue.milp = 0;
 nrescue.miqp = 0;
-nrescue.extreme = sub_maxsolvers('extreme');
+nrescue.extreme = 5;
 
 % set prefered solvers, list organized according to solver's speed on a given
 % problem
