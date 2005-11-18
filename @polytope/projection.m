@@ -166,8 +166,8 @@ if ~isfield(Options,'psolvers')
         Options.psolvers(find(Options.psolvers==6)) = [];
         Options.psolvers = [Options.psolvers 5 6 1];
     end
-    if length(orig_dim) > 3,
-        % don't even try iterative hull if we are projecting on more than 3
+    if length(orig_dim) > 5,
+        % don't even try iterative hull if we are projecting on more than 5
         % dimensions, since that can be _really_ slow
         Options.psolvers(find(Options.psolvers==2)) = [];
     end
@@ -239,7 +239,7 @@ for reg = 1:length(PA.Array),
                     % use mpLP to solve projection
                     Q = sub_mplp_proj(PA.Array{reg}, orig_dim, dim, Options);
                 otherwise,
-                    error('PROJECTION: unknown ptojection method selected!');
+                    error('PROJECTION: unknown projection method selected!');
             end
             if ~isbounded(Q),
                 if isbounded(PA.Array{reg}),
