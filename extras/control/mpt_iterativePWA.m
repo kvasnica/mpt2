@@ -940,7 +940,9 @@ for ii=1:length(Step),
     end
 end
 
-Options = rmfield(Options,'projection');
+if isfield(Options, 'projection'),
+    Options = rmfield(Options, 'projection');
+end
 
 nRtot = 0;
 pwalist = cell(1,nPWA);
