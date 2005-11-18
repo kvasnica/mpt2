@@ -667,7 +667,7 @@ while region <= nRegions & nRegions <= MAXREGIONS,
             solveNewLP = 0;
             neighbor = searchIndex(neighbor);    % actual region index Pquadrant{q}(neighbor)
             if nMatch > 1,
-                if Options.verbose > 0,
+                if Options.verbose > 1,
                     disp('Polyhedra should not overlap');
                 end
             end
