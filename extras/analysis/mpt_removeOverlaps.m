@@ -24,10 +24,11 @@ function [newCtrlStruct]=mpt_removeOverlaps(Partition,Options)
 % Options.lpsolver  - default solver for LP's
 % Options.abs_tol   - absolute tolerance
 % Options.rel_tol   - relative tolerance
+% Options.Vpruning  - whether or not to prune non-valid intersections by
+%                     examining extreme points (0 is default)
 % Options.lowmem    - defines memory saving mode
 %                       0 - no memory saving - fast computation (default)
-%                       1 - slight memory saving
-%                       2 - heavy memory saving (slow computation)
+%                       1 - heavy memory saving (slow computation)
 %
 % Note: If Options is missing or some of the fiels are not defined, the default
 %       values from mptOptions will be used
@@ -37,7 +38,7 @@ function [newCtrlStruct]=mpt_removeOverlaps(Partition,Options)
 % ---------------------------------------------------------------------------
 % newCtrl    - controller which consists of purely non-overlapping regions
 %
-% see also MPT_ITERATIVEPWA, MPT_ITERATIVE, MPT_OPTCONTROLPWA, MPT_PLOTU
+% see also POLYTOPE/REDUCEUNION, POLYTOPE/UNIQUE
 %
 
 % Copyright is with the following author(s):
@@ -79,59 +80,40 @@ if nargin<2,
     Options=[];
 end
 
-if ~isfield(Options,'abs_tol')
-    Options.abs_tol=mptOptions.abs_tol;     % default absolute tolerance
-end
-if ~isfield(Options,'rel_tol')
-    Options.rel_tol=mptOptions.rel_tol;     % default relative tolerance
-end
-if ~isfield(Options,'verbose')
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options,'lpsolver')
-    Options.lpsolver = mptOptions.lpsolver;
-end
-if ~isfield(Options,'lowmem')
-    Options.lowmem=0;
-end
-if ~isfield(Options, 'statusbar')
-    Options.statusbar = 0;
-end
-if ~isfield(Options, 'status_min')
-    Options.status_min = 0;
-end
-if ~isfield(Options, 'status_max')
-    Options.status_max = 1;
-end
-if ~isfield(Options, 'closestatbar'),
-    Options.closestatbar = 1;
-end
-statusbar = Options.statusbar;
-closestatbar = Options.closestatbar;
-Options.closestatbar = 0;
-Options.statusbar = 0;
-if statusbar,
-    Options.verbose = -1;
-end
 
-lowmem0 = (Options.lowmem==0);
-lowmem1 = (Options.lowmem==1);
-lowmem2 = (Options.lowmem==2);
+%====================================================================
+% set default options and parameters
+Options = mpt_defaultOptions(Options, ...
+    'abs_tol', mptOptions.abs_tol, ...
+    'rel_tol', mptOptions.rel_tol, ...
+    'bbox_tol', 1e4*mptOptions.abs_tol, ...
+    'verbose', mptOptions.verbose, ...
+    'lpsolver', mptOptions.lpsolver, ...
+    'lowmem', 0, ...
+    'Vpruning', 0, ...
+    'sphratio', 0.1 );
 
-rel_tol = Options.rel_tol;
 abs_tol = Options.abs_tol;
+rel_tol = Options.rel_tol;
+bbox_tol = Options.bbox_tol;
 lpsolver = Options.lpsolver;
+emptypoly = mptOptions.emptypoly;
+lowmem = Options.lowmem;
+bboxOpt = Options;
+bboxOpt.noPolyOutput = 1;
+mptctrl_input = 0;
+input_is_polytope = 0;
 
+
+%====================================================================
+% decide type of input argument
 if isa(Partition, 'polytope'),
     % input is a polytope array, convert it to a dummy controller structure
     input_is_polytope = 1;
     Partition = mpt_dummyCS(Partition);
 else
     input_is_polytope = 0;
-end
-
-mptctrl_input = 0;
-progress = 0;
+end 
 
 if ~iscell(Partition)
     if isa(Partition, 'mptctrl')
@@ -204,77 +186,88 @@ else
     details = Partition{1}.details;
 end
 
-npart = length(Partition);      % number of polyhedral partitions
-emptypoly = polytope;
-Pn = emptypoly;
-Fi = {};
-Gi = {};
-Ai = {};
-Bi = {};
-Ci = {};
-dynamics = [];
-nR = 0;
 
-intOptions=Options;
-intOptions.reduce_intersection=0; % we don't want to construct the intersection, just determine if it exist
-Options.reduce_intersection = 1;
 
-% check if cost contains quadratic cost
-for ii=1:npart,
-    Aai = [Partition{ii}.Ai{:}];
-    if ~all(all(Aai==0)),
-        error('mpt_removeOverlaps: Quadratic terms in the cost function not allowed!');
+%====================================================================
+% store length of each partition to avoid calling length(Pn) later on
+npart = length(Partition);
+nx = dimension(Partition{1}.Pn);
+PartLength = zeros(1, npart);
+for ii = 1:npart,
+    PartLength(ii) = length(Partition{ii}.Pn);
+end
+
+
+%====================================================================
+% stack bounding boxes of all partitions' Pfinal polytopes together
+% for faster access later
+PartBBoxes = zeros(nx, npart*2);
+PartLength = zeros(1, npart);
+for ii = 1:npart,
+    [d, bmin, bmax] = bounding_box(Partition{ii}.Pfinal, bboxOpt);
+    PartBBoxes(:, (ii-1)*2+1:ii*2) = [bmin bmax];
+    PartLength(ii) = length(Partition{ii}.Pn);
+end
+% prepare an intersection table which contains information about which
+% partitions do intersect
+PartIntersect = ones(npart);
+for ipart = 1:npart-1,
+    PartBBi = PartBBoxes(:, (ipart-1)*2+1:ipart*2);
+    for jpart = ipart+1:npart,
+        PartBBj = PartBBoxes(:, (jpart-1)*2+1:jpart*2);
+        if any(PartBBi(:,2) + bbox_tol < PartBBj(:,1)) | ...
+                any(PartBBj(:,2) + bbox_tol < PartBBi(:,1)),
+            % the two partitions for sure do not intersect since their bounding
+            % boxes do not intersect
+            PartIntersect(ipart, jpart) = 0;
+            PartIntersect(jpart, ipart) = 0;
+        end
     end
 end
-clear Aai
+% we don't need the bounding boxes anymore, clear them to save memory
+clear PartBBoxes
 
+
+
+%====================================================================
 % look for duplicate regions, i.e. regions which have identical cost, control
 % law and regions are the same. if such regions is identified, remove them from
 % Partition list (be carefull not to remove both identical regions, just one of
 % them!)
-
-if statusbar,
-    if ~isfield(Options, 'status_handle')
-        Options.status_handle = mpt_statusbar('Removing overlaps...');
-        closestatbar = 1;
-    end
-end
-
-remove_regions = cell(1,npart);
 nRemoved = 0;
-for ii=1:npart,
-    %sbprogress(pbarh,ceil(ii/npart*100));
-    part_ii = Partition{ii};
-    part_Pn_ii = part_ii.Pn;
-    if statusbar,
-        if isempty(mpt_statusbar(Options.status_handle, progress, Options.status_min, Options.status_max)),
-            mpt_statusbar;
-            error('Break...');
-        end     
-    end
-    for jj=ii+1:npart,
-        part_jj = Partition{jj};
-        part_Pn_jj = part_jj.Pn;
-        for kk=1:length(part_ii.Fi),
-            part_ii_Fi_kk = part_ii.Fi{kk};
-            part_ii_Gi_kk = part_ii.Gi{kk};
-            part_ii_Bi_kk = part_ii.Bi{kk};
-            part_ii_Ci_kk = part_ii.Ci{kk};
-            for mm=1:length(part_jj.Fi),
-                %%part_jj_Ci_mm = part_jj.Ci{mm};
-                if abs(part_ii_Ci_kk - part_jj.Ci{mm}) <= abs_tol,
-                    if all(all(abs(part_ii_Bi_kk - part_jj.Bi{mm}) <= abs_tol)),
-                        if all(all(abs(part_ii_Fi_kk - part_jj.Fi{mm}) <= abs_tol)),
-                            if all(abs(part_ii_Gi_kk - part_jj.Gi{mm}) <= abs_tol),
-                                if part_ii.Pn(kk) == part_jj.Pn(mm),
-                                    % cost, control law and regions are identical, remove one of
-                                    % them
-                                    if isempty(remove_regions{jj}),
-                                        remove_regions{jj}=mm;
-                                    else
-                                        remove_regions{jj} = [remove_regions{jj} mm];
-                                    end
-                                    nRemoved = nRemoved + 1;
+for ipart = 1:npart-1,
+    Partition_i = Partition{ipart};
+    for jpart = ipart+1:npart,
+        if PartIntersect(ipart, jpart)==0,
+            % partitions do not intersect, hence they cannot share identical
+            % regions
+            continue
+        end
+        Partition_j = Partition{jpart};
+        Cj = [Partition_j.Ci{:}];
+        if isempty(Cj),
+            % partition was already removed, skip to next one
+            continue
+        end
+        ij_equal = [];
+        for ireg = 1:PartLength(ipart),
+            Fi = Partition_i.Fi{ireg};
+            Gi = Partition_i.Gi{ireg};
+            Bi = Partition_i.Bi{ireg};
+            Ci = Partition_i.Ci{ireg};
+            for jreg = 1:PartLength(jpart),
+                % check if regions Partition{jpart}(jreg) and
+                % Partition{ipart}(ireg) are identical. if so, we remove one of
+                % them
+                %
+                % we could also do this comparison in a subfunctions, but it
+                % turned out that doing it in-line is much faster.
+                if abs(Ci-Cj(jreg)) <= abs_tol,
+                    if sum(abs(Gi-Partition_j.Gi{jreg}), 2) <= abs_tol,
+                        if sum(abs(Bi-Partition_j.Bi{jreg}), 2) <= abs_tol,
+                            if sum(abs(Fi-Partition_j.Fi{jreg}), 2) <= abs_tol,
+                                if Partition_i.Pn(ireg) == Partition_j.Pn(jreg),
+                                    ij_equal = [ij_equal; jreg];
                                 end
                             end
                         end
@@ -282,372 +275,272 @@ for ii=1:npart,
                 end
             end
         end
+        % only keep those regions which are not identical
+        j_unique = unique(ij_equal);
+        nRemoved = nRemoved + length(j_unique);
+        jkeep = setdiff(1:PartLength(jpart), j_unique);
+        Partition_j.Pn = Partition_j.Pn(jkeep);
+        Partition_j.Fi = {Partition_j.Fi{jkeep}};
+        Partition_j.Gi = {Partition_j.Gi{jkeep}};
+        Partition_j.Bi = {Partition_j.Bi{jkeep}};
+        Partition_j.Ci = {Partition_j.Ci{jkeep}};
+        Partition{jpart} = Partition_j;
+        PartLength(jpart) = length(Partition_j.Pn);
     end
 end
-%close(nbarh);
-clear part_ii_Fi_kk part_ii_Gi_kk part_ii_Bi_kk part_ii_Ci_kk
-clear part_ii part_Pn_ii part_jj part_Pn_jj
 if nRemoved>0 & Options.verbose > 0,
     disp(sprintf('Removed %d duplicate regions',nRemoved));
 end
 
-% ----------------------------------------------------------------
-% this part can be further optimized for speed
 
-for part=1:length(remove_regions),
-    if isempty(remove_regions{part}),
-        continue
-    end
-    regions = remove_regions{part};
-    onepart = Partition{part};
-    Fi = {};
-    Gi = {};
-    Ai = {};
-    Bi = {};
-    Ci = {};
-    for jj=1:length(Partition{part}.Fi),
-        if ~any(jj==regions)
-            Fi{end+1} = Partition{part}.Fi{jj};
-            Gi{end+1} = Partition{part}.Gi{jj};
-            Ai{end+1} = Partition{part}.Ai{jj};
-            Bi{end+1} = Partition{part}.Bi{jj};
-            Ci{end+1} = Partition{part}.Ci{jj};
-        end
-    end
-    Pn = Partition{part}.Pn;
-    Pn(regions) = [];
-    dynamics = Partition{part}.dynamics;
-    dynamics(regions) = [];
-    onepart.Pfinal = Partition{part}.Pfinal;
-    onepart.Pn = Pn;
-    onepart.Fi = Fi;
-    onepart.Gi = Gi;
-    onepart.Ai = Ai;
-    onepart.Bi = Bi;
-    onepart.Ci = Ci;
-    onepart.dynamics = dynamics;
-    Partition{part} = onepart;
-end
-newPart = {};
-keptParts = [];
+
+%====================================================================
+% it could be that the "removing of identical regions" procedure identified
+% a whole partition to be identical to an another one, thus we need to
+% remove such partition(s) from the list
+keep_partitions = zeros(1, npart);
 for ii=1:npart,
-    if length(Partition{ii}.Fi)>0,
-        newPart{end+1} = Partition{ii};
-        keptParts(end+1) = ii;
-    end
+    keep_partitions(ii) = isfulldim(Partition{ii}.Pn);
 end
-Partition= newPart;
+keep_indices = find(keep_partitions);
+keptParts = keep_indices;
+% keep only non-redundant partitions
+Partition = {Partition{keep_indices}};
+% keep only non-redundant partitions in the interesection map
+PartIntersect = PartIntersect(keep_indices,keep_indices);
+% keep only non-redundant partitions in the length vector
+PartLength = PartLength(keep_indices);
+
 npart = length(Partition);
-clear remove_regions onepart newPart Pn Ai Fi Gi Bi Ci
-% ----------------------------------------------------------------
 
-isPartPfinalFullDim = ones(npart,1);
-for ii=1:npart,
-    if ~isfulldim(Partition{ii}.Pfinal) | isempty(Partition{ii}.Fi),
-        isPartPfinalFullDim(ii)=0;
-    end
+
+
+%====================================================================
+% exit immediatelly if only one partition left
+if length(Partition)==1,
+    newCtrlStruct = Partition{1};
+    return
 end
-nx = dimension(Partition{1}.Pn);
-abs_tol = Options.abs_tol;
 
+
+
+%====================================================================
+% start removing overlaps
+if Options.verbose>0,
+    disp('Removing overlaps...');
+end
+nR = 0;
 Pn = emptypoly;
 Fi = {};
 Gi = {};
 Ai = {};
 Bi = {};
 Ci = {};
-dynamics = [];
-nR = 0;
+dynamics = []; 
+keptPartsIdx = []; 
 
-% compute bounding box of each polytope in each partition and store it for later
-% use
-boxOpt = Options;
-boxOpt.noPolyOutput = 1;
 
-if lowmem0 | lowmem1,
-    boxes = cell(1,npart);
-    for ii=1:npart,
-        lenPn = length(Partition{ii}.Fi);
-        boxes{ii} = cell(1,lenPn);
-        for jj=1:lenPn,
-            [R, low, up] = bounding_box(Partition{ii}.Pn(jj),boxOpt);
-            boxes{ii}{jj}.low = low;
-            boxes{ii}{jj}.up = up;
+
+%====================================================================
+% prepare bounding boxes of each region of each partition as big matrices
+BBOXES = cell(1, npart);
+for ipart = 1:npart,
+    B = pelemfun(@bounding_box, Partition{ipart}.Pn, struct('Voutput', 1));
+    BBOXES{ipart} = [B{:}];
+end
+
+
+%====================================================================
+% prepare H-representation as a cell array (only for Options.lowmem==0)
+if lowmem==0,
+    HPART = cell(1, npart);
+    KPART = cell(1, npart);
+    for ipart = 1:npart,
+        [HPART{ipart}, KPART{ipart}] = pelemfun(@double, Partition{ipart}.Pn);
+    end
+end
+
+
+%====================================================================
+% prepare map of intersecting regions
+IMAP = {};
+for ipart = 1:npart-1,
+    for jpart = ipart+1:npart,
+        if PartIntersect(ipart, jpart),
+            if Options.Vpruning,
+                % use pruning based on vertices - doesn't help too much compared
+                % to using just bounding boxes and is much more prone to
+                % numerical issues
+                [IMAP{ipart}{jpart}, Partition{ipart}.Pn, Partition{jpart}.Pn] = ...
+                    imap(Partition{ipart}.Pn, Partition{jpart}.Pn, bbox_tol, Options.sphratio, lpsolver);
+            else
+                % use pruning based on bounding boxes
+                IMAP{ipart}{jpart} = bboxmap(BBOXES{ipart}, BBOXES{jpart}, bbox_tol);
+            end
         end
     end
 end
+% we don't need the bounding boxes anymore, clear them to save memory
+clear BBOXES
 
-if statusbar,
-    if isempty(mpt_statusbar(Options.status_handle, progress, Options.status_min, Options.status_max)),
-        mpt_statusbar;
-        error('Break...');
-    end     
-end
 
-if Options.verbose>0,
-    if lowmem0
-        disp('Removing overlaps...');
-    elseif lowmem1
-        disp('Removing overlaps (memory saving mode)...');
-    else
-        disp('Removing overlaps (maximum memory saving mode)...');
-    end
-end
 
-if lowmem0
-    Hstore = cell(1,npart);
-    Kstore = cell(1,npart);
-    for ii = 1:npart,
-        lenFi = length(Partition{ii}.Fi);
-        Hstore{ii} = cell(1, lenFi);
-        Kstore{ii} = cell(1, lenFi);
-        for jj = 1:lenFi,
-            [Hstore{ii}{jj}, Kstore{ii}{jj}] = double(Partition{ii}.Pn(jj));
+for ipart = 1:npart,
+
+    if Options.verbose < 2 & Options.verbose > -1,
+        if mod(ipart, round(npart/3))==0 | ipart==1 | ipart==npart,
+            fprintf('hull %d/%d\t', ipart, npart);
         end
     end
-end
 
-keptPartsIdx = [];
-
-for ii=1:npart
-
-    if Options.verbose > -1,
-        if mod(ii,round(npart/3))==0 | ii==1 | ii==npart,
-            %sbprogress(pbarh,ceil(ii/npart*100));
-            fprintf('hull %d/%d\t',ii,npart);
-        end
-    end
-    progress = ii/npart;
-    PartitionII = Partition{ii};
-    if lowmem0 | lowmem1
-        boxes_ii = boxes{ii};
-    end
-    
-%     if statusbar,
-%         if isempty(mpt_statusbar(Options.status_handle, progress, Options.status_min, Options.status_max)),
-%             mpt_statusbar;
-%             error('Break...');
-%         end     
-%     end
-    
-    for jj=1:length(PartitionII.Fi)
+    for ireg = 1:PartLength(ipart),
         
         Intersection=[];  % intersection information
         Intersection.Pn = emptypoly;
-        Intersection.nR=0;
-        
-        Part_ii_Pn_jj = PartitionII.Pn(jj);
-        
-        if lowmem2 | lowmem1,
-            [H1,K1] = double(Part_ii_Pn_jj);
-        else
-            H1 = Hstore{ii}{jj};
-            K1 = Kstore{ii}{jj};
-        end
-        
-        if lowmem0 | lowmem1
-            low1 = boxes_ii{jj}.low;
-            up1 = boxes_ii{jj}.up;
-            low1tol = low1 + abs_tol;
-            up1tol = up1 + abs_tol;
-        end
-        
-%         if statusbar,
-%             if isempty(mpt_statusbar(Options.status_handle, progress, Options.status_min, Options.status_max)),
-%                 mpt_statusbar;
-%                 error('Break...');
-%             end     
-%         end
-        
-        for kk=1:npart
-            if kk==ii
-                % do not consider overlaps within of the same partition
-                %
-                % by Options.noSectionCheck we also indicate that the regions are already sorted in
-                % descending order by value function and we don't need to compare partitions with greater cost (set distance)
-                continue;
-            end
-            
-            if lowmem0 | lowmem1
-                boxes_kk = boxes{kk};
-            end
-            
-            PartitionKK = Partition{kk};
-            
-            if statusbar,
-                if isempty(mpt_statusbar(Options.status_handle, progress, Options.status_min, Options.status_max)),
-                    mpt_statusbar;
-                    error('Break...');
-                end     
-            end
-            
-            for mm=1:length(PartitionKK.Fi)
+        Intersection.nR=0; 
 
-                auxI_mm = 1;
-            
-                if lowmem0 | lowmem1
-                    low2 = boxes_kk{mm}.low;
-                    up2 = boxes_kk{mm}.up;
-                    low2tol = low2 + abs_tol;
-                    up2tol = up2 + abs_tol;
-                else
-                    [R, low1, up1] = bounding_box(Partition{ii}.Pn(jj),boxOpt);
-                    [R, low2, up2] = bounding_box(Partition{kk}.Pn(mm),boxOpt);
-                    low1tol = low1+abs_tol;
-                    up1tol = up1+abs_tol;
-                    low2tol = low2+abs_tol;
-                    up2tol = up2+abs_tol;
-                end
-                auxI_mm = 1;
-                for qq=1:nx,
-                    if ~( (low2(qq)<=low1tol(qq) & low1(qq)<=up2tol(qq)) | ...
-                            (low2(qq)<=up1tol(qq) & up1(qq)<=up2tol(qq)) | ...
-                            (low1(qq)<=low2tol(qq) & low2(qq)<=up1tol(qq)) | ...
-                            (low1(qq)<=up2tol(qq) & up2(qq)<=up1tol(qq)) )
-                        % bounding boxes do not intersect, hence polytopes
-                        % do not intersect as well
-                        auxI_mm = 0;
-                        break
-                    else
-                        continue
-                    end
-                end
+        if lowmem == 0,
+            Hi = HPART{ipart}{ireg};
+            Ki = KPART{ipart}{ireg};
+        else
+            [Hi, Ki] = double(Partition{ipart}.Pn(ireg));
+        end
+        
+        for jpart = 1:npart,
+
+            if ipart==jpart,
+                % do not consider overlaps within of the same partition
+                continue;
                 
-                if auxI_mm == 0,
-                    % if polytope Partition{kk}.Pn(mm) is not intersecting the feasible set of Partition{ii}, skip it
+            elseif ~PartIntersect(ipart, jpart),
+                % partitions do not intersect, don't bother and skip to next one
+                continue
+                
+            elseif ipart < jpart,
+                % extract proper intersection map
+                IM = IMAP{ipart}{jpart};
+                
+            else
+                % extract proper intersection map                
+                IM = IMAP{jpart}{ipart}';
+                
+            end
+            
+            for jreg = 1:PartLength(jpart),
+
+                if IM(ireg, jreg)==0,
+                    % no intersection exists between these two regions
                     continue
                 end
-                
-                if lowmem2 | lowmem1,
-                    [H2,K2] = double(PartitionKK.Pn(mm));
-                else
-                    H2 = Hstore{kk}{mm};
-                    K2 = Kstore{kk}{mm};
+
+                if lowmem==0,
+                    Hj = HPART{jpart}{jreg};
+                    Kj = KPART{jpart}{jreg};
+                else                    
+                    [Hj, Kj] = double(Partition{jpart}(jreg));
                 end
                 
-                Haux = [H1; H2];
-                Kaux = [K1; K2];
-                % get radius of chebyshev's ball of the intersection
-                if auxI_mm==3,
-                    fulldim=1;
-                else
-                    [xcheb, R] = sub_chebyball(Haux,Kaux,nx,rel_tol,abs_tol,lpsolver);
-                    fulldim = (R>=abs_tol);
-                end
-                if fulldim
-                    
-                    % intersection is non-empty
-                    Baux=PartitionKK.Bi{mm}-PartitionII.Bi{jj};
-                    Caux=PartitionKK.Ci{mm}-PartitionII.Ci{jj};
+                Haux = [Hi; Hj];
+                Kaux = [Ki; Kj];
+                
+                [x, R] = sub_chebyball(Haux, Kaux, nx, rel_tol, abs_tol, lpsolver);
+                dosect = (R > abs_tol);
+                
+                if dosect,
+
+                    % intersection exists
+                    Baux = Partition{jpart}.Bi{jreg} - Partition{ipart}.Bi{ireg};
+                    Caux = Partition{jpart}.Ci{jreg} - Partition{ipart}.Ci{ireg};
                     % if costs are the same for two regions be careful not to remove both regions
                     % here we keep only the region belonging to the first partition
-                    if sum(abs([Baux Caux]),2)<=abs_tol                       % is the cost identical?
-                        if ii<kk,                                                     % if so, we just remove the region once
+                    if sum(abs([Baux Caux]),2)<=abs_tol       % is the cost identical?
+                        if ipart < jpart,                     % if so, we just remove the region once
                             Intersection.nR=Intersection.nR+1;
-                            Intersection.who(Intersection.nR,:)=[kk mm];
-                            Paux = polytope(Haux, Kaux, 0, 2, xcheb, R);
+                            Intersection.who(Intersection.nR,:)=[jpart jreg];
+                            Paux = polytope(Haux, Kaux, 0, 2);
                             Intersection.Pn = [Intersection.Pn Paux];
                         end
                     else
                         % find a part of the region in which cost associated to index 'mm' is lower than the one of index 'jj'
                         H = [Haux; Baux];
                         K = [Kaux; -Caux];
-                        % get radius of chebyshev's ball of the intersection
-                        [xcheb, R] = sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver);
-                       
-                        if R>=abs_tol,
-                            % faster call - do not reduce the polytope yet
-                            Paux = polytope(H, K, 0, 2, xcheb, R);
-                            Intersection.nR=Intersection.nR+1;
-                            Intersection.who(Intersection.nR,:)=[kk mm];
+                        [x, R] = sub_chebyball(H, K, nx, rel_tol, abs_tol, lpsolver);
+                        if (R >= abs_tol),
+                            Paux = polytope(H, K, 0, 2, x, R);
+                            Intersection.nR = Intersection.nR+1;
+                            Intersection.who(Intersection.nR,:) = [jpart jreg];
                             Intersection.Pn = [Intersection.Pn Paux];
                         end
                     end
-                end
-            end % mm
-        end % kk
+                else
+                    % mark regions as non-intersecting in the intersection map
+                    IM(ireg, jreg)=0;
+                    
+                end %dosect
+            end % jreg
+            
+            % write updated transition map back
+            if ipart < jpart,
+                % extract proper intersection map
+                 IMAP{ipart}{jpart} = IM;
+             else
+                % extract proper intersection map                
+                IMAP{jpart}{ipart} = IM';
+            end
+            
+        end % jpart
         
-        if statusbar,
-            if isempty(mpt_statusbar(Options.status_handle, progress, Options.status_min, Options.status_max)),
-                mpt_statusbar;
-                error('Break...');
-            end     
-        end
-        
-        if Intersection.nR>0
+        if Intersection.nR > 0
             % get all segments which have the same 'minimal' cost
-            Ri = regiondiff(PartitionII.Pn(jj), Intersection.Pn, Options);          
-            if ~isfulldim(Ri(1)) % union is covering Ri
+            Ri = regiondiff(Partition{ipart}.Pn(ireg), Intersection.Pn, Options);
+            if ~isfulldim(Ri) % union is covering Ri
                 if Options.verbose>1,
-                    disp(['      reg ' num2str([ii jj]) '     ']);
+                    disp(['      reg ' num2str([ipart ireg]) '     ']);
                 end
                 continue;
             else
                 if Options.verbose>1,
-                    disp([' ==== reg ' num2str([ii jj]) ' ==== kept']);
+                    disp([' ==== reg ' num2str([ipart ireg]) ' ==== kept']);
                 end
                 Pn = [Pn Ri];
                 for mm=1:length(Ri)
                     nR = nR+1;
-                    Fi{nR} = PartitionII.Fi{jj};
-                    Gi{nR} = PartitionII.Gi{jj};
-                    Ai{nR} = PartitionII.Ai{jj};
-                    Bi{nR} = PartitionII.Bi{jj};
-                    Ci{nR} = PartitionII.Ci{jj};
-                    dynamics = [dynamics PartitionII.dynamics(jj)];
+                    Fi{nR} = Partition{ipart}.Fi{ireg};
+                    Gi{nR} = Partition{ipart}.Gi{ireg};
+                    Ai{nR} = Partition{ipart}.Ai{ireg};
+                    Bi{nR} = Partition{ipart}.Bi{ireg};
+                    Ci{nR} = Partition{ipart}.Ci{ireg};
+                    dynamics = [dynamics Partition{ipart}.dynamics(ireg)];
                     if ~isempty(keptPartsIdx),
-                        if ( ~any(keptPartsIdx == ii) ),
-                            keptPartsIdx(end+1) = ii;
+                        if ( ~any(keptPartsIdx == ipart) ),
+                            keptPartsIdx(end+1) = ipart;
                         end
                     end
                 end
             end
         else
             if Options.verbose>1,
-                disp([' ==== reg ' num2str([ii jj]) ' ==== kept']);
+                disp([' ==== reg ' num2str([ipart ireg]) ' ==== kept']);
             end
             nR = nR+1;
-            Pn = [Pn Part_ii_Pn_jj];
-            Fi{nR} = PartitionII.Fi{jj};
-            Gi{nR} = PartitionII.Gi{jj};
-            Ai{nR} = PartitionII.Ai{jj};
-            Bi{nR} = PartitionII.Bi{jj};
-            Ci{nR} = PartitionII.Ci{jj};
-            dynamics = [dynamics PartitionII.dynamics(jj)];
+            Pn = [Pn Partition{ipart}.Pn(ireg)];
+            Fi{nR} = Partition{ipart}.Fi{ireg};
+            Gi{nR} = Partition{ipart}.Gi{ireg};
+            Ai{nR} = Partition{ipart}.Ai{ireg};
+            Bi{nR} = Partition{ipart}.Bi{ireg};
+            Ci{nR} = Partition{ipart}.Ci{ireg};
+            dynamics = [dynamics Partition{ipart}.dynamics(ireg)];
             if ~isempty(keptPartsIdx),
-                if ( ~any(keptPartsIdx == ii) ),
-                    keptPartsIdx(end+1) = ii;
+                if ( ~any(keptPartsIdx == ipart) ),
+                    keptPartsIdx(end+1) = ipart;
                 end
             end
         end
-    end % jj
-end % ii 
-clear Intersection PartitionII
+    end % ireg
+end % ipart
+
 if Options.verbose > -1,
     fprintf('\n');
-end
-
-if statusbar,
-    if isempty(mpt_statusbar(Options.status_handle, 1, Options.status_min, Options.status_max)),
-        mpt_statusbar;
-        error('Break...');
-    end     
-end
-
-if iscell(Partition)
-    newCtrlStruct.sysStruct = sysStruct;
-    newCtrlStruct.probStruct = probStruct;
-end
-if Options.noSectionCheck
-    if ~exist('ctrlStruct','var'),
-        ctrlStruct = Partition{1};
-    else
-        newCtrlStruct = ctrlStruct;
-    end
-end
-
-if closestatbar,
-    mpt_statusbar;
 end
 
 if input_is_polytope
@@ -656,10 +549,14 @@ if input_is_polytope
     return
 end
 
-%newCtrlStruct.Pfinal = reduceunion(PPfinal);
-%newCtrlStruct.Pfinal = Pn;
+newCtrlStruct = Partition{1};
+
+Pfinal = polytope;
+for ii = 1:npart,
+    Pfinal = [Pfinal Partition{ii}.Pfinal];
+end
 details.keptParts = keptParts(keptPartsIdx);
-newCtrlStruct.Pfinal = PPfinal;
+newCtrlStruct.Pfinal = Pfinal;
 newCtrlStruct.Pn = Pn;
 newCtrlStruct.Fi = Fi;
 newCtrlStruct.Gi = Gi;
@@ -674,71 +571,27 @@ if mptctrl_input
     % if input was an MPTCTRL object, return MPTCTRL object
     newCtrlStruct = mptctrl(newCtrlStruct);
 end
-clear RegionIntersect
-
-
 
 return
 
 
 % ---------------------------------------------------------------------------------------
-function ctrlStruct = sub_ro_minTime(ctrlStruct)
-
-PA = ctrlStruct.Pn;
-PA = fliplr(PA);
-ctr = 1;
-PPA = PA(end);
-FFi{ctr} = ctrlStruct.Fi{1};
-GGi{ctr} = ctrlStruct.Gi{1};
-AAi{ctr} = ctrlStruct.Ai{1};
-BBi{ctr} = ctrlStruct.Bi{1};
-CCi{ctr} = ctrlStruct.Ci{1};
-DD = ctrlStruct.dynamics(1);
-
-lenPn = length(PA);        
-for ii=2:lenPn
-    i=lenPn-ii+1;
-    if mod(ii,20)==0,
-        disp(['Region ' num2str(ii) '/' num2str(lenPn)])
-    end
-    tmpA=PA((i+1):lenPn);
-    tmpA=PA(i)\tmpA;
-    if(isfulldim(tmpA))
-        for j=1:length(tmpA)
-            ctr=ctr+1;
-            PPA = [PPA tmpA(j)];
-            FFi{ctr}=ctrlStruct.Fi{ii};
-            GGi{ctr}=ctrlStruct.Gi{ii};
-            AAi{ctr}=ctrlStruct.Ai{ii};
-            BBi{ctr}=ctrlStruct.Bi{ii};
-            CCi{ctr}=ctrlStruct.Ci{ii};
-            DD = [DD ctrlStruct.dynamics(ii)];
-        end
-    end
-end 
-ctrlStruct.Pn = PPA;
-ctrlStruct.Fi = FFi;
-ctrlStruct.Gi = GGi;
-ctrlStruct.Ai = AAi;
-ctrlStruct.Bi = BBi;
-ctrlStruct.Ci = CCi;
-ctrlStruct.dynamics = DD;
-ctrlStruct.overlaps = 0;
-
-
-% ---------------------------------------------------------------------------------------
 function [xcheb, R]=sub_chebyball(H,K,nx,rel_tol,abs_tol,lpsolver)
 
-if all(K>-1e9),
+if any(K<=-1e9),
+    % problem seems to be unbounded, perform normalization later on
+    exitflag = 0;
+else    
     % use 'rescue' function - resolve an LP automatically if it is infeasible
     % with default solver
     [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
         K,[],[],[],lpsolver);
-else
-    how = 'infeasible';
 end
 
-if ~strcmp(how,'ok')
+%if ~strcmp(how,'ok')
+if exitflag==1,
+    % all ok,
+else
     % maybe there is a numerical problem, thus we normalize H and K
     
     [nc,nx]=size(H);
@@ -784,6 +637,12 @@ if ~strcmp(how,'ok')
     % with default solver
     [xopt,fval,lambda,exitflag,how]=mpt_solveLPs([zeros(1,nx) 1],[H, -sqrt(sum(H.*H,2))],...
         K,[],[],x0,lpsolver);
+    
+    if exitflag~=1,
+        % solution is not optimal, set R to zero, this will be threated as an
+        % infeasible transition later on
+        xopt = 0*xopt;
+    end
 end
 
 xcheb = xopt(1:nx); % center of the ball
@@ -839,6 +698,7 @@ ctrlStruct.overlaps = 0;
 return
 
 
+%------------------------------------------------------------------------------
 function [fC]=sub_flip_cell(C)
 
 lenC = length(C);
@@ -846,3 +706,135 @@ fC=cell(1,lenC);
 for ii=1:lenC,
     fC{lenC-ii+1}=C{ii};
 end
+
+
+%------------------------------------------------------------------------------
+function map = bboxmap(BP, BQ, bbox_tol)
+
+[dim, nP] = size(BP);
+[dim, nQ] = size(BQ);
+nP = nP/2;
+nQ = nQ/2;
+map = ones(nP, nQ);
+for preg = 1:nP
+    for qreg = 1:nQ,
+        if any(BP(:,preg*2)+bbox_tol < BQ(:,(qreg-1)*2+1)) 
+            % even bounding boxes of the two polytopes do not intersect
+            map(preg, qreg) = 0;
+        elseif any(BQ(:,qreg*2)+bbox_tol < BP(:, (preg-1)*2+1)),
+            % even bounding boxes of the two polytopes do not intersect
+            map(preg, qreg) = 0;
+        end
+    end
+end
+
+%------------------------------------------------------------------------------
+function [map, P, Q] = imap(P, Q, bbox_tol, maxsph, lpsolver)
+
+bboxOpt.noPolyOutput = 1;
+lenP = length(P);
+lenQ = length(Q);
+map = ones(lenP, lenQ);
+
+PB = cell(1, lenP);
+QB = cell(1, lenQ);
+if maxsph>0,
+    % we will check intersection of V-representations
+    PV = cell(1, lenP);
+    QV = cell(1, lenQ);
+end
+
+% prepare bounding boxes and extreme points
+for preg = 1:lenP,
+    [d, Pmin, Pmax] = bounding_box(P(preg), bboxOpt);
+    if maxsph>0,
+        [V, R, d] = extreme(d);
+        PV{preg} = V';
+    end
+    P(preg) = d;
+    PB{preg} = [Pmin Pmax];
+end
+for qreg = 1:lenQ,
+    [d, Qmin, Qmax] = bounding_box(Q(qreg), bboxOpt);
+    if maxsph>0,
+        [V, R, d] = extreme(d);
+        QV{qreg} = V';
+    end
+    Q(qreg) = d;
+    QB{qreg} = [Qmin Qmax];
+end
+
+% first do pruning based on bounding boxes
+for preg = 1:lenP,
+    pb = PB{preg};
+    for qreg = 1:lenQ,
+        qb = QB{qreg};
+        if any(pb(:,2)+bbox_tol < qb(:,1)) | any(qb(:,2)+bbox_tol < pb(:, 1)),
+            % even bounding boxes of the two polytopes do not intersect
+            map(preg, qreg) = 0;
+        end
+    end
+end
+
+if maxsph<=0,
+    return
+end
+
+maxsph = lenP*lenQ*maxsph;
+
+
+dim = dimension(P);
+vecP = [PV{1:end}];
+indiciesP = cumsum([1 cellfun('prodofsize', PV)/dim]);
+vecQ = [QV{1:end}];
+indiciesQ = cumsum([1 cellfun('prodofsize', QV)/dim]);
+sphcount = 0;
+
+for i=1:lenP
+    for j = find(map(i,:))
+        if map(i,j)
+            sphcount = sphcount + 1;
+            if sphcount > maxsph,
+                % exit if maximum number of allowed separating haperplanes has
+                % been reached
+                return
+            end
+            [a,b,f] = separatinghp(PV{i}, QV{j}, lpsolver, dim);
+            if (f == 1) % Found one!
+                AA = a*vecQ;
+                BB = a*vecP;
+                jprunes  = zeros(lenQ,1);
+                for prunej = 1:lenQ
+                    jprunes(prunej) = all((AA(indiciesQ(prunej):indiciesQ(prunej+1)-1)-b)>=bbox_tol);
+                end
+                jprunes = logical(jprunes);
+                if any(jprunes)
+                    iprunes  = zeros(lenP,1);
+                    for prunei = i:lenP
+                        iprunes(prunei) = all((BB(indiciesP(prunei):indiciesP(prunei+1)-1)-b)<=-bbox_tol);
+                    end
+                    for prunei = find(iprunes)
+                        map(prunei,jprunes) = 0;
+                    end
+                end
+            end
+
+        end
+    end
+end
+
+
+%-------------------------------------------------------------------
+function [a,b,exitflag] = separatinghp(X,Y,lpsolver,nx)
+
+mx = size(X,2);
+my = size(Y,2);
+
+A = [X' -ones(mx,1);-Y' ones(my,1)];
+b = [-ones(mx,1);-ones(my,1)];
+f = zeros(1,nx+1);
+[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,b,[],[],[],lpsolver);
+a = xopt(1:nx)';
+b = xopt(end);
+% how = ~isequal(how,'infeasible');
+% how = how & ~all(abs(xopt)<1e-8) & ~any(xopt==1e9);
