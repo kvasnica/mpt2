@@ -134,6 +134,7 @@ if ~iscell(Partition)
     if ~ctrlStruct.overlaps,
         disp('mpt_removeOverlaps: Partitions do not overlap, nothing to do here...');
         newCtrlStruct = ctrlStruct;
+        newCtrlStruct.details.keptParts = 1;
         if mptctrl_input
             newCtrlStruct = mptctrl(newCtrlStruct);
         end
@@ -141,6 +142,7 @@ if ~iscell(Partition)
     end
     if ctrlStruct.probStruct.subopt_lev == 1,
         newCtrlStruct = sub_removeOverlaps_MinTime(ctrlStruct);
+        newCtrlStruct.details.keptParts = 1;        
         if mptctrl_input
             newCtrlStruct = mptctrl(newCtrlStruct);
         end
@@ -319,6 +321,10 @@ npart = length(Partition);
 % exit immediatelly if only one partition left
 if length(Partition)==1,
     newCtrlStruct = Partition{1};
+    newCtrlStruct.details.keptParts = 1;
+    if mptctrl_input
+        newCtrlStruct = mptctrl(newCtrlStruct);
+    end
     return
 end
 
