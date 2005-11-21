@@ -1331,6 +1331,7 @@ G(aux,:)=[];
 W(aux,:)=[];
 E(aux,:)=[];
 
+constraints_reduced = 0;
 if(reduce_constraints)
     %remove all redundant constraints
     if Options.noReduce,
@@ -1366,6 +1367,7 @@ if(reduce_constraints)
             Matrices.bndb = bndb;
             Matrices.Pinvset = Pinvset;
             Matrices.GEW = GEW;
+            Matrices.constraints_reduced = 1;
             G = Matrices;
         end
         return
@@ -1373,6 +1375,7 @@ if(reduce_constraints)
     [GE,W]=double(GEW);
     G=GE(:,1:(end-nx));
     E=-GE(:,(end-nx+1):end);
+    constraints_reduced = 1;
 end
 
 
@@ -1425,6 +1428,7 @@ if nargout==1,
     Matrices.bndA = bndA;
     Matrices.bndb = bndb;
     Matrices.Pinvset = Pinvset;
+    Matrices.constraints_reduced = constraints_reduced;
     G = Matrices;
 end
 

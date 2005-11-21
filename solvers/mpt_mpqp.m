@@ -132,6 +132,23 @@ if ~isfield(Matrices, 'PbndIncluded'),
     Matrices.G=[Matrices.G; zeros(size(Matrices.bndA,1),size(Matrices.G,2))];
 end
 
+if isfield(Matrices, 'constraints_reduced'),
+    constraints_reduced = Matrices.constraints_reduced;
+else
+    constraints_reduced = 0;
+end
+
+if ~constraints_reduced,
+    % we must remove redundant constraints otherwise it can happen that when
+    % identifying active constraints, we choose several of them which are identical,
+    % which in turn leads to problems when constructing critical regions.
+    P = polytope([Matrices.G Matrices.E], Matrices.W);
+    [H, K] = double(P);
+    Matrices.G = H(:, 1:size(Matrices.G, 2));
+    Matrices.E = H(:, size(Matrices.G, 2)+1:end);
+    Matrices.W = K;
+end
+
 [G,S,W,H,F,Hinv,GHinv,bndA,bndb,nx,nu,Matrices]=sub3_extract(Matrices);
 
 global mptOptions;
