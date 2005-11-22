@@ -99,6 +99,11 @@ end
 if ~isfield(Options, 'verbose'),
     Options.verbose = mptOptions.verbose;
 end
+if ~isfield(Options, 'qpsolver'),
+    % we can't use projection method 7 (mplp) if we can't use the latest mpLP
+    % solver, which requires some QP solver to be available.
+    Options.qpsolver = mptOptions.qpsolver;
+end
 
 if ~isfulldim(PA),
     % exit quickly if input polytope is not fully dimensional
@@ -141,14 +146,13 @@ if ~isfield(Options,'psolvers')
     elseif length(dim)<=1,
         % only 1 dimension to eliminate -> use fourier-motzkin
         Options.psolvers = [5 1 6 4 7 2 3 0];
+    elseif length(orig_dim)<=5,
+        % projecting on less than 6 dimensions, the mplp-based method works well
+        Options.psolvers = [7 4 5 2 6 3 1 0];
     elseif length(dim)<=2,
         % only 2 dimensions to eliminate -> use mex fourier-motzkin (matlab
         % fourier motzkin can be very slow)
         Options.psolvers = [5 4 6 7 1 2 3 0];
-    elseif length(orig_dim)<=d/2
-        % eliminating many dimensions, the mplp-based method seems to be a good
-        % compromise between reliability and speed
-        Options.psolvers = [4 5 7 6 3 1 2 0];
     else
         % prefer esp otherwise
         Options.psolvers = [4 7 5 2 3 1 0 6];
@@ -169,6 +173,11 @@ if ~isfield(Options,'psolvers')
         % don't even try iterative hull if we are projecting on more than 5
         % dimensions, since that can be _really_ slow
         Options.psolvers(find(Options.psolvers==2)) = [];
+    end
+    if Options.qpsolver < 0,
+        % no QP solver available, we can't use most recent mpt_mplp() version,
+        % therefore we exclude the method based on mpLPs
+        Options.psolvers(find(Options.psolvers==7)) = [];
     end
 end
 if isfield(Options,'projection')
@@ -290,14 +299,12 @@ function P = sub_mplp_proj(P, orig_dim, dim, Options)
 %   2. characterization of the feasible set, which is exactly equal to the
 %   projection of the ([-E G],W) polytope onto the x-space
 
-Opt = Options;
-Opt.verbose = -1;    % to keep mpt_mplp() silent
-if isfield(Opt, 'projection'),
-    Opt = rmfield(Opt, 'projection');
+if Options.qpsolver < 0,
+    error('No QP solver available, cannot use this method for projections');
 end
-if isfield(Opt, 'psolvers'),
-    Opt = rmfield(Opt, 'psolvers');
-end
+
+Opt.max_regions = 1000;  % abort mpt_mplp() if we exceed this number of regions
+Opt.verbose = -1;        % keep mpt_mplp() silent
 
 [H, K] = double(P);
 M.G = H(:, dim);
@@ -305,13 +312,18 @@ M.E = -H(:, orig_dim);
 M.W = K;
 M.bndA = [];
 M.bndb = [];
-M.H = rand(1, length(dim));  % use random cost to avoid degeneracies
+M.H = zeros(1, length(dim));  % use zero cost. although it can lead to degeneracies, 
+                              % it should generate a fairly small number of regions
 M.F = zeros(1, length(orig_dim));
 [Pn, Fi, Gi, AC, Phard] = mpt_mplp(M, Opt);
 if ~isfulldim(Phard)
     % sometimes we can return Phard as an empty polytope if there are missing
     % regions on the boundary
-    error('PROJECTION: mplp approach failed.');
+    error('PROJECTION: mplp approach failed (Phard is empty).');
+elseif length(Pn) >= Opt.max_regions,
+    % we aborted mplp() prematurely in order to avoid cycling, Phard cannot be
+    % trusted
+    error('PROJECTION: mplp approach failed (max_regions exceeded).');
 else
     P = Phard;   % projection is equal to the feasible set
 end
