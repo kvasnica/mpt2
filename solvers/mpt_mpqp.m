@@ -466,7 +466,9 @@ while region<=nR,
                     % Add control law
                     [Pcr,Fii,Gii,kr]=sub1_computelaw(ii,nu,nx,Matrices,Options);
                     if(~isfulldim(Pcr))
-                        disp('WARNING: Empty controller region despite active constraints !')
+                        if Options.verbose > 1,
+                            disp('WARNING: Empty controller region despite active constraints !')
+                        end
                         break
                     end
                     nR=nR+1; % new region
