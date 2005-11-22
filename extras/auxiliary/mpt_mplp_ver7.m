@@ -168,7 +168,7 @@ EMPTY_ROW_TOL    = Options.abs_tol;         % Tolerance for declaring
 % that row is empty
 CONSTR_TOL       = Options.rel_tol;         % Tolerance for declaring that
 % constr. is redundant
-ZERO_TOL         = Options.abs_tol;         % Tolerance for
+ZERO_TOL         = min(Options.abs_tol, 1e-8);         % Tolerance for
 % considering something
 % equal to 0
 RANK_TOL         = 10*sqrt(eps);         % Tolerance for the
@@ -850,6 +850,18 @@ while region <= nRegions & nRegions <= MAXREGIONS,
                             ' subregion.']);
                     end
                 end
+                
+                if ~isinside(cr.P, xBeyond, isinOpt),
+                    % cr.P should always contain the point xBeyond, unless there
+                    % are severe numerical troubles.
+                    if Options.verbose > 1
+                        disp(['Numerical problems detected! Either use ', ...
+                                'different LP solver or re-scale your ', ...
+                                'problem!']);
+                    end
+                    continue
+                end
+                
                 %
                 % store a new region
                 %
