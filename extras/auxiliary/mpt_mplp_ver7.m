@@ -1533,7 +1533,7 @@ if ~isfulldim(LXpoly),
     LXpoly = set(LXpoly, 'K', K);
     LXpoly = set(LXpoly, 'xCheb', zeros(size(H, 2), 1));
     try
-        cr.P = projection(LXpoly, 1:nx, Options);
+        T = evalc('cr.P = projection(LXpoly, 1:nx, Options);');
         if Options.verbose > 1,
             fprintf(['Projection of a lower-dimensional '...
                 'polytope succeeded...\n']);
