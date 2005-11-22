@@ -1522,7 +1522,29 @@ LXpoly = polytope(H,K);
 if ~isfulldim(LXpoly),
     % can this really happen?
     %
-    cr.type = 0;
+    
+    % it could be that LXpoly is a lower-dimensional polytope. 
+    % therefore we create a dummy polytope object and force set 
+    % it's H-representation. we also need to set zero chebycenter, 
+    % since many projection methods try to shift the polytope such 
+    % that origin is included in it's interior.
+    LXpoly = unitbox(size(H, 2), 1);
+    LXpoly = set(LXpoly, 'H', H);
+    LXpoly = set(LXpoly, 'K', K);
+    LXpoly = set(LXpoly, 'xCheb', zeros(size(H, 2), 1));
+    try
+        cr.P = projection(LXpoly, 1:nx, Options);
+        if Options.verbose > 1,
+            fprintf(['Projection of a lower-dimensional '...
+                'polytope succeeded...\n']);
+        end
+    catch
+        if Options.verbose > 1,
+            fprintf(['Projection of a lower-dimensional ' ...
+                'polytope failed...\n']);
+        end
+        cr.type = 0;
+    end
     return;
 end
 %
