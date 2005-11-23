@@ -148,28 +148,33 @@ if ~isfield(Options,'psolvers')
         Options.psolvers = [5 1 6 4 7 2 3 0];
     elseif length(orig_dim)<=5,
         % projecting on less than 6 dimensions, the mplp-based method works well
-        Options.psolvers = [7 4 5 2 6 3 1 0];
+        Options.psolvers = [7 4 5 6 3 2 1 0];
     elseif length(dim)<=2,
         % only 2 dimensions to eliminate -> use mex fourier-motzkin (matlab
         % fourier motzkin can be very slow)
-        Options.psolvers = [5 4 6 7 1 2 3 0];
+        Options.psolvers = [5 4 6 7 1 3 2 0];
     else
         % prefer esp otherwise
-        Options.psolvers = [4 7 5 2 3 1 0 6];
+        Options.psolvers = [4 7 5 6 3 2 1 0];
     end
     if dimension(PA) > 6,
         % don't even try vertex based methods for high dimensions
-        Options.psolvers(find(Options.psolvers==3)) = [];
         Options.psolvers(find(Options.psolvers==0)) = [];
+    end
+    if dimension(PA) > 10,
+        % give lowest priority to the block elimination method for high
+        % dimensions
+        Options.psolvers(find(Options.psolvers==3)) = [];
+        Options.psolvers = [Options.psolvers 3];
     end
     if length(dim) > 3,
         % give lowest priority to fourier-motzkin if we are eliminating more
         % than 3 dimensions. but keep mex fourier-motzkin, just as a last resort
         Options.psolvers(find(Options.psolvers==1)) = [];
         Options.psolvers(find(Options.psolvers==6)) = [];
-        Options.psolvers = [Options.psolvers 6 1];
+        Options.psolvers = [Options.psolvers 6];
     end
-    if length(orig_dim) > 5,
+    if length(orig_dim) > 4,
         % don't even try iterative hull if we are projecting on more than 5
         % dimensions, since that can be _really_ slow
         Options.psolvers(find(Options.psolvers==2)) = [];
@@ -194,7 +199,9 @@ p_strings = {'Vertex Enumeration',...
         'Block Elimination',...
         'ESP',...
         'Fourier-Motzkin (mex version)',...
-        'Fourier-Motzkin (mex version, fast)' };
+        'Fourier-Motzkin (mex version, fast)', ...
+        'mplp-based method', ...
+    };
 
 if (isempty(PA.Array) & ~PA.minrep & Options.noReduce==0)
     PA = reduce(PA);
@@ -315,7 +322,7 @@ M.bndb = [];
 M.H = zeros(1, length(dim));  % use zero cost. although it can lead to degeneracies, 
                               % it should generate a fairly small number of regions
 M.F = zeros(1, length(orig_dim));
-[Pn, Fi, Gi, AC, Phard] = mpt_mplp(M, Opt);
+T = evalc('[Pn, Fi, Gi, AC, Phard] = mpt_mplp(M, Opt);');
 if ~isfulldim(Phard)
     % sometimes we can return Phard as an empty polytope if there are missing
     % regions on the boundary
