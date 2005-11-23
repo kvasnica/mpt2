@@ -69,7 +69,7 @@ if nargin < 2
     l = Inf;
 end
 
-if isempty(l) | ~isinf(l) & l~=1
+if isempty(l) | (~isinf(l) & l~=1)
     error('only linear norms are supported, i.e. l = 1 or Inf');
 end
 
