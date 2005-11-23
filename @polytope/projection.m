@@ -315,7 +315,7 @@ M.bndb = [];
 M.H = zeros(1, length(dim));  % use zero cost. although it can lead to degeneracies, 
                               % it should generate a fairly small number of regions
 M.F = zeros(1, length(orig_dim));
-[Pn, Fi, Gi, AC, Phard] = mpt_mplp(M, Opt);
+T = evalc('[Pn, Fi, Gi, AC, Phard] = mpt_mplp(M, Opt);');
 if ~isfulldim(Phard)
     % sometimes we can return Phard as an empty polytope if there are missing
     % regions on the boundary
