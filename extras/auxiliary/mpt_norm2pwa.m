@@ -91,12 +91,15 @@ if length(Pn)>1
     error('it can only be defined over one polytope')
 end
 
+[H, K] = double(Pn);
+
+if nx~= size(H,2)
+    error('the dimension of P and Pn don''t match')
+end
+    
 if ~isfield(Options,'method')
     Options.method = 1; %YALMIP
 end
-
-
-[H, K] = double(Pn);
 
 
 if Options.method == 1
