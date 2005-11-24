@@ -1,8 +1,7 @@
-function pwafcn = mpt_norm2pwa(P,l,Pn)
+function pwafcn = mpt_norm2pwa(P,l,Options)
 % MPT_NORM2PWA  transformes a linear norm into an equivalent PWA fcn representation
 %
-% pwafcn = mpt_norm2pwa(P,l)
-% pwafcn = mpt_norm2pwa(P,l,Pn)
+% pwafcn = mpt_norm2pwa(P,l,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -16,16 +15,21 @@ function pwafcn = mpt_norm2pwa(P,l,Pn)
 % P            - scaling matrix in ||P*x||_l
 % l            - = 1 or Inf, standard vector norm (l=Inf will be assumed if not
 %                set)
-% Pn           - one polytope over which the norm should be defined (optional)
+% Options      - optional arguments
+%   .Pn        - one polytope over which the norm should be defined
+%   .method    - if 1 (default) solution will be found via YALMIP
+%                if 2, solution is found via enumeration 
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-% pwafcn.Bi    - descriptopn of the PWA function 
-%       .Ci
-%       .Pn         
-% pwafcn.epi   - implicit epigraph description of ||P*x||_l using sdvar.
+% pwafcn       - descriptoin of the PWA function 
+%    .Bi,.Ci    
+%    .Pn       - polyhedral partition over which the PWA fcn is defined
+%    .Pfinal   - domain of the PWA function 
+%    .epi      - implicit epigraph description of ||P*x||_l using sdvar.
 %                (more efficient than the PWA description for computation)
+%                (only existent if Options.method=1)
 %
 % Note: for simple plotting use plot(pwafcn.epi)
 
@@ -65,6 +69,9 @@ if ~isstruct(mptOptions)
     mpt_error;
 end
 
+if nargin < 3
+    Options = [];
+end
 if nargin < 2
     l = Inf;
 end
@@ -73,49 +80,92 @@ if isempty(l) | (~isinf(l) & l~=1)
     error('only linear norms are supported, i.e. l = 1 or Inf');
 end
 
-
-
 [mP,nx] = size(P);  
 
-if nargin < 3
+if ~isfield(Options,'Pn')
     Pn = unitbox(nx,mptOptions.infbox);
+else
+    Pn = Options.Pn;
 end
 if length(Pn)>1
     error('it can only be defined over one polytope')
 end
+
+if ~isfield(Options,'method')
+    Options.method = 1; %YALMIP
+end
+
+
 [H, K] = double(Pn);
 
 
-% use a more efficient epi graph way to describe the norm.
-% (more efficient than enumerating the possibilities)
-x = sdpvar(nx,1);
-[pwafcn.epi,pwafcn.Bi,pwafcn.Ci,pwafcn.Pn] = pwa(norm(P*x,l),set(H*x<=K));
-
-
-% % alternatively: 
-% % using 'enumeration' of the parts [ONLY for 1-norm, yet]
-% T=[];
-% for ii=0:2^mP-1,
-%   a=dec2bin(ii, log2(mP)+1);
-%   t=[];
-%   for jj=1:length(a),
-%     t=[t str2num(a(jj))];
-%   end,
-%   T=[T; t];
-% end
-% Tind = find(T(:)==0);
-% T(Tind) = -1;
-% 
-% cnt = 0;
-% for cc= 1:2^mP
-%     pp = polytope([-repmat(T(cc,:)',1,nx).*P;H], [zeros(mP,1);K]);
-%     if isfulldim(pp)
-%         cnt = cnt+1;
-%         pwafcn.Bi{cnt} = T(cc,:)*P;
-%         pwafcn.Ci{cnt} = 0;
-%         pwafcn.Pn(cnt) = pp;
-%     end
-% end%(FOR) cc
-% pwafcn.Pfinal = Pn;
+if Options.method == 1
+    % use a more efficient epi graph way to describe the norm.
+    % (more efficient than enumerating the possibilities)
+    x = sdpvar(nx,1);
+    [pwafcn.epi,pwafcn.Bi,pwafcn.Ci,pwafcn.Pn] = pwa(norm(P*x,l),set(H*x<=K));
+    pwafcn.Pfinal = Pn;
+    
+elseif Options.method == 2
+    % using 'enumeration' of the parts
+    
+        if l==1
+            T=[];
+            for ii=0:2^mP-1,
+                a=dec2bin(ii, mP);
+                t=[];
+                for jj=1:length(a),
+                    t=[t str2num(a(jj))];
+                end,
+                T=[T; t];
+            end
+            Tind = find(T(:)==0);
+            T(Tind) = -1;
+            
+            cnt = 0;
+            for cc= 1:2^mP
+                pp = polytope([-repmat(T(cc,:)',1,nx).*P;H], [zeros(mP,1);K]);
+                if isfulldim(pp)
+                    cnt = cnt+1;
+                    pwafcn.Bi{cnt} = T(cc,:)*P;
+                    pwafcn.Ci{cnt} = 0;
+                    pwafcn.Pn(cnt) = pp;
+                end
+            end%(FOR) cc
+            pwafcn.Pfinal = Pn;
+            
+    else % l=Inf
+        
+        cnt = 0;
+        for ii=1:mP
+            ind = setdiff(1:mP,ii);
+            
+            Px = [P(ind,:); -P(ind,:)] - repmat(P(ii,:),(mP-1)*2,1);
+            pp = polytope([Px;H],[zeros((mP-1)*2,1);K]);
+            if isfulldim(pp)
+                cnt = cnt+1;
+                pwafcn.Bi{cnt} = P(ii,:);
+                pwafcn.Ci{cnt} = 0;
+                pwafcn.Pn(cnt) = pp;
+            end
+        end%(FOR) ii
+        
+        for ii=1:mP
+            ind = setdiff(1:mP,ii);
+            
+            Px = [P(ind,:); -P(ind,:)] + repmat(P(ii,:),(mP-1)*2,1);
+            pp = polytope([Px;H],[zeros((mP-1)*2,1);K]);
+            if isfulldim(pp)
+                cnt = cnt+1;
+                pwafcn.Bi{cnt} = -P(ii,:);
+                pwafcn.Ci{cnt} = 0;
+                pwafcn.Pn(cnt) = pp;
+            end
+        end%(FOR) ii
+        pwafcn.Pfinal = Pn;
+                
+    end%(IF) l
+    
+end% (IF) Options.method
 
 return
