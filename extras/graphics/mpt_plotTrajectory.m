@@ -38,6 +38,8 @@ function [X,U,cost,trajectory]=mpt_plotTrajectory(ctrl,Options)
 %                       to plot just the first Options.horizon points
 % Options.newfigure - If set to 1, opens a new figure window
 % Options.legend    - If set to 1, legend will be verboseed
+% Options.showPn    - If set to 1 (default), plots the polyhedral partition over
+%                     which the control law is defined.
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -95,40 +97,16 @@ if nargin<2,
     Options=[];
 end
 
-if ~isfield(Options,'lpsolver') % lpsolver to be used
-    Options.lpsolver=mptOptions.lpsolver;
-end
-if ~isfield(Options,'abs_tol') % absolute tolerance
-    Options.abs_tol=mptOptions.abs_tol;
-end
-if ~isfield(Options,'openloop') % compute the open-loop solution? (values 1/0, where 0 represents the closed-loop solution)
-    Options.openloop=0;
-end
-if ~isfield(Options,'maxCtr') % maximum namer of iterations in the closed-loop control-law evaluation
-    Options.maxCtr=200;
-end
-% if ~isfield(Options,'minnorm') % consider state reached the origin if norm of the state is less then Option.minnorm and abort trajectory update
-%     Options.minnorm=0.01;
-% end
-if ~isfield(Options,'verbose') % level of verbosity
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options,'horizon') % set this value to some integer if you want to compute state evolution trajectory 
-                               % for certain number of steps, regardless of Options.minnorm
-    Options.horizon=Inf;
-end
-if ~isfield(Options,'newfigure')
-    Options.newfigure=mptOptions.newfigure;
-end
-if ~isfield(Options,'randdist') % if random disturbances should be added to the state vector
-    Options.randdist=1;
-end
-if ~isfield(Options,'legend')
-    Options.legend=0;
-end
-if ~isfield(Options,'x0')
-    Options.x0 = [];
-end
+Options = mpt_defaultOptions(Options, ...
+    'openloop', 0, ... % compute the open-loop solution? (values 1/0, where 0 represents the closed-loop solution)
+    'maxCtr', 200, ... % maximum namer of iterations in the closed-loop control-law evaluation
+    'verbose', mptOptions.verbose, ...
+    'horizon', Inf, ... 
+    'newfigure', mptOptions.newfigure, ...
+    'randdist', 1, ... % if random disturbances should be added to the state vector
+    'legend', 0, ...
+    'x0', [], ...
+    'showPn', 1 );
 
 if isa(ctrl, 'mptctrl')
     if ~isexplicit(ctrl)
@@ -238,13 +216,9 @@ if ~isempty(Options.x0),
     end
 end
 
-%disp(sprintf('\nPress the right mouse button to exit...'));
-
-% hold off
-h=mpt_plotPartition(ctrlStruct,Options);
-% cc=[211 211 211]/255;
-% Options.color=repmat(cc,length(ctrlStruct.Pn),1);
-% h=plot(ctrlStruct.Pn,Options);
+if Options.showPn,
+    h=mpt_plotPartition(ctrlStruct,Options);
+end
 grid on;
 hold on
 if probStruct.tracking,
