@@ -104,6 +104,7 @@ switch solver,
     case 13, out = 'CLP';
     case 14, out = 'BPMPD';
     case 15, out = 'CPLEXMEX';
+    case 16, out = 'PDCO';
     otherwise, out = 'unknown'; err=1;
 end
 
@@ -212,6 +213,8 @@ elseif strcmpi(solver,'bpmpd'),
     out = 14;
 elseif strcmpi(solver,'cplexmex'),
     out = 15;
+elseif strcmpi(solver,'pdco'),
+    out = 16;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else

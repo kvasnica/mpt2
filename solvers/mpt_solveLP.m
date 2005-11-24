@@ -38,6 +38,8 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLP(f,A,B,Aeq,Beq,x0,lpsolver,l
 %              lpsolver=12: uses OOQP
 %              lpsolver=13: uses CLP
 %              lpsolver=14: uses BPMPD (bpmpd_mex)
+%              lpsolver=15: uses CPLEX (cplexmex)
+%              lpsolver=16: uses PDCO
 %
 % lb, ub   - lower and upper bounds on variables (optional)
 %            Note! set "lpsolver=[]" to select the default solver.

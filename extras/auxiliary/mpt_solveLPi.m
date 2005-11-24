@@ -46,6 +46,7 @@ function [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f,A,B,Aeq,Beq,x0,lpsolver)
 %              lpsolver=13: uses CLP (mexclp)
 %              lpsolver=14: uses BPMPD (bpmpd_mex)
 %              lpsolver=15: uses CPLEX (cplexmex)
+%              lpsolver=16: uses PDCO
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -566,6 +567,44 @@ elseif (lpsolver==15)
     else
         how = 'unknown';
         exitflag = 0;
+    end
+
+elseif lpsolver==16,
+    % PDCO
+    
+    % default parameters set accorfing ro pdco.m
+    d1 = 1e-4;
+    d2 = 1e-4;
+    options = pdcoSet;
+    options.wait = 0;
+
+    A = [A; Aeq; -Aeq];
+    B = [B; Beq; -Beq];
+    pc = B(:);
+    pA = -A';
+    pB = f(:);
+    
+    [nc, nx] = size(A);
+    bl = zeros(nc, 1);
+    bu = 1e9*ones(nc, 1);
+    guess = ones(nc, 1)/nc;
+    [a, b, c, d] = pdco(pc, pA, pB, bl, bu, d1, d2, options, ...
+        guess, zeros(nx, 1), guess, 1, 1, 0);
+    if any(a>=1e9),
+        % dual is unbounded => primal is infeasible
+        d = 1;
+    end
+    
+    fval = -pc'*a;
+    xopt = -b;
+    lambda = a;  % lagrange multipliers
+    if d==0,
+        % feasible optimal solution
+        how = 'ok';
+        exitflag = 1;
+    else
+        how = 'infeasible';
+        exitflag = -1;
     end
     
 else
