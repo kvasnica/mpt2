@@ -68,15 +68,15 @@ disp('Plotting of polyhedral partitions:');
 fprintf('\n');
 disp('when one calls mpt_control to compute the control law, the output arguments are as follows:')
 fprintf('\n');
-disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
+disp('>> ctrl = mpt_control(sysStruct, probStruct);');
 fprintf('\n');
-disp('"ctrlStruct" contains the description of the polyhedral partition over which the PWA control law,');
-disp('specified by cell arrays ctrlStruct.Fi and ctrlStruct.Gi, is defined. The partition can be');
+disp('where "ctrl" contains the description of the polyhedral partition over which the PWA control law,');
+disp('specified by cell arrays ctrl.Fi and ctrl.Gi, is defined. The partition can be');
 disp('visualized by typing');
 fprintf('\n');
-disp('>> mpt_plotPartition(ctrlStruct);');
+disp('>> plot(ctrl);');
 fprintf('\n\n');
-mpt_plotPartition(ctrlStruct,Options);
+plot(ctrlStruct,Options);
 disp('Press any key to continue...');
 pause
 
@@ -99,11 +99,11 @@ fprintf('\n\n');
 disp('The MPT toolbox provides a user-friendly implementation of the receding-horizon');
 disp('strategy. This feature is handled by the following function:');
 fprintf('\n');
-disp('[X,U,Y,D,cost] = mpt_computeTrajectory(ctrlStruct,x0,Options)');
+disp('[X,U,Y,D,cost] = sim(ctrl,x0,Options)');
 fprintf('\n');
 disp('You need to provide the following arguments:');
-disp('  ctrlStruct - controller structure obtained by mpt_control');
-disp('  x0         - initial state for which you want to compute a control action');
+disp('  ctrl    - controller object obtained by mpt_control');
+disp('  x0      - initial state for which you want to compute a control action');
 fprintf('\n');
 disp('And one optional argument:');
 disp('  Options    - user parameters (see help mpt_computeTrajectory for details)');
@@ -115,13 +115,13 @@ disp('  Y    - evolution of the system outputs');
 disp('  D    - evolution of the additive disturbances (if present)');
 disp('  cost - value of the cost function');
 fprintf('\n\n');
-disp('Assume now we want to control the initial state x=[-6; 3]');
+disp('Assume now we want to control the initial state x=[-2; 1]');
 fprintf('\n');
-disp('>> [X,U,Y,D,cost] = mpt_computeTrajectory(ctrlStruct,[-6;3]);');
+disp('>> [X,U,Y,D,cost] = sim(ctrl,[-2;1]);');
 fprintf('\n');
 disp('Press any key to start the computation...');
 pause
-[X,U,Y,D,cost] = mpt_computeTrajectory(ctrlStruct,[-6;3]);
+[X,U,Y,D,cost] = sim(ctrlStruct,[-2;1]);
 fprintf('\n');
 X,U
 fprintf('\n');
@@ -136,18 +136,18 @@ disp('The previous method is useful if you intend to implement the explicit cont
 disp('to some physical device. For visualization purposes, the MPT toolbox provides');
 disp('the following function which plots all trajectories:');
 fprintf('\n');
-disp('mpt_plotTimeTrajectory(ctrlStruct,x0)');
+disp('simplot(ctrl,x0)');
 fprintf('\n');
 disp('Mandatory input arguments are:');
-disp('  ctrlStruct - contoller structure obtained by mpt_control');
-disp('  x0         - initial state for which you want to compute a control action');
+disp('  ctrl    - contoller object obtained by mpt_control');
+disp('  x0      - initial state for which you want to compute a control action');
 fprintf('\n\n');
 disp('To visualize the control trajectories for the given initial state x0=[-6; 3], you call:');
 fprintf('\n');
-disp('>> mpt_plotTimeTrajectory(ctrlStruct,[-6; 3]);');
+disp('>> simplot(ctrl,[-2; 1]);');
 fprintf('\n');
 Options.newfigure=1;
-mpt_plotTimeTrajectory(ctrlStruct,[-6;3],[],Options);
+simplot(ctrlStruct,[-2;1],[],Options);
 disp('Press any key to continue...');
 pause
 
@@ -155,7 +155,7 @@ clc
 disp('If your system is 2-dimensional, you can use a mouse point-and-click interface to');
 disp('plot system trajectory:');
 fprintf('\n\n');
-disp('>> mpt_plotTrajectory(ctrlStruct);');
+disp('>> simplot(ctrl);');
 fprintf('\n\n');
 disp('On the figure which will open, use your mouse to pick up an initial state.');
 disp('For that state, closed-loop trajectory will be computed and displayed on the figure.');
@@ -164,7 +164,7 @@ fprintf('\n');
 disp('Press any key to continue...');
 pause
 Options.newfigure=1;
-mpt_plotTrajectory(ctrlStruct,Options);
+simplot(ctrlStruct,Options);
 fprintf('\n');
 disp('Press any key to continue...');
 pause
@@ -174,27 +174,27 @@ clc
 disp('If your system is 2-dimensional, you can also visualize the control action by');
 disp('calling the following function:');
 fprintf('\n\n');
-disp('>> mpt_plotU(ctrlStruct);');
+disp('>> plotu(ctrl);');
 fprintf('\n');
 disp('Input arguments have the same meaning as in previous functions.');
 fprintf('\n');
 disp('Rotate the newly opened figure to see it from different perspectives.');
 fprintf('\n');
-mpt_plotU(ctrlStruct,Options);
+plotu(ctrlStruct,Options);
 disp('Press any key to continue...');
 pause
 fprintf('\n\n');
 
 clc
-disp('Each ctrlStruct controller contains also value function which may be PWA or PWQ');
+disp('Each controller object contains also value function which may be PWA or PWQ');
 disp('over polyhedra, depending on norm of the cost function (probStruct.norm) for');
 disp('which the controller was obtained. To visualize the value function, call:');
 fprintf('\n\n');
-disp('>> mpt_plotJ(ctrlStruct);');
+disp('>> plotj(ctrl);');
 fprintf('\n');
 disp('Rotate the newly opened figure to see it from different perspectives.');
 fprintf('\n');
-mpt_plotJ(ctrlStruct);
+plotj(ctrlStruct);
 disp('Press any key to continue...');
 pause
 fprintf('\n\n');
