@@ -206,13 +206,6 @@ end
 
 nx = ctrl.details.dims.nx;
 nu = ctrl.details.dims.nu;
-if sys_type==1,
-    % check that the provided sysStruct is compatible with this controller
-    [simx, simu] = mpt_sysStructInfo(Options.sysStruct);
-    if nx~=simx | nu~=simu,
-        error('The provided system structure has incompatible number of states and/or inputs.');
-    end
-end
 
 if length(x0)>nx,
     error('Wrong dimension of X0!');
@@ -225,6 +218,14 @@ if isDUmode,
         
         % exclude u(k-1) from x0
         x0 = x0(1:nx-nu);
+    end
+end
+
+if sys_type==1,
+    % check that the provided sysStruct is compatible with this controller
+    [simx, simu] = mpt_sysStructInfo(Options.sysStruct);
+    if length(x0)~=simx | nu~=simu,
+        error('The provided system structure has incompatible number of states and/or inputs.');
     end
 end
 
