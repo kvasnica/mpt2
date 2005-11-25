@@ -246,5 +246,7 @@ if lyapunov.feasible
     else
         fprintf('The Lyapunov function was stored to %s.details.lyapunov\n\n', inputname(1));
     end
+    
+else
+    fprintf('\n%s Lyapunov function NOT found, closed-loop system can be unstable.\n', type);
 end
-
