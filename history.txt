@@ -26,6 +26,10 @@ given system when called with no output arguments
 [NEW] new function for simulations of closed-loop systems: mptctrl/sim, 
 mptctrl/simplot
 
+[NEW] mptctrl/plotu now substitutes mpt_plotU
+
+[NEW] mptctrl/plotj now substitutes mpt_plotJ
+
 [NEW] mptctrl/get, mptctrl/set: set/get methods for MPTCTRL objects
 
 [NEW] mptctrl/modify: modify a controller in certain way (e.g. remove
