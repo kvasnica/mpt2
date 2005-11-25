@@ -117,6 +117,7 @@ end
 
 if Options.newfigure,
     figure;
+    Options.newfigure = 0;  % we need to tell polytope/plot() not to open a yet another window
 end
 
 
