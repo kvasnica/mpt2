@@ -23,6 +23,9 @@ given system when called with no output arguments
 [NEW] mptctrl: allow to evaluate the control law for state x0 more easily by 
 'ctrl(x0)'
 
+[NEW] new function for simulations of closed-loop systems: mptctrl/sim, 
+mptctrl/simplot
+
 [NEW] mptctrl/get, mptctrl/set: set/get methods for MPTCTRL objects
 
 [NEW] mptctrl/modify: modify a controller in certain way (e.g. remove
