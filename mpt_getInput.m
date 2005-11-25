@@ -286,11 +286,11 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         if ctrl.details.dims.nx~=length(x0),
             if ctrl.probStruct.tracking==1,
                 if length(x0) ~= (ctrl.details.dims.nx + ctrl.details.dims.nu + reflength),
-                    disp('For tracking==1, the state vector x0 must be in form [x; u; ref] !');
+                    error('For tracking==1, the state vector x0 must be in form [x; u; ref] !');
                 end
             elseif ctrl.probStruct.tracking==2,
                 if length(x0) ~= (ctrl.details.dims.nx + reflength)
-                    disp('For tracking==2, the state vector x0 must be in form [x; ref] !');
+                    error('For tracking==2, the state vector x0 must be in form [x; ref] !');
                 end
             else
                 error(sprintf('MPT_GETINPUT: state x0 should be a column vector with %d elements!',ctrl.details.dims.nx));
