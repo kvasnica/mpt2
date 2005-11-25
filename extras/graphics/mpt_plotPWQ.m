@@ -255,12 +255,18 @@ end
 
 % check if meshgridpoint is in a region and if it is so, calculate the function value
 I_2=eye(2);
-f_opt=[1,1];    
+f_opt=[1,1];
+
+% store H-representation of each polytope in a cell array for faster access
+[H, K] = pelemfun(@double, Pn);
+Pnc = cellfun('prodofsize', K);
+lenPn = length(Pn);
+
 for i=1:meshgridpoints
     for j=1:meshgridpoints
         k=1;
         region_found=0;
-        while ((k <= length(Pn)) & ((region_found == 0) | Options.overlaps))
+        while ((k <= lenPn) & ((region_found == 0) | Options.overlaps))
             if oneDimCase
                 Position = x1(j);
             else
@@ -268,8 +274,9 @@ for i=1:meshgridpoints
             end
             m=1;
             x_in_region=1;
-            [Hk,Kk]=double(Pn(k));
-            while((m <= length(Hk)) & (x_in_region==1))  % check if position achieves all (m) inequalities of region k
+            Hk = H{k};
+            Kk = K{k};
+            while((m <= Pnc(k)) & (x_in_region==1))  % check if position achieves all (m) inequalities of region k
                 x_value=Hk(m,:)*Position;
                 if(x_value > Kk(m))
                     x_in_region=0;
