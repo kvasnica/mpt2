@@ -567,6 +567,7 @@ if(~isfulldim(P))
     lyapunovL=[];
     lyapunovC=[];
     mpt_options('lpsolver', defaultLP);
+    feasible = 0;
     return
 else
     disp('Solving LP...')

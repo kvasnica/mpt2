@@ -18,6 +18,19 @@ function [X,U,Y,D,cost,trajectory,feasible,dyns,reason,details]=mpt_computeTraje
 %                     If horizon=Inf, computes evolution of the state to origin
 % Options.reference - If tracking is requested, provide the reference point
 %                     in this variable (e.g. Options.reference = [5;0])
+% Options.sysStruct - If provided, we use this system model for simulations
+%                     instead of sysStruct which was used to compute the
+%                     controller
+% Options.sysHandle - Handle of a simulation function. If provided, we call this
+%                     function to obtain the state update. E.g.:
+%                        Options.sysHandle = @di_sim_fun
+%                     where "di_sim_fun.m" mut be a function which takes "xk"
+%                     and "uk" as input arguments and produces exactly two
+%                     outputs - "xn" (state update x(k+1)) and "yn" (output
+%                     y(k)). It's the user's responsibility to make sure that
+%                     dimensions of state/inputs/outputs match dimensions of the
+%                     control law. Take a look at 'help di_sim_fun' for more
+%                     details.
 % Options.randdist  - If set to 1, randomly generated additive disturbance
 %                       vector will be added to the state equation
 % Options.openloop  - If 1, the open-loop solution will be computed, 0 for
@@ -30,8 +43,8 @@ function [X,U,Y,D,cost,trajectory,feasible,dyns,reason,details]=mpt_computeTraje
 % Options.samplInTset - if Options.stopInTset is on, this option defines how
 %                       many CONSECUTIVE states has to lie in the terminal set
 %                       before the evolution terminates. Default is 2
-% Options.minnorm   - If closed-loop trajectory is computed, we stope evolution
-%                       if norm of a state decreases below this value
+% Options.minnorm   - If closed-loop trajectory is computed, we stop the
+%                     evolution if norm of a state decreases below this value
 % Options.verbose   - Level of verbosity
 % Options.lpsolver  - Solver for LPs (see help mpt_solveLP for details)
 % Options.abs_tol   - absolute tolerance

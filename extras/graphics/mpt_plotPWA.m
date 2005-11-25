@@ -133,6 +133,7 @@ index=0;
 
 if Options.newfigure,
    figure;  % open new figure window
+   Options.newfigure = 0;  % tell any subsequent function not to open a yet another figure
 end
 
 handle=[];

@@ -107,7 +107,7 @@ disp('>> probStruct.N = 5;');
 disp('>> probStruct.subopt_lev = 0;');
 fprintf('\n\n');
 disp('The controller is then obtained by');
-disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
+disp('>> ctrl = mpt_control(sysStruct, probStruct);');
 fprintf('\n');
 disp('and is depicted on the figure');
 try
@@ -116,7 +116,7 @@ catch
     error('Demos data not accessible! Please add mpt/demos to your path.');
 end
 Options.newfigure = 1;
-mpt_plotPartition(ctrlStruct,Options);
+plot(ctrlStruct,Options);
 fprintf('\n\n');
 disp('Press any key to continue...');
 pause
@@ -128,7 +128,7 @@ disp('>> probStruct.N = Inf;');
 disp('>> probStruct.subopt_lev = 0;');
 fprintf('\n\n');
 disp('The controller is calculated with');
-disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
+disp('>> ctrl = mpt_control(sysStruct, probStruct);');
 fprintf('\n');
 disp('and depicted on the figure');
 try
@@ -138,7 +138,7 @@ catch
 end
 
 Options.newfigure = 1;
-mpt_plotPartition(ctrlStruct,Options);
+plot(ctrlStruct,Options);
 fprintf('\n\n');
 disp('Press any key to continue...');
 pause
@@ -151,7 +151,7 @@ disp('>> probStruct.N = Inf;');
 disp('>> probStruct.subopt_lev = 1;');
 fprintf('\n\n');
 disp('and can be obtained in the usual way:');
-disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
+disp('>> ctrl = mpt_control(sysStruct, probStruct);');
 fprintf('\n');
 disp('Partitions are shown on the figure.');
 try
@@ -160,7 +160,7 @@ catch
     error('Demos data not accessible! Please add mpt/demos to your path.');
 end
 Options.newfigure = 1;
-mpt_plotPartition(ctrlStruct,Options);
+plot(ctrlStruct,Options);
 fprintf('\n\n');
 disp('Press any key to continue...');
 pause
@@ -173,16 +173,16 @@ disp('>> probStruct.norm = 1; % can be either 1-norm of Inf-norm');
 disp('>> probStruct.N = Inf;');
 disp('>> probStruct.subopt_lev = 2;');
 fprintf('\n\n');
-disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
+disp('>> ctrl = mpt_control(sysStruct, probStruct);');
 fprintf('\n');
-disp('>> mpt_plotPartition(ctrlStruct)');
+disp('>> plot(ctrl)');
 try
     evalin('base','load pwa_sincos_lc');
 catch
     error('Demos data not accessible! Please add mpt/demos to your path.');
 end
 Options.newfigure = 1;
-mpt_plotPartition(ctrlStruct,Options);
+plot(ctrlStruct,Options);
 fprintf('\n\n');
 disp('Press any key to continue...');
 pause
@@ -195,7 +195,7 @@ disp('>> sysStruct.noise = polytope([eye(2); -eye(2)], [1;1;1;1]*0.5);');
 fprintf('\n');
 disp('A call to:');
 fprintf('\n');
-disp('>> [ctrlStruct] = mpt_control(sysStruct, probStruct);');
+disp('>> ctrl = mpt_control(sysStruct, probStruct);');
 fprintf('\n\n');
 disp('will then lead to a robustly stabilizing controller for a given PWA system.');
 fprintf('\n\n');

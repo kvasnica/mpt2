@@ -23,6 +23,13 @@ given system when called with no output arguments
 [NEW] mptctrl: allow to evaluate the control law for state x0 more easily by 
 'ctrl(x0)'
 
+[NEW] new function for simulations of closed-loop systems: mptctrl/sim, 
+mptctrl/simplot
+
+[NEW] mptctrl/plotu now substitutes mpt_plotU
+
+[NEW] mptctrl/plotj now substitutes mpt_plotJ
+
 [NEW] mptctrl/get, mptctrl/set: set/get methods for MPTCTRL objects
 
 [NEW] mptctrl/modify: modify a controller in certain way (e.g. remove
@@ -38,6 +45,9 @@ iteration
 
 [NEW] mpt_maxCtrlSet: allow to call mpt_maxCtrlSet with custom
 problem-dependent parameters (Options.probStruct)
+
+[NEW] mpt_computeTrajectory: now allows to specify arbitrary system which 
+will be used for simulations (Options.sysStruct, Options.sysHandle)
 
 [NEW] mpt_sys: do not generate HYSDEL simulator if user tells so
 (mpt_sys('hysdelfile.hys', 'nosimulator'))
