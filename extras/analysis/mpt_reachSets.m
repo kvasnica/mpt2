@@ -241,6 +241,12 @@ if isa(U0, 'polytope'),
 
     Ei = pelemfun(@extreme, Pi);
     if isa(U0, 'polytope'),
+        if length(U0)>1,
+            error('This function does not support polytope arrays in U0.');
+        end
+        if ~isfulldim(U0),
+            error('U0 must be a fully dimensional polytope.');
+        end
         U0e = extreme(U0);
     end
     
