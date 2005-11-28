@@ -99,6 +99,14 @@ if nargin<10,
     rescue = mptOptions.rescueQP;
 end
 
+if isempty(A),
+    % some solvers don't like when there are no inequality constraints,
+    % becuase they use size of the "A" matrix to deduce number of variables.
+    % therefore we define A and b as empty matrices of corresponding size.
+    nx = length(f);    
+    A = zeros(0, nx);
+    B = zeros(0, 0);
+end
 [m,n]=size(A);
 [meq,neq]=size(Aeq);
 f = f(:);
