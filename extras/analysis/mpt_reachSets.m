@@ -239,10 +239,7 @@ if isa(U0, 'polytope'),
         Pi = [Pi polytope([Hinf; gX gU], [Kinf; gC])];
     end
 
-    Ei = {};
-    for ii=1:length(Pi),
-        Ei{end+1} = extreme(Pi);
-    end
+    Ei = pelemfun(@extreme, Pi);
     if isa(U0, 'polytope'),
         U0e = extreme(U0);
     end
@@ -292,7 +289,7 @@ if isa(U0, 'polytope'),
                 X0int = X0(jj)*U0;
                 whichdyn = 1;
             else
-                [X0int, whichdyn] = sub_intersect(X0(jj)*U0, Pi, Hn, Kn, emptypoly, abs_tol, lpsolver);
+                [X0int, whichdyn] = sub_intersect(X0(jj)*U0, Pi, Ei, Hn, Kn, emptypoly, abs_tol, lpsolver);
             end
             if isfulldim(X0int),
                 for ii = 1:length(X0int),
