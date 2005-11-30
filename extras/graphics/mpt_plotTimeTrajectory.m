@@ -157,10 +157,8 @@ if inptype==3 | inptype==1,
         if Options.guierrors,
             error(['Initial state must be a ' num2str(size(ctrlStruct.Fi{1},2)) ' x 1 vector!']);
         else
-            disp(['mpt_plotTimeTrajectory: x0 must be a ' num2str(size(ctrlStruct.Fi{1},2)) ' x 1 vector!']);
+            error(['mpt_plotTimeTrajectory: x0 must be a ' num2str(size(ctrlStruct.Fi{1},2)) ' x 1 vector!']);
         end
-        X=[];U=[];cost=0; trajectory=[];
-        return
     end
 end
 

@@ -239,11 +239,14 @@ if isa(U0, 'polytope'),
         Pi = [Pi polytope([Hinf; gX gU], [Kinf; gC])];
     end
 
-    Ei = {};
-    for ii=1:length(Pi),
-        Ei{end+1} = extreme(Pi);
-    end
+    Ei = pelemfun(@extreme, Pi);
     if isa(U0, 'polytope'),
+        if length(U0)>1,
+            error('This function does not support polytope arrays in U0.');
+        end
+        if ~isfulldim(U0),
+            error('U0 must be a fully dimensional polytope.');
+        end
         U0e = extreme(U0);
     end
     
@@ -292,7 +295,7 @@ if isa(U0, 'polytope'),
                 X0int = X0(jj)*U0;
                 whichdyn = 1;
             else
-                [X0int, whichdyn] = sub_intersect(X0(jj)*U0, Pi, Hn, Kn, emptypoly, abs_tol, lpsolver);
+                [X0int, whichdyn] = sub_intersect(X0(jj)*U0, Pi, Ei, Hn, Kn, emptypoly, abs_tol, lpsolver);
             end
             if isfulldim(X0int),
                 for ii = 1:length(X0int),

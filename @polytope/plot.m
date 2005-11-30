@@ -33,6 +33,9 @@ function [handle,titlehandle]=plot(varargin)
 % Options.wirecolor   - color of the wireframe (black is default)
 % Options.linewidth   - width of the border of polytope (1 is default)
 % Options.shade=0-1   - level of transparency (0 - transparent faces, 1 - opaque faces)
+% Options.zvalue      - when plotting 2D polytopes and this parameter is given,
+%                       it will shift the polytope along the 3rd coordinate by
+%                       this value
 % Options.xdimension  - whether to plot a section in 2D or 3D (allowed values: 2,3)
 %                       default value is 3 if this field is not present
 % Options.xsection    - through which states to cut the plot (values e.g. [4 5] for a
@@ -435,7 +438,13 @@ while index<nii
                         h=patch(x1,x2,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
                     end
                 else
-                    h=patch(x1,x2,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
+                    if isfield(Options, 'zvalue'),
+                        % move the 2D patch along the 3rd coordinate
+                        zz = Options.zvalue*ones(size(x1));
+                        h=patch(x1,x2,zz,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
+                    else
+                        h=patch(x1,x2,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
+                    end
                 end
             end
             if cutmade,
