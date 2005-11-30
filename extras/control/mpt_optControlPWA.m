@@ -102,8 +102,11 @@ end
 if ~isfield(Options, 'mplpver')
     Options.mplpver = Inf;  % choose the fastest
 end
+if ~isfield(Options, 'qpsolver'),
+    Options.qpsolver = mptOptions.qpsolver;
+end
 
-if Options.mplpver < 4,
+if Options.mplpver < 4 | Options.qpsolver < 0,
     fprintf('WARNING: older version of mpLP solver specified, switching to different algorithm...\n');
     ctrlStruct = mpt_optControlPWAold(sysStruct, probStruct, Options);
     return
