@@ -8,7 +8,8 @@ function nc = nconstr(P)
 % ---------------------------------------------------------------------------
 % Returns number of constraints (i.e. rows of the H matrix)
 %
-% NOTE: returns a vector of dimensions if P is a polytope array
+% NOTE: If P is a polytope array, nconstr(P) returns the total number of
+% hyperplanes.
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -26,8 +27,8 @@ function nc = nconstr(P)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
@@ -51,13 +52,14 @@ function nc = nconstr(P)
 %
 % ---------------------------------------------------------------------------
 
-% if ~isa(P, 'polytope')
-%   error('NCONSTR: Argument MUST be a polytope object');
-% end
-
 % number of constraints is just number of rows of the H matrix
-if length(P.Array)>0,
-    nc=size(P.Array{1}.H,1);
+nP = length(P.Array);
+if nP>0,
+    % return total number of facets for the whole polytope array
+    nc = 0;
+    for ip = 1:nP
+        nc = nc + size(P.Array{ip}.H,1);
+    end
 else
     nc = size(P.H,1);
 end
