@@ -143,6 +143,12 @@ elseif (lpsolver==0)
     if any(isnan(B)),
         B(find(isnan(B)))=1e9; % convert NaN bounds to some large number
     end
+    if isempty(A),
+        % set dummy empty matrices with correct dimensions, other we get wrong
+        % "m" and "n" parameters later on
+        A = zeros(0, length(f));
+        B = zeros(0, 0);
+    end
     [m,n] = size(A);
     
     if isempty(x0)
@@ -192,6 +198,12 @@ elseif (lpsolver==9)
     % NAG: e04mbf.m
     %===============
 
+    if isempty(A),
+        % set dummy empty matrices with correct dimensions, other we get wrong
+        % "m" and "n" parameters later on
+        A = zeros(0, length(f));
+        B = zeros(0, 0);
+    end
     [m,n]=size(A);
 
     if isempty(x0)
