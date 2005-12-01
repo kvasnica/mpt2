@@ -144,11 +144,13 @@ if any(B<-1e9),
     error('mpt_solveLP: Upper bound exceeded. Most probably the problem is unbounded.');
 end
 
-no_sparse_solvers = [3 5];
+% NAG and CDD do not like inputs which are sparse matrices
+no_sparse_solvers = [0 9 3 5];
 yalmip_solvers = [6 10 11 12];
 
 if ismember(lpsolver, no_sparse_solvers),
-    % convert sparse matrices to full format for CDD solvers
+    % convert sparse matrices to full format for solvers which have problems
+    % with sparse inputs
     if issparse(A),
         A = full(A);
     end
@@ -160,6 +162,9 @@ if ismember(lpsolver, no_sparse_solvers),
     end
     if issparse(Beq),
         Beq = full(Beq);
+    end
+    if issparse(f),
+        f = full(f);
     end
 end
 
