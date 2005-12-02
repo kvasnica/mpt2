@@ -143,6 +143,15 @@ if ~constraints_reduced,
     % identifying active constraints, we choose several of them which are identical,
     % which in turn leads to problems when constructing critical regions.
     P = polytope([Matrices.G Matrices.E], Matrices.W);
+    if ~isfulldim(P),
+        % problem is infeasible
+        Pn=polytope;
+        Phard=polytope;
+        Fi=[]; Gi=[]; activeConstraints=[];
+        details.Ai = {}; details.Bi = {}; details.Ci = {};
+        disp('mpt_mpqp:  Infeasible optimization problem from the begining');
+        return
+    end
     [H, K] = double(P);
     Matrices.G = H(:, 1:size(Matrices.G, 2));
     Matrices.E = H(:, size(Matrices.G, 2)+1:end);
