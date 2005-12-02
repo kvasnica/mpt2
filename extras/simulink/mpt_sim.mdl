@@ -1,5 +1,5 @@
 Library {
-  Name			  "tp295558"
+  Name			  "tp120149"
   Version		  5.1
   LibraryLinkDisplay	  "none"
   CovSaveName		  "covdata"
@@ -18,8 +18,8 @@ Library {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "michal"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Apr 11 13:29:57 2005"
-  ModelVersionFormat	  "1.%<AutoIncrement:60>"
+  LastModifiedDate	  "Fri Dec 02 20:12:03 2005"
+  ModelVersionFormat	  "1.%<AutoIncrement:63>"
   ConfigurationManager	  "None"
   SimParamPage		  "Solver"
   LinearizationMsg	  "none"
@@ -97,7 +97,7 @@ Library {
     FontAngle		    "normal"
   }
   System {
-    Name		    "tp295558"
+    Name		    "tp120149"
     Location		    [321, 636, 835, 934]
     Open		    off
     ModelBrowserVisibility  off
@@ -362,7 +362,7 @@ Library {
       MaskVariables	      "ctrl=@1;Ts=@2;infbreak=@3;"
       MaskInitialization      "if isempty(ctrl)\n	error('No controller "
 "specified!');\nend\nif ~isa(ctrl, 'mptctrl')\n	error('Controller must "
-"be an MPTCTRL object!');\nend\nif isexplicit(ctrl)\n    [H, K, F, G, nc, nr, "
+"be an MPTCTRL object!');\nend\nif cancompile(ctrl)\n    [H, K, F, G, nc, nr, "
 "nx, nu, ny, nxt, nref, ts, dumode, tracking, abstol] = mpt_getSfuncParam(ctrl"
 ");\n    funname = 'mpt_getInput_sfunc_parm';\n    params = 'H, K, F, G, nc, n"
 "r, nx, nu, ny, nxt, nref, Ts, dumode, tracking, abstol, infbreak';\nelse\n   "

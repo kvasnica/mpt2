@@ -86,14 +86,8 @@ end
 if ~isa(ctrl, 'mptctrl')
     error('Input must be an MPTCTRL controller object!');
 end
-if ~isexplicit(ctrl)
-    error('Only explicit controllers can be exported to C code!');
-end
-
-if isfield(ctrl.probStruct, 'feedback')
-    if ctrl.probStruct.feedback~=0,
-        error('Controllers with feedback prestabilization are not supported.');
-    end
+if ~cancompile(ctrl),
+    error('This controller cannot be exported to C code.');
 end
 
 nr = length(ctrl);

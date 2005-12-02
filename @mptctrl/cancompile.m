@@ -1,22 +1,21 @@
-function data = mpt_mexData(ctrl)
-%MPT_MEXDATA Prepares input data for mex_getInput
-%
-% mpt_exportc(ctrl, fname)
+function yesno = cancompile(ctrl)
+%CANCOMPILE Returns true if a given controller can be compiled
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Prepares input data for mex_getInput
+% Returns true if a given controller can be compiled into an executable form to
+% be used on target platforms.
 %
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% ctrl   - MPT explicit controller
+% ctrl   - MPTCTRL object
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% data   - Structure containing data of a given explicit controller
+% yesno  - Boolean flag
 %
 
 % Copyright is with the following author(s):
@@ -44,20 +43,19 @@ function data = mpt_mexData(ctrl)
 %
 % ---------------------------------------------------------------------------
 
-if ~isa(ctrl, 'mptctrl')
-    error('Input argument must be a MPT controller!');
-end
-if ~cancompile(ctrl),
-    error('This controller cannot be exported.');
-end
+yesno = 1;
+if ~isexplicit(ctrl),
+    % cannot compile on-line controllers
+    yesno = 0;
     
-[H, K, F, G, nc, nr, nx, nu, ny, nxt, nref, Ts, dumode, tracking, abstol] = mpt_getSfuncParam(ctrl);
-
-data.H = H;
-data.K = K;
-data.F = F;
-data.G = G;
-data.nc = nc;
-data.nr = nr;
-data.nx = nx;
-data.nu = nu;
+elseif iscell(ctrl.sysStruct.A) & ctrl.probStruct.norm == 2 & ...
+        ctrl.probStruct.subopt_lev == 0,
+    % currently cannot compile optimal controllers for PWA systems with
+    % quadratic cost
+    yesno = 0;
+    
+elseif ctrl.probStruct.feedback ~= 0,
+    % cannot export controllers based on feedback pre-stabilization
+    yesno = 0;
+    
+end
