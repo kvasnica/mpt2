@@ -243,7 +243,7 @@ if Options.openloop,
     end
     x0 = extend_x0(ctrl, x0, u_prev, Options.reference, isEXPctrl, isDUmode);
     if isEXPctrl,
-        if isstruct(sysStruct.A),
+        if iscell(sysStruct.A),
             % we have a PWA system, call mpt_computeTrajectory which calculates
             % open-loop trajectory for PWA system
             [X,U,Y,D,cost,trajectory,feasible,dyns] = mpt_computeTrajectory(struct(ctrl), x0, N, Options);
