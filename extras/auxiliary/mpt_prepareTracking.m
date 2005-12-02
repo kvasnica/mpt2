@@ -98,9 +98,14 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref')
     end
     
     if isfulldim(probStruct.Tset),
-        % shift the terminal set
-        [Hset,Kset] = double(probStruct.Tset);
-        probStruct.Tset = polytope(Hset, Kset - Hset*xref);
+        % shift the terminal set. handle properly cases when probStruct.Tset is
+        % a polytope array
+        Tset = polytope;
+        for ii = 1:length(probStruct.Tset),
+            [Hset,Kset] = double(probStruct.Tset(ii));
+            Tset = [Tset polytope(Hset, Kset - Hset*xref)];
+        end
+        probStruct.Tset = Tset;
     end
     
     if isfulldim(sysStruct.Pbnd),
@@ -534,18 +539,22 @@ end
 
 if ispwa & isfield(probStruct,'Tset'),
     if isfulldim(probStruct.Tset),
-        [Hs,Ks]=double(probStruct.Tset);
-        [nxc,nxx] = size(Hs);
-        if probStruct.tracking==2,
-            Hn = [Hs zeros(size(Hs)); zeros(size(Hs)) -Hs];
-            Kn = [Ks; Ks];
-        else
-            Hn = [Hs zeros(nxc,nu) zeros(nxc,nxx);...
-                    zeros(nuc,nxx) I2u zeros(nuc,nxx);
-                zeros(nxc,nxx) zeros(nxc,nu) -Hs];
-            Kn = [Ks; umax; -umin; Ks];
+        Tset = polytope;
+        for ii = 1:length(probStruct.Tset),
+            [Hs,Ks]=double(probStruct.Tset(ii));
+            [nxc,nxx] = size(Hs);
+            if probStruct.tracking==2,
+                Hn = [Hs zeros(size(Hs)); zeros(size(Hs)) -Hs];
+                Kn = [Ks; Ks];
+            else
+                Hn = [Hs zeros(nxc,nu) zeros(nxc,nxx);...
+                        zeros(nuc,nxx) I2u zeros(nuc,nxx);
+                    zeros(nxc,nxx) zeros(nxc,nu) -Hs];
+                Kn = [Ks; umax; -umin; Ks];
+            end
+            Tset = [Tset polytope(Hn,Kn)];
         end
-        probStruct.Tset=polytope(Hn,Kn);
+        probStruct.Tset = Tset;
     end
 end
 
