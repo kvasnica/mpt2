@@ -763,10 +763,16 @@ else
             ii=ii(keptrows);
         end
     end
-    
+
+    % we can have serious problems if Gt contains any multiple identical rows,
+    % therefore we remove them:
+    [aa,bb] = unique(Gt, 'rows');
+    % also restore order of constraints because unique changes it!
+    Gt = Gt(bb, :);  
+    ii = ii(bb);
+        
     Wt=Matrices.W(ii,:);
     St=Matrices.S(ii,:);
-    % GHG=inv(Gt*Matrices.Hinv*Gt');
     GHGinv=inv(Gt*Matrices.Hinv*Gt');
     tmat=Matrices.Hinv*Gt'*GHGinv;
     %-----------------------------------
