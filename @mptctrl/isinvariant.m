@@ -67,7 +67,12 @@ elseif isfield(probStruct, 'Qy')
 end
 if probStruct.norm==2 & probStruct.Tconstraint==1 & probStruct.subopt_lev==0
     % invariance guaranteed for 2-norm problems with LQR target set
-    result = 1;
+    
+    % but only for LTI systems currently!
+    if ~iscell(ctrl.sysStruct.A),
+        result = 1;
+    end
+
 elseif probStruct.subopt_lev>0
     % invariance guaranteed for minimum time and low-complexity setups
     result = 1;

@@ -64,20 +64,24 @@ if probStruct.tracking>0
 end
 if probStruct.norm==2 & probStruct.Tconstraint==1 & probStruct.subopt_lev==0
     % stability guaranteed for 2-norm problems with LQR target set
-    result = 1;
+    
+    % but only for LTI systems currently!
+    if ~iscell(sysStruct.A),
+        result = 1;
+    end
+    
 elseif probStruct.subopt_lev == 1
     % stability guaranteed for minimum-time solutions
     result = 1;
-% elseif probStruct.subopt_lev == 2 & isfield(ctrl.details.feasible),
-%     % stability guaranteed for low-complexity solutions with associated PWQ/PWA/
-%     % common lyapunov function
-%     result = ctrl.details.feasible;
+    
 elseif probStruct.subopt_lev==0 & isinf(probStruct.N)
     % stability guaranteed for infinite-time problems
     result = 1;
+    
 elseif isfield(ctrl.details, 'lyapunov')
     % stability is also guaranteed if a lyapunov function has been found
     result = ctrl.details.lyapunov.feasible;
+    
 end
 if isfield(ctrl.probStruct, 'Nc'),
     if ctrl.probStruct.Nc==ctrl.probStruct.N & result==1,
