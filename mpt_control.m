@@ -215,13 +215,15 @@ if nbool>0,
         % all inputs are boolean
         switch probStruct.subopt_lev
             case 0,
-                if probStruct.norm==2,
-                    error('2-norm problems not supported for probStruct.subopt_lev=0 and discrete inputs!');
-                end
                 if isinf(probStruct.N),
                     error('No infinite-time solution available for systems with discrete inputs!');
                 end
-                ctrlStruct = mpt_optBoolCtrl(sysStruct, probStruct, Options);
+                if probStruct.norm==2,
+                    ctrlStruct = mpt_optQuadCtrl(sysStruct, probStruct, Options);
+                else
+                    ctrlStruct = mpt_optBoolCtrl(sysStruct, probStruct, Options);
+                end
+                
             case 1,
                 ctrlStruct = mpt_boolMinTime(sysStruct, probStruct, Options);
             case 2,
@@ -231,13 +233,14 @@ if nbool>0,
         % some inputs are continuous, some integer
         switch probStruct.subopt_lev
             case 0,
-                if probStruct.norm==2,
-                    error('2-norm problems not supported for probStruct.subopt_lev=0 and discrete inputs!');
-                end
                 if isinf(probStruct.N),
                     error('No infinite-time solution available for systems with discrete inputs!');
                 end
-                ctrlStruct = mpt_optMixedCtrl(sysStruct, probStruct, Options);
+                if probStruct.norm==2,
+                    ctrlStruct = mpt_optQuadCtrl(sysStruct, probStruct, Options);
+                else
+                    ctrlStruct = mpt_optMixedCtrl(sysStruct, probStruct, Options);
+                end
             case 1,
                 ctrlStruct = mpt_mixedMinTime(sysStruct, probStruct, Options);
             case 2,
@@ -330,9 +333,11 @@ else
                     ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options);
                 end
             else
-                % no optimal solution for quadratic performance index
-                disp('Please set probStruct.subopt_lev=1 for PWA systems with quadratic cost; or use probStruct.norm={1, Inf} to enforce linear cost');
-                error('mpt_control: Optimal DP solution for PWA systems with quadratic cost not implemented in this release.');
+                % CFTOC for quadratic performance index with PWA systems
+                if isinf(probStruct.N),
+                    error('No infinite-time solution for PWA systems and quadratic cost.');
+                end
+                ctrlStruct = mpt_optQuadCtrl(sysStruct, probStruct, Options);
             end
         else
             % iterative solution
@@ -355,6 +360,9 @@ if isempty(ctrlStruct.Fi{1}),
 end
 
 nR = length(ctrlStruct.Fi);
+if isa(ctrlStruct, 'mptctrl'),
+    ctrlStruct = struct(ctrlStruct);
+end
 
 if isfield(probStruct,'xref') | isfield(probStruct,'uref'),
     % for fixed-state tracking, do the substitution back

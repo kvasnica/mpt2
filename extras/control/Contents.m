@@ -1,8 +1,9 @@
 % Multi-Parametric Toolbox Control routines
 %   mpt_control            - Main control routine. Computes explicit controller for a given problem
 %
-%   mpt_optControl         - Solves the CFTOC problem for a given LTI system
-%   mpt_optControlPWA      - Solves the CFTOC problem for a given PWA system
+%   mpt_optControl         - CFTOC of LTI systems
+%   mpt_optControlPWA      - CFTOC of PWA systems with linear cost
+%   mpt_optQuadCtrl        - CFTOC of PWA systems with quadratic cost
 %   mpt_optInfControl      - Solves the infinite-time constrained optimal control problem for LTI systems
 %   mpt_optInfControlPWA   - Solves the infinite-time constrained optimal control problem for PWA systems
 %   mpt_iterative          - Computes a time-optimal or low-complexity explicit controller for LTI systems
