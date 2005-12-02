@@ -132,6 +132,20 @@ if ~isfield(Matrices, 'PbndIncluded'),
     Matrices.G=[Matrices.G; zeros(size(Matrices.bndA,1),size(Matrices.G,2))];
 end
 
+if size(Matrices.G, 2)==0,
+    % we don't have anything to optimize over, return one region and associated
+    % cost
+    Pn = polytope(-Matrices.E, Matrices.W);
+    Phard = Pn;
+    details.Ai{1} = Matrices.Y;
+    details.Bi{1} = Matrices.Cx;
+    details.Ci{1} = Matrices.Cc;
+    Fi{1} = zeros(0, size(Matrices.E, 2));
+    Gi{1} = zeros(0, 0);
+    activeConstraints = [];
+    return
+end    
+
 if isfield(Matrices, 'constraints_reduced'),
     constraints_reduced = Matrices.constraints_reduced;
 else
