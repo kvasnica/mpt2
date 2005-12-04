@@ -91,7 +91,7 @@ if isempty(H),
     interfacedata.problemclass.objective.quadratic = struct('convex', 0, 'nonconvex', 0);
 else
     % we have an QP / MIQP
-    interfacedata.Q = 2*H; % YALMIP solves "min x'*Q*x" and not "min 1/2*x'*Q*x" !!!
+    interfacedata.Q = H;
     interfacedata.problemclass.objective.linear = 0;
     interfacedata.problemclass.objective.quadratic = struct('convex', 1, 'nonconvex', 0);
 end
