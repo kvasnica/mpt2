@@ -284,7 +284,9 @@ if isfield(mptOptions, 'yalmipdata'),
     end
     
     % update the model structure with current data
-    model = sub_setyalmipdata(model,H,f,A,B,Aeq,Beq,lb,ub,vartype,x0);
+    % notice we have to use H/2 because YALMIP minimizes x'*H*x and not
+    % 1/2*x'*H*x.
+    model = sub_setyalmipdata(model,H/2,f,A,B,Aeq,Beq,lb,ub,vartype,x0);
     
     % call an appropriate solver
     solution = eval([model.interfacedata.solver.call '(model.interfacedata);']);
