@@ -670,7 +670,14 @@ end
 if(DEBUG==1|DEBUG==2)
     [hardA,hardb,NoSolutionToPoint]=sub4_fixouterhull(hardA,hardb,xB,Pn,lpsolver,TOLERANCE,stepSize,xBRegion,Options);
 end
-Phard = polytope(hardA, hardb);
+if isempty(hardA),
+    if Options.verbose >= 0,
+        fprintf('mpt_mpqp: Warning: Phard is returned as an empty polytope. Please report this case to mpt@control.ee.ethz.ch\n');
+    end
+    Phard = union(Pn);
+else
+    Phard = polytope(hardA, hardb);
+end
 %------------------------------------------------
 % Remove redundant constraints in the outer hull
 %-----------------------------------------------
