@@ -102,6 +102,9 @@ else
     if ~isa(Q,'polytope'),
         error('SUBSASGN: Argument MUST be a polytope object!');
     end
+    if dimension(Q)~=dimension(P),
+        error('SUBSASGN: Dimensions of all polytopes must be identical.');
+    end
     for ii=1:length(Xs),
         P.Array{Xs(ii)}=Q;
     end
