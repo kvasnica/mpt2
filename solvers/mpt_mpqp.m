@@ -52,6 +52,9 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mpqp(Matrices,Options)
 %              if they exist, will be detected, i.e. the user will be notified.
 %              Correction to the calculation of the outer hull.
 %
+% Options.zero_tol    - everything below this value is considered zero
+%                       (default is 1e-13)
+%
 % Note: If Options is missing or some of the fiels are not defined, the default
 %       values from mptOptions will be used
 %
@@ -71,6 +74,8 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mpqp(Matrices,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%     kvasnica@control.ee.ethz.ch
 % (C) 2004 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %     baotic@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
@@ -102,8 +107,6 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mpqp(Matrices,Options)
 % ---------------------------------------------------------------------------
 
 error(nargchk(1,2,nargin));
-
-zero_tol = 1e-13;     % everything below this value is considered zero
 
 nu=size(Matrices.H,1);
 nx=size(Matrices.E,2);
@@ -215,6 +218,11 @@ end
 if ~isfield(Options, 'statusbar'),
     Options.statusbar = 0;
 end
+if ~isfield(Options, 'zero_tol'),
+    Options.zero_tol = 1e-13;     % everything below this value is considered zero
+end
+
+zero_tol = Options.zero_tol;
 
 useSymmetry=Options.useSymmetry;  
 lpsolver=Options.lpsolver;       
