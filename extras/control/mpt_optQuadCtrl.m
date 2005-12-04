@@ -16,6 +16,10 @@ function ctrl = mpt_optQuadCtrl(sysStruct, probStruct, Options)
 % sysStruct         - System structure in the sysStruct format
 % probStruct        - Problem structure in the probStruct format
 % Options           - Additional options
+%    .verbose       - level of verbosity
+%    .mp.algorithm  - which enumeration algorithm to use
+%                     (Options.mp_algorithm=3 uses different enumeration)
+%    .mp.presolve   - perform pre-solving if this option is true (default)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -64,6 +68,15 @@ Options = mpt_defaultOptions(Options, ...
     'verbose', mptOptions.verbose);
 
 %===============================================================================
+% set options which we pass to solvemp()
+yalmipOptions = mptOptions.sdpsettings;
+f = fields(Options);
+for ii = 1:length(f),
+    yalmipOptions = setfield(yalmipOptions, f{ii}, getfield(Options, f{ii}));
+end
+
+
+%===============================================================================
 % verify sysStruct and probStruct structures
 if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt.verbose=1;
@@ -74,7 +87,7 @@ origProbStruct = probStruct;
 
 
 %===============================================================================
-% prepare some data
+% prepare data such that we can later create a valid MPTCTRL object
 origSysStruct = sysStruct;
 origProbStruct = probStruct;
 if ~iscell(sysStruct.A),
@@ -306,8 +319,7 @@ end
 
 %===============================================================================
 % solve the mpMIQP
-opt = sdpsettings(mptOptions.sdpsettings, 'verbose', Options.verbose);
-[mpsol{k},sol{k},Uz{k}] = solvemp(F, obj, opt, x{k}, u{k});
+[mpsol{k},sol{k},Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, u{k});
 
 
 %===============================================================================
