@@ -356,3 +356,8 @@ drawnow;
 
 h_all.PWQ = h;
 h_all.Pn  = handle;
+
+if nargout==0,
+    clear h_all
+end
+
