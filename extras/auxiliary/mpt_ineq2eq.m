@@ -76,7 +76,7 @@ for ii = 1:ne-1,
     
     % possible candidates are those rows whose sum is equal to the sum of the
     % original row
-    possible_eq = find(sumM == s) + ii;
+    possible_eq = find(abs(sumM-s)<1e-12) + ii;
     for jj = possible_eq',
         % now compare if the two inequalities (the second one with opposite
         % sign) are really equal (hence they form an equality constraint)
