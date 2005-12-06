@@ -121,7 +121,7 @@ if isinf(probStruct.N),
     error('mpt_optQuadCtrl: Prediction horizon must be finite!');
 end
 if mpt_isnoise(sysStruct.noise),
-    error('mpt_optQuadCtrl: aditive noise not supported.');
+    error('mpt_optQuadCtrl: additive noise not supported.');
 end
 if nbool>0 & probStruct.tracking==1,
     error('mpt_optQuadCtrl: tracking cannot be used for systems with integer inputs.');
