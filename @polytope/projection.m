@@ -30,6 +30,8 @@ function [P]= projection(PA,dim,Options)
 % Options.projection=6  - Fourier-Motzkin Elimination (mex implementation) -
 %                         fast but eventualy unreliable
 % Options.projection=7  - Use approach based on mpLPs
+% Options.iterhull_maxiter  - Maximum number of iterations for the Iterative
+%                             Hull algorithm
 %
 % Note: If Options.projection is not set, best method is selected automatically
 %
@@ -103,6 +105,10 @@ if ~isfield(Options, 'qpsolver'),
     % we can't use projection method 7 (mplp) if we can't use the latest mpLP
     % solver, which requires some QP solver to be available.
     Options.qpsolver = mptOptions.qpsolver;
+end
+if ~isfield(Options, 'iterhull_maxiter'),
+    % maximum number of iterations for the iterative hull algorithm
+    Options.iterhull_maxiter = 100;
 end
 
 if ~isfulldim(PA),
@@ -505,6 +511,10 @@ else
     Vert=[];
     cnt = 0;
     while ~OK
+        cnt = cnt + 1;
+        if cnt > Options.iterhull_maxiter,
+            error('projection/iterative hull: Maximum number of iterations exceeded.');
+        end
         f1=randn(1,length(ydim));
         f=zeros(1,length(xdim));
         f(ydim)=f1;
@@ -528,7 +538,7 @@ else
             OK=1;     
         end 
     end 
-    
+    cnt = 0;
     tmpOpt.abs_tol=abs_tol*10; %to compensate for rounding errors
     
     P1=hull(Vert(:,ydim));        
@@ -538,6 +548,10 @@ else
     % 2. hull compute with all the extrema
     % 3. hull(new) ~= hull(old) => go to point 1 ; else, return. 
     while 1
+        cnt = cnt + 1;
+        if cnt > Options.iterhull_maxiter,
+            error('projection/iterative hull: Maximum number of iterations exceeded.');
+        end        
         for ind=1:size(P1.H,1)
             
             f1=round(P1.H(ind,:)/abs_tol)*abs_tol;
