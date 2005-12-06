@@ -154,7 +154,7 @@ if ~isempty(alph_vars),
     if ~isfield(Matrices, 'alphabet'),
         error('mpt_mpmiqp: Matrices.alphabet must be given.');
     elseif ~iscell(Matrices.alphabet),
-        error('mpt_mpmiqp: Matrices.alphaber must be a cell array.');
+        error('mpt_mpmiqp: Matrices.alphabet must be a cell array.');
     end
 end
 for ii = 1:length(alph_vars),
