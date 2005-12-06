@@ -9,9 +9,15 @@
 Version 2.5 (23-Nov-2005)
 -------------------------
 
-[NEW] ellipsoidal toolbox now included
+[NEW] Hybrid Identification Toolbox included
+
+[NEW] Ellipsoidal Toolbox now included
 
 [NEW] latest version of YALMIP included
+
+[NEW] mpMILP and mpMIQP solvers
+
+[NEW] optimal control of PWA systems with quadratic objective function
 
 [NEW] support for lower-dimensional noise polytopes
 
@@ -26,16 +32,14 @@ given system when called with no output arguments
 [NEW] new function for simulations of closed-loop systems: mptctrl/sim, 
 mptctrl/simplot
 
-[NEW] mptctrl/plotu now substitutes mpt_plotU
-
-[NEW] mptctrl/plotj now substitutes mpt_plotJ
-
 [NEW] mptctrl/get, mptctrl/set: set/get methods for MPTCTRL objects
 
 [NEW] mptctrl/modify: modify a controller in certain way (e.g. remove
 certain regions)
 
 [NEW] mpt_buildAdjacency: computes which regions are adjacent
+
+[NEW] mpt_norm2pwa: converts a norm to a PWA function
 
 [NEW] mpt_maxCtrlSet: allow to break computation of Kinf sets based on
 volume increase (Options.Vconverge)
@@ -156,6 +160,8 @@ greedy merging
 [PATCH] mpt_mplp: fix random perturbations for 1D systems
 
 [PATCH] mpt_mplp: fix problems with "xBeyond violates more than one bounds"
+
+[PATCH] mpt_mpqp: improved handling of degeneracies
 
 [PATCH] mpt_optControlPWA: fixed handling of 1D systems
 

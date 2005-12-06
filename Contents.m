@@ -19,8 +19,10 @@
 %   mpt_exportc            - Exports a given explicit controller to C-code
 %
 % Solvers
-%   mpt_mplp               - Explicitly solves the given linear program (LP)
-%   mpt_mpqp               - Explicitly solves the given quadratic program (QP)
+%   mpt_mplp               - Multi-Parametric LP solver
+%   mpt_mpqp               - Multi-Parametric QP solver
+%   mpt_mpmilp             - Multi-Parametric Mixed-Integer LP solver
+%   mpt_mpmiqp             - Multi-Parametric Mixed-Integer QP solver
 %   mpt_solveLP            - Interface to various LP solvers
 %   mpt_solveQP            - Interface to various QP solvers
 %   mpt_solveMILP          - Interface to various MILP solvers
