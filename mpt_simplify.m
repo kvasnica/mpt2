@@ -28,6 +28,8 @@ function [simpleCtrl,details] = mpt_simplify(ctrl, how, Options)
 % Options.trials   - for greedy merging, defines number of trials to
 %                    improve the solution (default is 1, corresponds to 1 run)
 % Options.verbose  - level of verbosity {0|1|2}
+% Options.nu       - number of system inputs (when simplifying partitions which
+%                    are not necessarily controller objects)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -130,21 +132,35 @@ else
 end
 
 if isa(ctrl, 'mptctrl')
+    mptctrl_input = 1;
     ctrlStruct = struct(ctrl);
 else
+    mptctrl_input = 0;
     ctrlStruct = ctrl;
 end
 
-if ~mpt_isValidCS(ctrlStruct),
-    error('mpt_simplify: input argument must be a valid controller structure!');
+if mptctrl_input,
+    if ~mpt_isValidCS(ctrlStruct),
+        error('mpt_simplify: input argument must be a valid controller structure!');
+    end
+    if ctrlStruct.overlaps %& Options.greedy==1,
+        disp('Overlaps detected, removing overlaps...');
+        ctrlStruct = mpt_removeOverlaps(ctrlStruct);
+    end
 end
 
-if ctrlStruct.overlaps %& Options.greedy==1,
-    disp('Overlaps detected, removing overlaps...');
-    ctrlStruct = mpt_removeOverlaps(ctrlStruct);
+if mptctrl_input,
+    [nx,nu,ny,ndyn] = mpt_sysStructInfo(ctrlStruct.sysStruct);
+else
+    % handle partitions which are not valid controller structures
+    nx = size(ctrlStruct.Fi{1},2);
+    if isfield(Options, 'nu'),
+        nu = Options.nu;
+    else
+        nu = size(ctrlStruct.Fi{1},1);
+    end
 end
 
-[nx,nu,ny,ndyn] = mpt_sysStructInfo(ctrlStruct.sysStruct);
 if size(ctrlStruct.Fi{1},1)>nu,
     % if the controller was obtained by solving a CFTOC problem for LTI
     % systems, extract only control law assigned to the first step.
@@ -181,8 +197,10 @@ simpleCtrlStruct.Gi = {};
 simpleCtrlStruct.Ai = {};
 simpleCtrlStruct.Bi = {};
 simpleCtrlStruct.Ci = {};
-simpleCtrlStruct.dynamics = [];
-simpleCtrlStruct.simplified = 1;
+if mptctrl_input,
+    simpleCtrlStruct.dynamics = [];
+    simpleCtrlStruct.simplified = 1;
+end
 
 zAi = zeros(size(ctrlStruct.Ai{1}));
 zBi = zeros(size(ctrlStruct.Bi{1}));
@@ -327,30 +345,31 @@ simpleCtrlStruct.Ci = cell(1, nRnew);
 [simpleCtrlStruct.Bi{:}] = deal(zBi);
 [simpleCtrlStruct.Ci{:}] = deal(zCi);
 
-simpleCtrlStruct.dynamics = repmat(0,1,length(simpleCtrlStruct.Pn));
-simpleCtrlStruct.details.before_simpl = length(ctrlStruct.Pn);
-simpleCtrlStruct.details.after_simpl = length(simpleCtrlStruct.Pn);
-simpleCtrlStruct.details.simpl_time = simpl_time;
-if Options.greedy,
-    simpleCtrlStruct.details.alg = 'greedy';
-else
-    simpleCtrlStruct.details.alg = 'optimal';
-end
-simpleCtrlStruct.simplified = 1;
-
-if isfield(simpleCtrlStruct.details,'searchTree'),
-    simpleCtrlStruct.details = rmfield(simpleCtrlStruct.details,'searchTree');
-    disp('recomputing search tree...');
-    simpleCtrlStruct = mpt_searchTree(simpleCtrlStruct);
+if mptctrl_input,
+    simpleCtrlStruct.dynamics = repmat(0,1,length(simpleCtrlStruct.Pn));
+    simpleCtrlStruct.details.before_simpl = length(ctrlStruct.Pn);
+    simpleCtrlStruct.details.after_simpl = length(simpleCtrlStruct.Pn);
+    simpleCtrlStruct.details.simpl_time = simpl_time;
+    if Options.greedy,
+        simpleCtrlStruct.details.alg = 'greedy';
+    else
+        simpleCtrlStruct.details.alg = 'optimal';
+    end
+    simpleCtrlStruct.simplified = 1;
+    if isfield(simpleCtrlStruct.details,'searchTree'),
+        simpleCtrlStruct.details = rmfield(simpleCtrlStruct.details,'searchTree');
+        disp('recomputing search tree...');
+        simpleCtrlStruct = mpt_searchTree(simpleCtrlStruct);
+    end
 end
 
 if Options.verbose>=0,
     fprintf('controller partition reduced to %d regions\n',length(simpleCtrlStruct.Pn));
 end
 
-details. before = simpleCtrlStruct.details.before_simpl;
-details.after = simpleCtrlStruct.details.after_simpl;
-details.runTime = simpleCtrlStruct.details.simpl_time;
+details.before = length(ctrlStruct.Pn);
+details.after = length(simpleCtrlStruct.Pn);
+details.runTime = simpl_time;
 if Options.greedy,
     details.alg = 'greedy';
 else
@@ -365,7 +384,11 @@ if Options.statusbar,
     mpt_statusbar;
 end
 
-simpleCtrl = mptctrl(simpleCtrlStruct);
+if mptctrl_input,
+    simpleCtrl = mptctrl(simpleCtrlStruct);
+else
+    simpleCtrl = simpleCtrlStruct;
+end
 
 % assign simplified controller in caller's workspace
 if ~isempty(inputname(1)) & nargout==0,
@@ -380,11 +403,7 @@ function color = sub_preparecolors(ctrlStruct)
 P = ctrlStruct.Pn;
 Fi = ctrlStruct.Fi;
 Gi = ctrlStruct.Gi;
-if iscell(ctrlStruct.sysStruct.B),
-    nu = size(ctrlStruct.sysStruct.B{1}, 2);
-else
-    nu = size(ctrlStruct.sysStruct.B, 2);
-end
+nu = size(Fi{1}, 1);
 color.Reg = NaN*ones(1,length(P));
 color.Table = {}; 
 color.Fi = {};
