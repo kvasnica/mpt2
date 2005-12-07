@@ -17,6 +17,10 @@ function h_all=mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Optio
 % USAGE:
 %   mpt_plotPWQ(Pn,Ai,Bi,Ci)           to plot PWQ function over Pn
 %
+% NOTE:
+%   If Pn contains overlapping regions, this function will only plot the lowest
+%   value associated to given points.
+%
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
@@ -31,9 +35,6 @@ function h_all=mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Optio
 %                     (default: mptOptions.lpsolver)
 % Options.newfigure - If set to 1, opens a new figure window,
 %                     (default: mptOptions.newfigure)
-% Options.overlaps  - If regions in partition Pn are overlaping this flag should
-%                     be set to 1, in order to find the smallest quadratic value
-%                     (default: 0)
 % Options.showPn    - If set to 1, plots on polyhedral sets Pn,
 %                     (default: 1)
 % Options.samecolors - If set to 1, pieces of PWA function will be plotted
@@ -57,10 +58,13 @@ function h_all=mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Optio
 % handle.PWQ        - handle of the PWQ function
 % handle.Pn         - handle of the plotted partition
 %
-% see also MPT_PLOTPWA, MPT_GETPWQLYAPFCT, MPT_GETCOMMONLYAPFCT
+% see also MPT_PLOTPWA, MPT_PLOTJ
+%
 
 % Copyright is with the following author(s):
 %
+% (c) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
 % (c) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
@@ -117,9 +121,6 @@ end
 if ~isfield(Options,'newfigure')
     Options.newfigure=mptOptions.newfigure;
 end
-if ~isfield(Options,'overlaps')
-    Options.overlaps=0;
-end
 if ~isfield(Options,'showPn')
     Options.showPn=1;
 end
@@ -156,6 +157,14 @@ if(isempty(lyapunovL) | isempty(lyapunovC))
      end
 end
 
+if Options.newfigure,
+   figure;  % open new figure window
+   Options.newfigure = 0;  % tell any subsequent function not to open a yet another figure
+elseif ~ishold,
+    % else reuse current plot or open new figure if no plot exists
+    newplot;
+end
+
 disp('Creating PWQ plot...');
 
 if Options.samecolors,
@@ -189,57 +198,26 @@ if oneDimCase,
     C=zeros(meshgridpoints,meshgridpoints);
 else
     V = [];
+    [B, L, U] = bounding_box(Pn, struct('noPolyOutput', 1));
     if isfield(Options,'min_x1')
         min_x1=Options.min_x1;
     else
-        min_x1=Inf;
-        for i=1:length(Pn)
-            f_min_x1=[1,0];
-            [H,K]=double(Pn(i));
-            [x,fval,lambda,exitflag,how]=mpt_solveLPi(f_min_x1,H,K,[],[],[],Options.lpsolver);
-            if(x(1) < min_x1)
-                min_x1=x(1);
-            end
-        end
+        min_x1 = L(1);
     end
     if isfield(Options,'max_x1')
-        max_x1=Options.max_x1;
+        max_x1 = Options.max_x1;
     else
-        max_x1=-Inf;
-        for i=1:length(Pn)
-            f_max_x1=[-1,0];
-            [H,K]=double(Pn(i));
-            [x,fval,lambda,exitflag,how]=mpt_solveLPi(f_max_x1,H,K,[],[],[],Options.lpsolver);
-            if(x(1) > max_x1)
-                max_x1=x(1);
-            end
-        end
+        max_x1 = U(1);
     end
     if isfield(Options,'min_x2')
-        min_x2=Options.min_x2;
+        min_x2 = Options.min_x2;
     else
-        min_x2=Inf;
-        for i=1:length(Pn)
-            f_min_x2=[0,1];
-            [H,K]=double(Pn(i));
-            [x,fval,lambda,exitflag,how]=mpt_solveLPi(f_min_x2,H,K,[],[],[],Options.lpsolver);
-            if(x(2) < min_x2)
-                min_x2=x(2);
-            end
-        end
+        min_x2 = L(1);
     end
     if isfield(Options,'max_x2')
-        max_x2=Options.max_x2;
+        max_x2 = Options.max_x2;
     else
-        max_x2=-Inf;
-        for i=1:length(Pn)
-            f_max_x2=[0,-1];
-            [H,K]=double(Pn(i));
-            [x,fval,lambda,exitflag,how]=mpt_solveLPi(f_max_x2,H,K,[],[],[],Options.lpsolver);
-            if(x(2) > max_x2)
-                max_x2=x(2);
-            end
-        end
+        max_x2 = U(2);
     end
     %   produce a meshgrid between the extremal values
     x1=linspace(min_x1,max_x1,meshgridpoints);
@@ -250,54 +228,35 @@ else
     C=zeros(meshgridpoints,meshgridpoints);
 end
 
-
-
-
-% check if meshgridpoint is in a region and if it is so, calculate the function value
-I_2=eye(2);
-f_opt=[1,1];
-
-% store H-representation of each polytope in a cell array for faster access
-[H, K] = pelemfun(@double, Pn);
-Pnc = cellfun('prodofsize', K);
-lenPn = length(Pn);
-
 for i=1:meshgridpoints
     for j=1:meshgridpoints
-        k=1;
-        region_found=0;
-        while ((k <= lenPn) & ((region_found == 0) | Options.overlaps))
-            if oneDimCase
-                Position = x1(j);
-            else
-                Position=[x1(j);x2(i)];
-            end
-            m=1;
-            x_in_region=1;
-            Hk = H{k};
-            Kk = K{k};
-            while((m <= Pnc(k)) & (x_in_region==1))  % check if position achieves all (m) inequalities of region k
-                x_value=Hk(m,:)*Position;
-                if(x_value > Kk(m))
-                    x_in_region=0;
-                end
-                m=m+1;    
-            end
-            if(x_in_region==1)
-                x=Position;
+        if oneDimCase,
+            x = x1(j);
+        else
+            x = [x1(j); x2(i)];
+        end
+        [isin, inwhich] = isinside(Pn, x);
+        if ~isin,
+            % point is not inside of any region, skip to next grid point
+            continue
+        else
+            mincost = Inf;            
+            for k=inwhich(:)',
+                % now compute cost in each region, then take the minimal one
+                % (because we can have overlaps
                 if((pwq_or_q==1) & (~isempty(lyapunovL{k})) & (~isempty(lyapunovC{k})))
-                    lL = lyapunovL{k};
-                    zaux=x'*lyapunovQ{k}*x+(lL(:))'*x+lyapunovC{k}; % calculate Lyapunov-function value
+                    % calculate Lyapunov-function value
+                    mincost = min(mincost, x'*lyapunovQ{k}*x+(lyapunovL{k}(:))'*x+lyapunovC{k}); 
                 else
-                    zaux=x'*lyapunovQ{k}*x; % calculate quadratic-function value
+                    % calculate quadratic-function value
+                    mincost = min(mincost, x'*lyapunovQ{k}*x); 
                 end
-                if zaux<Z(i,j)
-                    Z(i,j)=zaux;
-                    C(i,j)=k;   % C is used for color (surf-plot)
-                end
-                region_found=1;
             end
-            k=k+1;
+            zaux = mincost;
+            if zaux<Z(i,j)
+                Z(i,j)=zaux;
+                C(i,j)=zaux;   % C is used for color (surf-plot)
+            end
         end
     end
 end
@@ -316,8 +275,13 @@ title(sprintf('The PWQ function over %d regions', length(Pn)),'FontSize',18);
 grid; 
 %end of plot invariant-regions
 
+plot_holded = ishold;
+
 if oneDimCase,
-    hold on
+    if ~plot_holded,
+        % only hold the plot if user didn't do it manually        
+        hold on
+    end
     plot(X(1,:), Z(1,:), 'LineWidth', 3);
     ylabel('f_{PWQ}','Fontsize',16);
 else
@@ -336,7 +300,10 @@ else
 end
 handle = [];
 if Options.showPn
-    hold on
+    if ~plot_holded,
+        % only hold the plot if user didn't do it manually
+        hold on
+    end
     if Options.samecolors,
         handle=plot(Pn,struct('color',hsv(length(Pn))));
     else
@@ -350,7 +317,10 @@ end
 if ~oneDimCase,
     view(-37.5,20) 
 end
-hold off;
+if ~plot_holded,
+    % don't do 'hold off' if user holded the plot manually
+    hold off;
+end
 grid on
 drawnow;
 
@@ -360,4 +330,3 @@ h_all.Pn  = handle;
 if nargout==0,
     clear h_all
 end
-
