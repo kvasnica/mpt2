@@ -234,8 +234,11 @@ for k = N-1:-1:1
         bounds(x{k+1}, sysStruct.xmin, sysStruct.xmax);
     end
     bounds(u{k}, sysStruct.umin, sysStruct.umax);
-    if ~YeqSame,
-        bounds(y{k}, sysStruct.ymin, sysStruct.ymax);
+    if ~(k==1 & probStruct.y0bounds==0)
+        % do not impose constraints on y0 if user does not want to
+        if ~YeqSame,
+            bounds(y{k}, sysStruct.ymin, sysStruct.ymax);
+        end
     end
     
     % input constraints
@@ -260,12 +263,15 @@ for k = N-1:-1:1
     end
     
     % output constraints
-    if YeqSame,
-        % C,D,g are identical, it's enough to consider one dynamics
-        F = F + set(sysStruct.ymin < sysStruct.C{1}*x{k} + sysStruct.D{1}*u{k} + sysStruct.g{1}   < sysStruct.ymax);
-        F = F + set(sysStruct.ymin < sysStruct.C{1}*x{k+1} + sysStruct.D{1}*u{k+1} + sysStruct.g{1} < sysStruct.ymax);
-    else
-        F = F + set(sysStruct.ymin < y{k}   < sysStruct.ymax);
+    if ~(k==1 & probStruct.y0bounds==0)
+        % do not impose constraints on y0 if user does not want to
+        if YeqSame,
+            % C,D,g are identical, it's enough to consider one dynamics
+            F = F + set(sysStruct.ymin < sysStruct.C{1}*x{k} + sysStruct.D{1}*u{k} + sysStruct.g{1}   < sysStruct.ymax);
+            F = F + set(sysStruct.ymin < sysStruct.C{1}*x{k+1} + sysStruct.D{1}*u{k+1} + sysStruct.g{1} < sysStruct.ymax);
+        else
+            F = F + set(sysStruct.ymin < y{k}   < sysStruct.ymax);
+        end
     end
 
     % PWA Dynamics
