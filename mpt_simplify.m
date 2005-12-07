@@ -13,7 +13,9 @@ function [simpleCtrl,details] = mpt_simplify(ctrl, how, Options)
 % Simplifies a given explicit controller by merging regions which have the
 % same control law. By doing so, all stability and feasibility properties
 % of the controller are maintained, but complexity is greatly reduced.
-% Information about the cost function is lost.
+%
+% NOTE: Information about the value function will be lost when doing region
+%       simplification!
 %
 % ---------------------------------------------------------------------------
 % INPUT
