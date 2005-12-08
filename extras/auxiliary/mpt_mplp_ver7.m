@@ -73,6 +73,8 @@ function [Pn,Fi,Gi,activeConstraints, Phard,details]=mpt_mplp_ver7(Matrices,Opti
 
 % Copyright is with the following author(s):
 %    
+% (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
+%     loefberg@control.ee.ethz.ch
 % (C) 2004-2005 Miroslav Baric, Automatic Control Laboratory, ETH Zurich,
 %     baric@control.ee.ethz.ch    
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
@@ -1686,58 +1688,34 @@ function [isBorder,xBorder] = checkIfBorder(borderVec,kBorder,ZXpoly,Options)
 %
 
 
-%--------------------Raphael-------------------------
-% change the function to:
-%  1. compute all remaining extreme points of the bounding box
-%  2. change the procedure to handle arbitrary dimensions
-%========================================
+%============= sub_whichquadrant  ====================
 function quadIdx = sub_whichquadrant(P,center)
-%========================================
-%
+%=====================================================
+% by Johan Loefberg
+
 Options.noPolyOutput = 1;
-[R,l,u] = bounding_box(P,Options);
+[R,l,u] = bounding_box(P, Options);
 
 nx = length(center);
-exp2nx = 2^nx;
-q1 = zeros(1,exp2nx);
-powerTwo = (2*ones(nx,1)).^([0:nx-1]');
-xBeyond = u;
-for i=2:(exp2nx+1),
-    twoQuadrant = find(xBeyond==0);
-    len2Quad = length(twoQuadrant);
-    
-    if ( len2Quad ),
-        q = zeros(1,2*len2Quad);
-        for j=1:len2Quad,
-            jIdx = twoQuadrant(j);
-            xBeyond(jIdx) = 1 ;
-            vi = (xBeyond - center) > 0;
-            qIdx = 2*j;
-            q(qIdx-1) = 1 + vi' * powerTwo;
-            q(qIdx)   = q(qIdx-1);
-            if ( (center(jIdx) < 1) & (center(jIdx) >= -1) ),
-                q(qIdx) = q(qIdx) - powerTwo(jIdx);
-            end
-            xBeyond(jIdx)=0;
-        end
+
+S =  (1+sign([l-center u-center]))/2;
+S = round(S');
+
+C = S(1,:);
+quadIdx = [];
+for i = 1:nx
+    if S(1,i) == 1
+        CC = C;
+        CC(:,i) = CC(:,i) | S(1,i);
     else
-        vi = (xBeyond - center) > 0;
-        q  = 1 + vi' * powerTwo;
+        CC = [];
     end
-    q1(q) = 1;
-    
-    if ( i < exp2nx ),
-        for j=1:nx
-            if ( bitget(i-1,nx-j+1) )
-                xBeyond(j) = l(j);
-            else
-                xBeyond(j) = u(j);
-            end
-        end
-    elseif ( i == exp2nx ),
-        xBeyond = l;
-    end
+    if S(2,i) == 1
+        DD = C;
+        DD(:,i) = DD(:,i) | S(2,i);
+    else
+        DD = [];
+    end 
+    C = [C;CC;DD];   
 end
-quadIdx = find(q1==1);
-%
-%========= END sub_whichquadrant ===============
+quadIdx = unique(C*[2.^(0:nx-1)]')+1;

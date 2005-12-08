@@ -74,6 +74,8 @@ function [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mpqp(Matrices,Options)
 
 % Copyright is with the following author(s):
 %
+% (C) 2005 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
+%     loefberg@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %     kvasnica@control.ee.ethz.ch
 % (C) 2004 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
@@ -1302,92 +1304,34 @@ if(length(activeConstraint )>0)
 end
 
 
-%--------------------Raphael-------------------------
-% change the function to:
-%  1. compute all remaining extreme points of the bounding box
-%  2. change the procedure to handle arbitrary dimensions
-
-function q = sub_whichquadrant(P,center)
+%---------------------------------------------------------------------
+function quadIdx = sub_whichquadrant(P,center)
+%========================================
+% by Johan Loefberg
 
 Options.noPolyOutput = 1;
-nx = dimension(P);
+[R,l,u] = bounding_box(P, Options);
 
-try
-    [R,l,u] = bounding_box(P,Options);
-catch
-    disp('Bounding box could not be found');
-    q = 1:nx;
-end
+nx = length(center);
 
-vert = ones(nx,2^nx);
-binOne=dec2bin(1);
-for i=1:2^nx
-    decVec=dec2bin(i-1,nx);
-    for j=1:nx
-        if(decVec(j)==binOne)
-            vert(j,i)=l(j);
-        else
-            vert(j,i)=u(j);
-        end
+S =  (1+sign([l-center u-center]))/2;
+S = round(S');
+
+C = S(1,:);
+quadIdx = [];
+for i = 1:nx
+    if S(1,i) == 1
+        CC = C;
+        CC(:,i) = CC(:,i) | S(1,i);
+    else
+        CC = [];
     end
+    if S(2,i) == 1
+        DD = C;
+        DD(:,i) = DD(:,i) | S(2,i);
+    else
+        DD = [];
+    end 
+    C = [C;CC;DD];   
 end
-
-%-------------------My-------------------
-q1 = zeros(1,2^nx);
-for i=1:2^nx
-    q2 = sub_whichquadrant_point(vert(:,i),center);
-    q1(q2) = 1;
-end
-q = find(q1==1);
-
-% q
-% q1
-
-return
-
-
-
-%New function to find to which quadrant a point belongs
-
-function q = sub_whichquadrant_point(xBeyond,center)
-
-q = [];
-q1 = [];
-
-nx = length(xBeyond);
-%center = zeros(nx,1);       % center per default
-twoQuadrant = find(xBeyond==0);
-
-%%%if length(twoQuadrant)==0   
-if isempty(twoQuadrant),
-    %One = eye(nx);
-    vi = (xBeyond - center) > 0;
-    q1 = 1;
-    for i=0:nx-1
-        q1 = q1 + (vi(i+1))*2^i;    
-    end   
-else    
-    for j=1:length(twoQuadrant)
-        xBeyond(twoQuadrant(j))=1;
-        %One = eye(nx);
-        vi = (xBeyond - center) > 0;
-        q = 1;
-        for i=0:nx-1
-            q = q + (vi(i+1))*2^i;    
-        end 
-        
-        q1 = [q1 q];
-        xBeyond(twoQuadrant(j))=-1;
-        %One = eye(nx);
-        vi = (xBeyond - center) > 0;
-        q = 1;
-        for i=0:nx-1
-            q = q + (vi(i+1))*2^i;    
-        end 
-        xBeyond(twoQuadrant(j))=0;
-        q1 = [q1 q]; 
-    end      
-end
-q = q1;
-
-return
+quadIdx = unique(C*[2.^(0:nx-1)]')+1;
