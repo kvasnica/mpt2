@@ -167,21 +167,23 @@ else
     end
 
     isin = 0;
-    inwhich=[];
     closest = [];
     PArray = P.Array;
     fastbreak = Options.fastbreak;
-
+    inwhich = zeros(lenP, 1);
     for ii=1:lenP,                         % cycle through all elements of Pn
         PArray_ii = PArray{ii};
         if all(PArray_ii.H * x0 - PArray_ii.K <= abs_tol),    % for each P, check if Hx<=K holds
             isin=1;
-            inwhich = [inwhich; ii];
             if fastbreak,
+                % exit quickly if required
+                inwhich = ii;
                 return
             end
+            inwhich(ii) = 1;            
         end
     end
+    inwhich = find(inwhich);
 end
 if isin==0 & nargout>2,
     if lenP==0,
