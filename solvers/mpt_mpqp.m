@@ -175,6 +175,15 @@ if ~constraints_reduced,
     Matrices.W = K;
 end
 
+e = eig(Matrices.H);
+if min(e) == 0
+    disp('WARNING: Lack of strict convexity may lead to troubles in mpQP solver.')
+elseif min(e) < -1e-8
+    disp('WARNING: Problem is not positive semidefinite! Your mpQP solution may be completely wrong.')
+elseif min(e) < 1e-5
+    disp('WARNING: QP is close to being (negative) semidefinite, may lead to troubles in mpQP solver.')
+end
+
 [G,S,W,H,F,Hinv,GHinv,bndA,bndb,nx,nu,Matrices]=sub3_extract(Matrices);
 
 global mptOptions;
