@@ -34,8 +34,13 @@ function [handle,titlehandle]=plot(varargin)
 % Options.linewidth   - width of the border of polytope (1 is default)
 % Options.shade=0-1   - level of transparency (0 - transparent faces, 1 - opaque faces)
 % Options.zvalue      - when plotting 2D polytopes and this parameter is given,
-%                       it will shift the polytope along the 3rd coordinate by
-%                       this value
+%                       it will shift all plotted polytopes along the 3rd
+%                       coordinate by this value
+% Options.elevate     - if set to 1, every 1D or 2D polytope is elevated by an
+%                       increasing value of the z-axis. E.g. plot(P1, P2, P3)
+%                       will plot P1 with z=1, P2 with z=2 and P3 with z=3.
+%                       default is 0. this option takes precedence from
+%                       Options.zvalue.
 % Options.xdimension  - whether to plot a section in 2D or 3D (allowed values: 2,3)
 %                       default value is 3 if this field is not present
 % Options.xsection    - through which states to cut the plot (values e.g. [4 5] for a
@@ -142,6 +147,9 @@ end
 if ~isfield(Options,'linestyle')
     % could also be 'none' or ':'
     Options.linestyle = '-';
+end
+if ~isfield(Options, 'elevate'),
+    Options.elevate = 0;
 end
 
 lenQ=0; dimP=0;
@@ -380,7 +388,11 @@ while index<nii
         if dimP==1
             [tempV.V,tempV.R]=extreme(P,Options);
             x1=tempV.V(:,1);
-            x2=zeros(size(x1));
+            if Options.elevate==1,
+                x2 = cindex*ones(size(x1));
+            else
+                x2 = zeros(size(x1));
+            end
             if isempty(Options.marker),
                 h=line(x1,x2,'Color',color(1,:),'LineWidth',5);
             else
@@ -441,6 +453,10 @@ while index<nii
                     if isfield(Options, 'zvalue'),
                         % move the 2D patch along the 3rd coordinate
                         zz = Options.zvalue*ones(size(x1));
+                        h=patch(x1,x2,zz,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
+                    elseif Options.elevate==1,
+                        % move the 2D patch along the 3rd coordinate
+                        zz = cindex*ones(size(x1));
                         h=patch(x1,x2,zz,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
                     else
                         h=patch(x1,x2,color(1,:),'EdgeColor',Options.edgecolor,'FaceAlpha',shade,'LineStyle',Options.linestyle);
