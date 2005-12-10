@@ -60,7 +60,7 @@ else
         end
         oneCS = CScell{ctr};
         newCS.Pn = [newCS.Pn oneCS.Pn];
-        newCS.Pfinal = newCS.Pn;
+        newCS.Pfinal = [newCS.Pfinal oneCS.Pfinal];
         newCS.Fi = {newCS.Fi{:}, oneCS.Fi{:}};
         newCS.Gi = {newCS.Gi{:}, oneCS.Gi{:}};
         newCS.Ai = {newCS.Ai{:}, oneCS.Ai{:}};
