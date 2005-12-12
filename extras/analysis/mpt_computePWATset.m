@@ -66,7 +66,7 @@ global mptOptions;
 if ~isstruct(mptOptions),
     mpt_error;
 end
-if nargin<5,
+if nargin<4,
     Options=[];
 end
 if ~isfield(Options,'verbose'),
