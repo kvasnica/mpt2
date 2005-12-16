@@ -235,12 +235,13 @@ if ~isempty(inputname(1)) & nargout==0,
     assignin('caller',inputname(1),ctrl);
 end
 
+lyap_type = upper(funtype);
+if isequal(lyap_type, 'QUAD'),
+    lyap_type = 'Quadratic';
+end
+
 if lyapunov.feasible
-    type = upper(lyapunov.type);
-    if strcmp(type, 'QUADRATIC')
-        type = 'Quadratic';
-    end
-    fprintf('\n%s Lyapunov function found, closed-loop system is stable.\n', type);
+    fprintf('\n%s Lyapunov function found, closed-loop system is stable.\n', lyap_type);
     if isempty(inputname(1)) | nargout>0,
         fprintf('The Lyapunov function was stored to ctrl.details.lyapunov\n\n');
     else
@@ -248,5 +249,5 @@ if lyapunov.feasible
     end
     
 else
-    fprintf('\n%s Lyapunov function NOT found, closed-loop system can be unstable.\n', type);
+    fprintf('\n%s Lyapunov function NOT found, closed-loop system can be unstable.\n', lyap_type);
 end
