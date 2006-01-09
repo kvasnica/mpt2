@@ -55,34 +55,13 @@ function [Pu,how] = or(varargin)
 %
 % ---------------------------------------------------------------------------
 
-ni = nargin;
+global mptOptions
 
-if ~isa(varargin{1},'polytope')
-    error('OR: argument MUST be a polytope object!');
-end
-
-Pn = varargin{1};
-if isempty(Pn.Array),
-    Pn.Array{1} = Pn;
-end
-
-% merge all input arguments into one polytope array
-tot=length(Pn.Array)+1;
-for ii=2:ni,
-    if ~isa(varargin{ii},'polytope')
+Pn = mptOptions.emptypoly;
+for ii = 1:nargin,
+    if ~isa(varargin{ii}, 'polytope')
         error('OR: argument MUST be a polytope object!');
     end
-    Qn = varargin{ii};
-    lq = length(Qn.Array);
-    if lq > 0,
-        for jj=1:lq,
-            Pn.Array{tot} = Qn.Array{jj};
-            tot = tot+1;
-        end
-    else
-        Pn.Array{tot} = Qn;
-        tot = tot+1;
-    end
+    Pn = [Pn varargin{ii}];
 end
-
 [Pu,how] = union(Pn);
