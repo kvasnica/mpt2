@@ -461,7 +461,7 @@ ctrlStructST.details.searchTree = searchTree;
 ctrlST = mptctrl(ctrlStructST);
 
 % assign variable which contains the search tree in caller's workspace
-if ~isempty(inputname(1)),
+if ~isempty(inputname(1)) & nargout==0,
     assignin('caller',inputname(1),ctrlST);
 end
 
