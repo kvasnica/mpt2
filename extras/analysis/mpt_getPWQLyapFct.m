@@ -861,7 +861,11 @@ if(~Options.enforcePositivity)
         end
     end
     
-    solution = solvesdp(myprog,[],options);                        %find solution using LMI solver
+    if all(containsOrigin),
+        fprintf('mpt_getPWQLyapFct: Skipping verification because all regions contain the origin.\n');
+    else
+        solution = solvesdp(myprog,[],options);                        %find solution using LMI solver
+    end
     
     %analyze solver output
     if(solution.problem==4) 
