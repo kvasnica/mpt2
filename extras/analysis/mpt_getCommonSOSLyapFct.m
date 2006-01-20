@@ -867,7 +867,12 @@ if ( iscell(sysStruct.A) ),
                 error('mpt_getCommonSOSLyapFct: Faulty partition: Region could not be linked to any dynamic !!')
             end
         end
+    else
+        Acell = sysStruct.A;
+        Bcell = sysStruct.B;
+        fcell = sysStruct.f;
     end
+    
 elseif ~isfield(sysStruct,'Aunc') | ~isfield(sysStruct,'Bunc')
     % no polytopic uncertainty 
     % 
