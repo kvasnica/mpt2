@@ -299,7 +299,7 @@ if havenoise,
     end
 
 else
-    [Hn,Kn]=double(Pn);
+    [Hn, Kn] = pelemfun(@double, Pn);
     Fi=ctrlStruct.Fi;
     Gi=ctrlStruct.Gi;
 end
