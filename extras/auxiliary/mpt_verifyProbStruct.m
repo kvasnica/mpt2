@@ -30,8 +30,8 @@ function probStruct=mpt_verifyProbStruct(probStruct,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -64,15 +64,12 @@ end
 if nargin<2
     Options=[];
 end
-if ~isfield(Options,'verbose'),
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options, 'probstructname')
-    Options.probstructname = inputname(1);
-end
-if ~isfield(Options, 'guierrors'),
-    Options.guierrors = 0;
-end
+Options = mpt_defaultOptions(Options, ...
+    'verbose', mptOptions.verbose, ...
+    'probstructname', inputname(1), ...
+    'guierrors', 0, ...
+    'useyalmip', 0 );
+
 if isempty(Options.probstructname),
     Options.probstructname = 'probStruct';
 end
@@ -487,26 +484,29 @@ if probStruct.Tconstraint==2 & isfield(probStruct,'yref'),
 end
 
 if isfield(probStruct, 'Nc'),
-    if probStruct.norm~=2 & probStruct.Nc ~= probStruct.N,
-        error('Control horizon is only supported for quadratic cost function.');
-    end
-    if probStruct.subopt_lev > 0 & probStruct.Nc ~= probStruct.N,
-        error('Control horizon must be equal to prediction horizon for low-complexity strategies!');
-    end
-    if probStruct.Nc > probStruct.N,
-        error(['"' psn '.Nc" must be smaller than "' psn '.N" !']);
-    end
-    if probStruct.Nc < 1,
-        error(['"' psn '.Nc" must be greater 0 !']);
-    end
-    %     if isfield(probStruct, 'inputblocking'),
-    %         error(['"' psn '.Nc" cannot be used in combination with "' psn '.inputblocking" !']);
-    %     end
-    %     if isfield(probStruct, 'deltablocking'),
-    %         error(['"' psn '.Nc" cannot be used in combination with "' psn '.deltablocking" !']);
-    %     end
-    if probStruct.Nc < probStruct.N
-        probStruct.inputblocking = [ones(1, probStruct.Nc-1) probStruct.N-probStruct.Nc+1];
+    if ~Options.useyalmip,
+        % mpt_constructMatrices cannot deal with certain problem formulations
+        if probStruct.norm~=2 & probStruct.Nc ~= probStruct.N,
+            error('Control horizon is only supported for quadratic cost function.');
+        end
+        if probStruct.subopt_lev > 0 & probStruct.Nc ~= probStruct.N,
+            error('Control horizon must be equal to prediction horizon for low-complexity strategies!');
+        end
+        if probStruct.Nc > probStruct.N,
+            error(['"' psn '.Nc" must be smaller than "' psn '.N" !']);
+        end
+        if probStruct.Nc < 1,
+            error(['"' psn '.Nc" must be greater 0 !']);
+        end
+        %     if isfield(probStruct, 'inputblocking'),
+        %         error(['"' psn '.Nc" cannot be used in combination with "' psn '.inputblocking" !']);
+        %     end
+        %     if isfield(probStruct, 'deltablocking'),
+        %         error(['"' psn '.Nc" cannot be used in combination with "' psn '.deltablocking" !']);
+        %     end
+        if probStruct.Nc < probStruct.N
+            probStruct.inputblocking = [ones(1, probStruct.Nc-1) probStruct.N-probStruct.Nc+1];
+        end
     end
 end
 

@@ -31,8 +31,8 @@ function [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -65,21 +65,14 @@ end
 if nargin<3
     Options=[];
 end
-if ~isfield(Options,'verbose'),
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options, 'sysstructname')
-    Options.sysstructname = inputname(1);
-end
-if ~isfield(Options, 'probstructname')
-    Options.probstructname = inputname(2);
-end
-if ~isfield(Options, 'guierrors'),
-    Options.guierrors = 0;
-end
-if ~isfield(Options, 'forceverify'),
-    Options.forceverify = 0;
-end
+Options = mpt_defaultOptions(Options, ...
+    'verbose', mptOptions.verbose, ...
+    'sysstructname', inputname(1), ...
+    'probstructname', inputname(2), ...
+    'guierrors', 0, ...
+    'forceverify', 0, ...
+    'useyalmip', 0 );
+    
 if isempty(Options.sysstructname),
     Options.sysstructname = 'sysStruct';
 end
@@ -99,12 +92,15 @@ end
 
 [nx,nu,ny,ndyn,nbool,ubool] = mpt_sysStructInfo(sysStruct);
 
-if iscell(sysStruct.A) & isfield(probStruct, 'Nc')
-    if probStruct.Nc ~= probStruct.N,
-        if Options.guierrors,
-            error('Control horizon must be equal to the prediction horizon for PWA systems!');
-        else
-            error(['"' psn '.Nc" must be equal to "' psn '".N" for PWA systems!']);
+if ~Options.useyalmip,
+    % mpt_constructMatrices cannot deal with control horizon and PWA systems
+    if iscell(sysStruct.A) & isfield(probStruct, 'Nc')
+        if probStruct.Nc ~= probStruct.N,
+            if Options.guierrors,
+                error('Control horizon must be equal to the prediction horizon for PWA systems!');
+            else
+                error(['"' psn '.Nc" must be equal to "' psn '.N" for PWA systems!']);
+            end
         end
     end
 end
@@ -219,7 +215,7 @@ if probStruct.Tconstraint==2 & dimension(probStruct.Tset)~=nx,
     end
 end
 
-if isfield(probStruct, 'Qy') & probStruct.Tconstraint==1,
+if isfield(probStruct, 'Qy') & probStruct.Tconstraint==1 & Options.verbose > -1,
     disp('WARNING: Closed-loop stability not guaranteed for penalties on outputs.');
 end
 
