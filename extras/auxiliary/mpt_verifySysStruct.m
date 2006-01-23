@@ -64,15 +64,12 @@ end
 if nargin<2
     Options=[];
 end
-if ~isfield(Options,'verbose'),
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options, 'sysstructname')
-    Options.sysstructname = inputname(1);
-end
-if ~isfield(Options, 'guierrors'),
-    Options.guierrors = 0;
-end
+Options = mpt_defaultOptions(Options, ...
+    'verbose', mptOptions.verbose, ...
+    'sysstructname', inputname(1), ...
+    'guierrors', 0, ...
+    'ybounds_optional', 0);
+
 if isempty(Options.sysstructname),
     Options.sysstructname = 'sysStruct';
 end
@@ -126,14 +123,14 @@ if ~isfield(sysStruct, 'umax')
         error(['"' ssn '.umax" must be defined!']);
     end
 end
-if ~isfield(sysStruct, 'ymin')
+if ~isfield(sysStruct, 'ymin') & Options.ybounds_optional==0,
     if Options.guierrors,
         error('Lower bound on y(k) must be defined!');
     else
         error(['"' ssn '.ymin" must be defined!']);
     end
 end
-if ~isfield(sysStruct, 'ymax')
+if ~isfield(sysStruct, 'ymax') & Options.ybounds_optional==0,
     if Options.guierrors,
         error('Upper bound on y(k) must be defined!');
     else
@@ -379,11 +376,9 @@ else
 end
 
 % checks common for LTI and PWA systems:
-if(size(sysStruct.umax,2)>size(sysStruct.umax,1) | size(sysStruct.umin,2)>size(sysStruct.umin,1))
-    %disp('u constraints must be column vectors (transposing current entry)');
-    sysStruct.umax = sysStruct.umax(:);
-    sysStruct.umin = sysStruct.umin(:);
-end
+sysStruct.umax = sysStruct.umax(:);
+sysStruct.umin = sysStruct.umin(:);
+
 if ~isfield(sysStruct,'dumax'),
     if Options.verbose>1,
         disp('Constraints on slew rate of manipulated variable not defined, using -Inf/Inf');
@@ -397,16 +392,18 @@ if(size(sysStruct.dumax,2)>size(sysStruct.dumax,1) | size(sysStruct.dumin,2)>siz
     sysStruct.dumin = sysStruct.dumin(:);
 end
 if ~isfield(sysStruct,'ymax') | ~isfield(sysStruct,'ymin'),
-    if Options.guierrors,
+    if Options.ybounds_optional==1,
+        sysStruct.ymax = repmat(Inf, size(C, 1), 1);
+        sysStruct.ymin = repmat(-Inf, size(C, 1), 1);
+    elseif Options.guierrors,
         error('Output constraints must be defined!');
     else
         error(['Output constraints must be defined! Please set "' ssn '.ymax" and "' ssn '.ymin".']);
     end
 end
-if(size(sysStruct.ymax,2)>size(sysStruct.ymax,1) | size(sysStruct.ymin,2)>size(sysStruct.ymin,1))
-    sysStruct.ymax = sysStruct.ymax(:);
-    sysStruct.ymin = sysStruct.ymin(:);
-end
+sysStruct.ymax = sysStruct.ymax(:);
+sysStruct.ymin = sysStruct.ymin(:);
+
 if size(sysStruct.ymax,1)~=size(C,1)
     if Options.guierrors,
         error(sprintf('Upper bound on y(k) must be a %dx1 vector! You provided a %dx1 vector.', size(C,1), length(sysStruct.ymax)));
