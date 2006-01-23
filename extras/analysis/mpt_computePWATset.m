@@ -153,8 +153,14 @@ for ii=1:len_od
     %%CONSTRUCT CONSTRAINT MATRICES FOR t=0
     Hx{ii}=[F{ii};-F{ii}];                         %input constraints
     Kx{ii}=[sysStruct.umax;-sysStruct.umin];     %input constraints
-    Hx{ii}=[Hx{ii}; sysStruct.C{dyn}*eye(nx);-sysStruct.C{dyn}*eye(nx)];
-    Kx{ii}=[Kx{ii}; sysStruct.ymax;-sysStruct.ymin];
+    if isfield(sysStruct, 'xmax'),
+        Hx{ii}=[Hx{ii}; eye(nx); -eye(nx)];
+        Kx{ii}=[Kx{ii}; sysStruct.xmax; -sysStruct.xmin];
+    end
+    if isfield(sysStruct, 'ymax'),
+        Hx{ii}=[Hx{ii}; sysStruct.C{dyn}*eye(nx); -sysStruct.C{dyn}*eye(nx)];
+        Kx{ii}=[Kx{ii}; sysStruct.ymax; -sysStruct.ymin];
+    end
     Hx{ii}=[Hx{ii}; sysStruct.guardX{dyn}+sysStruct.guardU{dyn}*F{ii}];
     Kx{ii}=[Kx{ii}; sysStruct.guardC{dyn}];
     P_CL=[P_CL polytope(Hx{ii},Kx{ii})];
