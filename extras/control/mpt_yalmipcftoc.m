@@ -133,6 +133,14 @@ for ii = 1:length(f),
     yalmipOptions = setfield(yalmipOptions, f{ii}, getfield(Options, f{ii}));
 end
 
+% we need to check that prediction horizon is not infinity already at this stage
+if ~isfield(probStruct, 'N'),
+    error('Prediction horizon must be given.');
+end
+if isinf(probStruct.N),
+    error('Prediction horizon must not be infinity.');
+end
+
 
 %===============================================================================
 % handle multi-model systems (one sysStruct per one prediction step)
@@ -310,7 +318,7 @@ probStruct = sub_timevarpenalties(probStruct);
 %===============================================================================
 % find out whether sysStruct.C, sysStruct.D and sysStruct.g all contain the same
 % elements for all dynamics. if so, we can simplify things a bit
-if multi_model | haveMLD,
+if multi_model | haveMLD | Options.dont_solve,
     % always consider outputs as separate variables for the multi-model
     % approach, it makes things less messy coding-wise. do the same if we have
     % at least one MLD model.
@@ -787,6 +795,13 @@ end
 
 variables.x = x;
 variables.u = u;
+variables.y = y;
+if havePWA | haveMLD,
+    variables.d = d;
+end
+if haveMLD,
+    variables.z = z;
+end
 
 if Options.dont_solve,
     % just return constraints, objectives and variables
