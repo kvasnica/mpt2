@@ -157,9 +157,23 @@ else
     if iscell(sysStruct),
         error('Multi-model systems not supported by this function.');
     end
+
+    % verify sysStruct and probStruct
+    verOpt.ybounds_optional = 1;
+    verOpt.verbose = -1;    
+    verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move blocking
+    [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct);
+    origSysStruct = sysStruct;
+    origProbStruct = probStruct;
+    if probStruct.tracking > 0 & ~isfield(probStruct, 'tracking_augmented')
+        [sysStruct, probStruct] = mpt_yalmipTracking(sysStruct, probStruct, verOpt);
+    end
     
+    
+    % compute the controller
     yalmipOptions = mptOptions.sdpsettings;
     yalmipOptions.debug = 1;
+    yalmipOptions.verbose = 1;
     starttime = cputime;
     [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, [vars.u{1:end-1}]);
     if length(sol)==1,
@@ -195,19 +209,10 @@ else
             ctrl.Ai{ii} = zeros(nx);
         end
     end
+
     ctrl.overlaps = overlaps;
-
-    verOpt.ybounds_optional = 1;
-    verOpt.verbose = -1;    
-    verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move blocking
-    [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct);
-
-    ctrl.details.origSysStruct = sysStruct;
-    ctrl.details.origProbStruct = probStruct;
-
-    if probStruct.tracking > 0 & ~isfield(probStruct, 'tracking_augmented')
-        [sysStruct, probStruct] = mpt_yalmipTracking(sysStruct, probStruct, verOpt);
-    end
+    ctrl.details.origSysStruct = origSysStruct;
+    ctrl.details.origProbStruct = origProbStruct;
     ctrl.sysStruct = sysStruct;
     ctrl.probStruct = probStruct;
     
