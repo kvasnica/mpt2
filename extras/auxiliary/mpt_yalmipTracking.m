@@ -329,6 +329,7 @@ if probStruct.tracking==1,
     sysStruct.dumax = Inf*ones(nu,1);
     sysStruct.dumin = -Inf*ones(nu,1);
     probStruct.R = probStruct.Rdu;
+    probStruct = rmfield(probStruct, 'Rdu');
 end
 
 
