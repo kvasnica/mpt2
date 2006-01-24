@@ -162,7 +162,7 @@ else
     verOpt.ybounds_optional = 1;
     verOpt.verbose = -1;    
     verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move blocking
-    [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct);
+    [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct, verOpt);
     origSysStruct = sysStruct;
     origProbStruct = probStruct;
     if probStruct.tracking > 0 & ~isfield(probStruct, 'tracking_augmented')
