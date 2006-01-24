@@ -463,7 +463,7 @@ nrescue.extreme = 5;
 
 % set prefered solvers, list organized according to solver's speed on a given
 % problem
-prefered.lp = [0 9 3 15 2 8 14 7 1 13 5 10 11 12 16];
+prefered.lp = [0 9 3 15 2 8 4 14 7 1 13 5 10 11 12 16];
 prefered.qp = [0 1 9 2 8 4 5 6 7 10];
 prefered.milp = [0 7 6 3 2 4 5 1];
 prefered.miqp = [0 5 4 2 3 1];
