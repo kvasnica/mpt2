@@ -203,24 +203,18 @@ end
 haveXbounds = isfield(sysStruct, 'xmax');
 haveYbounds = isfield(sysStruct, 'ymax');
 
-% use given bounds on references, or use state/output constraints
-if isfield(sysStruct, 'xmax'),
-    if isfield(sysStruct, 'xrefmax'),
-        xrefmax = sysStruct.xrefmax;
-    else
-        xrefmax = sysStruct.xmax;
-        xrefmax(find(xrefmax==Inf)) = mptOptions.infbox;
-    end
+xrefmax = sub_defaultField(sysStruct, 'xrefmax', repmat(mptOptions.infbox, nx, 1));
+xrefmin = sub_defaultField(sysStruct, 'xrefmin', repmat(-mptOptions.infbox, nx, 1));
+yrefmax = sub_defaultField(sysStruct, 'yrefmax', repmat(mptOptions.infbox, ny, 1));
+yrefmin = sub_defaultField(sysStruct, 'yrefmin', repmat(-mptOptions.infbox, ny, 1));
 
-    % use given bounds on references, or use state/output constraints
-    if isfield(sysStruct, 'xrefmin'),
-        xrefmin = sysStruct.xrefmin;
-    else
-        xrefmin = sysStruct.xmin;
-        xrefmin(find(xrefmin==-Inf)) = -mptOptions.infbox;
-    end
-    xmax = sysStruct.xmax;
-    xmin = sysStruct.xmin;
+xrefmax(find(xrefmax==Inf)) = mptOptions.infbox;
+xrefmin(find(xrefmin==-Inf)) = -mptOptions.infbox;
+yrefmax(find(yrefmax==Inf)) = mptOptions.infbox;
+yrefmin(find(yrefmin==-Inf)) = -mptOptions.infbox;
+
+% use given bounds on references, or use state/output constraints
+if haveXbounds,
     if probStruct.tracking==2
         if ycost
             % state vector has dimension nx+ny
@@ -247,22 +241,7 @@ if isfield(sysStruct, 'xmax'),
 end
 
 % use given bounds on references, or use state/output constraints
-if isfield(sysStruct, 'ymax'),
-    
-    if isfield(sysStruct, 'yrefmax'),
-        yrefmax = sysStruct.yrefmax;
-    else
-        yrefmax = sysStruct.ymax;
-        yrefmax(find(yrefmax==Inf)) = mptOptions.infbox;
-    end
-    
-    % use given bounds on references, or use state/output constraints
-    if isfield(sysStruct, 'yrefmin'),
-        yrefmin = sysStruct.yrefmin;
-    else
-        yrefmin = sysStruct.ymin;
-        yrefmin(find(yrefmin==-Inf)) = -mptOptions.infbox;
-    end
+if haveYbounds,
     if probStruct.tracking==2,
         ymaxn = [sysStruct.ymax; yrefmax];
         yminn = [sysStruct.ymin; yrefmin];
@@ -395,4 +374,19 @@ for ii = 1:length(Porig),
         
     end
     Porig{ii} = P;
+end
+
+
+
+%-----------------------------------------------------------------
+function val = sub_defaultField(S, fname, default)
+% returns S.fname if 'fname' is a valid field of the structure "S". Otherwise
+% returns "default".
+
+if isfield(S, fname),
+    val = getfield(S, fname);
+elseif nargin==3,
+    val = default;
+else
+    val = [];
 end
