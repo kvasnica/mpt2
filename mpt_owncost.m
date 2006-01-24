@@ -181,7 +181,7 @@ else
         overlaps = 0;
         
     else
-        if isempty(sol{k}),
+        if isempty(sol),
             fprintf('\n\n');
             fprintf('========================================================================\n');
             fprintf('Please send your system and problem definition to mpt@control.ee.ethz.ch\n');
