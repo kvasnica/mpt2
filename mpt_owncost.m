@@ -1,8 +1,9 @@
-function ctrl = mpt_owncost(sysStruct, probStruct, F, obj, vars)
+function varargout = mpt_owncost(sysStruct, probStruct, F, obj, vars)
 % MPT_OWNCOST The "Design your own cost" function
 %
 % mpt_owncost(sysStruct, probStruct)
-% ctrl = mpt_owncost(sysStruct, probStruct, CON, OBJ, VAR)
+% [C, O, V] = mpt_owncost(sysStruct, probStruct)
+% ctrl = mpt_owncost(CON, OBJ, VAR)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -44,6 +45,9 @@ function ctrl = mpt_owncost(sysStruct, probStruct, F, obj, vars)
 % OUTPUT
 % ---------------------------------------------------------------------------
 % ctrl          - MPTCTRL object 
+% C             - Constraints (optional)
+% O             - Objective (optional)
+% V             - Variables (optional)
 %
 % see also MPT_CONTROL, MPT_YALMIPCFTOC
 %
@@ -74,6 +78,7 @@ function ctrl = mpt_owncost(sysStruct, probStruct, F, obj, vars)
 % ---------------------------------------------------------------------------
 
 global mptOptions;
+
 if ~isstruct(mptOptions),
     mpt_error;
 end
@@ -90,28 +95,64 @@ end
 ctrl = [];
 if nargin==2,
     % generate constraints, objective and variables
-    
-    % check for existence of certain variables in caller's workspace
-    checkvars = {'CON', 'OBJ', 'VAR'};
-    for ic = 1:length(checkvars),
-        evalcmd = sprintf('exist(''%s'', ''var'')', checkvars{ic});
-        exists = evalin('caller', evalcmd);
-        if exists,
-            fprintf('Variable "%s" will be overwritten...\n', checkvars{ic});
-        end
+
+    if ~(iscell(sysStruct) | isstruct(sysStruct)),
+        error('First input must be a structure.');
+    end
+    if ~isstruct(probStruct),
+        error('Second input must be a structure.');
     end
     
-    [dummy, C, O, V] = mpt_yalmipcftoc(sysStruct, probStruct, Options);
+    try
+        [dummy, C, O, V] = mpt_yalmipcftoc(sysStruct, probStruct, Options);
+    catch
+        error(lasterr);
+    end
     
-    % now assign varibales in caller's workspace
-    assignin('caller', 'CON', C);
-    assignin('caller', 'OBJ', O);
-    assignin('caller', 'VAR', V);
-
-    clear ctrl
+    if nargout==0,
+        % assign varibales in caller's workspace
+        
+        % check for existence of certain variables in caller's workspace
+        checkvars = {'CON', 'OBJ', 'VAR'};
+        for ic = 1:length(checkvars),
+            evalcmd = sprintf('exist(''%s'', ''var'')', checkvars{ic});
+            exists = evalin('caller', evalcmd);
+            if exists,
+                fprintf('Variable "%s" was overwritten...\n', checkvars{ic});
+            end
+        end
+        
+        assignin('caller', 'CON', C);
+        assignin('caller', 'OBJ', O);
+        assignin('caller', 'VAR', V);
+        fprintf('Variables CON, OBJ and VAR are now stored in your workspace.\n');
+        
+    elseif nargout==3,
+        % return constraints, objective and variables
+        varargout{1} = C;
+        varargout{2} = O;
+        varargout{3} = V;
+        
+    else
+        error('Wrong number of output arguments.');
+        
+    end
     
 else
     % compute controller based on custom constraints/objective
+    
+    if ~(isa(F, 'lmi') | isa(F, 'set')),
+        error('First input must be a set of constraints.');
+    end
+    if ~isa(obj, 'sdpvar'),
+        error('Second input must be an optimization objective.');
+    end
+    if ~isstruct(vars),
+        error('Third input must be a structure.');
+    end
+    if ~isfield(vars, 'x') | ~isfield(vars, 'u') | ~isfield(vars, 'y'),
+        error('Wrong type of third input argument.');
+    end
     
     if iscell(sysStruct),
         error('Multi-model systems not supported by this function.');
@@ -144,10 +185,7 @@ else
     end
 
     if isempty(ctrl),
-        % problem either infeasible or some problem occured
-        fprintf('Problem infeasible or some problem occured!\n');
-        ctrl = mptctrl;
-        return
+        error('Problem infeasible or an error occurred!');
     end
 
     ctrl.details.runTime = cputime - starttime;
@@ -178,4 +216,6 @@ else
         fprintf('Error while creating controller object, result returned as a structure\n');
     end
 
+    varargout{1} = ctrl;
+    
 end
