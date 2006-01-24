@@ -190,6 +190,7 @@ else
 
     ctrl.details.runTime = cputime - starttime;
     if probStruct.norm~=2,
+        nx = length(ctrl.Bi{1});
         for ii = 1:length(ctrl.Ai),
             ctrl.Ai{ii} = zeros(nx);
         end
