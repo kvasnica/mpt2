@@ -833,10 +833,7 @@ if length(sol{k})==1,
     
 else
     if isempty(sol{k}),
-        fprintf('\n\n');
-        fprintf('========================================================================\n');
-        fprintf('Please send your system and problem definition to mpt@control.ee.ethz.ch\n');
-        fprintf('========================================================================\n\n');
+        fprintf('\n%s\n', diagnost{k}.info);
         error('mpt_yalmipcftoc: an error has occurred, see message above.');
     end
         
