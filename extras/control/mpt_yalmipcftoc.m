@@ -362,14 +362,14 @@ end
 
 %===============================================================================
 % prepare references
-yref = sub_defaultfield(probStruct, 'yref', zeros(ny, 1));
-xref = sub_defaultfield(probStruct, 'xref', zeros(nx, 1));
-uref = sub_defaultfield(probStruct, 'uref', zeros(nu, 1));
+yref = mpt_defaultField(probStruct, 'yref', zeros(ny, 1));
+xref = mpt_defaultField(probStruct, 'xref', zeros(nx, 1));
+uref = mpt_defaultField(probStruct, 'uref', zeros(nu, 1));
 if haveMLD,
     % references for "d" and "z" variables of an MLD model
     nd = MLD{m}.nd; nz = MLD{1}.nz;
-    dref = sub_defaultfield(probStruct, 'dref', zeros(nd, 1));
-    zref = sub_defaultfield(probStruct, 'zref', zeros(nz, 1));
+    dref = mpt_defaultField(probStruct, 'dref', zeros(nd, 1));
+    zref = mpt_defaultField(probStruct, 'zref', zeros(nz, 1));
 end
 if isfield(probStruct, 'xref_augmented') | probStruct.tracking>0,
     % this flag is set in mpt_prepareTracking and indicates that the system was
@@ -1067,7 +1067,7 @@ end
 
 
 %-----------------------------------------------------------------
-function val = sub_defaultfield(S, fname, default)
+function val = mpt_defaultField(S, fname, default)
 % returns S.fname if 'fname' is a valid field of the structure "S". Otherwise
 % returns "default".
 
@@ -1099,9 +1099,9 @@ if isfield(probStruct, 'S') | isfield(probStruct, 'smax'),
     slacks.all = sdpvar(repmat(1, 1, N), repmat(1, 1, N));
     soften.all = 1;
     % upper bound on this slack
-    smax.all = sub_defaultfield(probStruct, 'smax', Inf);
+    smax.all = mpt_defaultField(probStruct, 'smax', Inf);
     % penalty on slacks
-    sweights.all = sub_defaultfield(probStruct, 'S', 1e3);
+    sweights.all = mpt_defaultField(probStruct, 'S', 1e3);
     
 else
     if isfield(probStruct, 'Sx') | isfield(probStruct, 'sxmax'),
@@ -1112,9 +1112,9 @@ else
             slacks.x = sdpvar(repmat(dims.nx, 1, N), repmat(1, 1, N));
             soften.x = 1;
             % upper bound on this slack
-            smax.x = sub_defaultfield(probStruct, 'sxmax', Inf);
+            smax.x = mpt_defaultField(probStruct, 'sxmax', Inf);
             % penalty on slacks
-            sweights.x = sub_defaultfield(probStruct, 'Sx', 1e3);
+            sweights.x = mpt_defaultField(probStruct, 'Sx', 1e3);
         end
     end
     if isfield(probStruct, 'Sy') | isfield(probStruct, 'symax'),
@@ -1125,9 +1125,9 @@ else
             slacks.y = sdpvar(repmat(dims.ny, 1, N), repmat(1, 1, N));
             soften.y = 1;
             % upper bound on this slack
-            smax.y = sub_defaultfield(probStruct, 'symax', Inf);
+            smax.y = mpt_defaultField(probStruct, 'symax', Inf);
             % penalty on slacks
-            sweights.y = sub_defaultfield(probStruct, 'Sy', 1e3);
+            sweights.y = mpt_defaultField(probStruct, 'Sy', 1e3);
         end
     end
     if isfield(probStruct, 'Su')  | isfield(probStruct, 'sumax'),
@@ -1135,9 +1135,9 @@ else
         slacks.u = sdpvar(repmat(dims.nu, 1, N), repmat(1, 1, N));
         soften.u = 1;
         % upper bound on this slack
-        smax.u = sub_defaultfield(probStruct, 'sumax', Inf);
+        smax.u = mpt_defaultField(probStruct, 'sumax', Inf);
         % penalty on slacks
-        sweights.u = sub_defaultfield(probStruct, 'Su', 1e3);
+        sweights.u = mpt_defaultField(probStruct, 'Su', 1e3);
     end
 end
 

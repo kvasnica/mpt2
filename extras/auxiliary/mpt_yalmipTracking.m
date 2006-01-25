@@ -203,10 +203,10 @@ end
 haveXbounds = isfield(sysStruct, 'xmax');
 haveYbounds = isfield(sysStruct, 'ymax');
 
-xrefmax = sub_defaultField(sysStruct, 'xrefmax', repmat(mptOptions.infbox, nx, 1));
-xrefmin = sub_defaultField(sysStruct, 'xrefmin', repmat(-mptOptions.infbox, nx, 1));
-yrefmax = sub_defaultField(sysStruct, 'yrefmax', repmat(mptOptions.infbox, ny, 1));
-yrefmin = sub_defaultField(sysStruct, 'yrefmin', repmat(-mptOptions.infbox, ny, 1));
+xrefmax = mpt_defaultField(sysStruct, 'xrefmax', repmat(mptOptions.infbox, nx, 1));
+xrefmin = mpt_defaultField(sysStruct, 'xrefmin', repmat(-mptOptions.infbox, nx, 1));
+yrefmax = mpt_defaultField(sysStruct, 'yrefmax', repmat(mptOptions.infbox, ny, 1));
+yrefmin = mpt_defaultField(sysStruct, 'yrefmin', repmat(-mptOptions.infbox, ny, 1));
 
 xrefmax(find(xrefmax==Inf)) = mptOptions.infbox;
 xrefmin(find(xrefmin==-Inf)) = -mptOptions.infbox;
@@ -375,19 +375,4 @@ for ii = 1:length(Porig),
         
     end
     Porig{ii} = P;
-end
-
-
-
-%-----------------------------------------------------------------
-function val = sub_defaultField(S, fname, default)
-% returns S.fname if 'fname' is a valid field of the structure "S". Otherwise
-% returns "default".
-
-if isfield(S, fname),
-    val = getfield(S, fname);
-elseif nargin==3,
-    val = default;
-else
-    val = [];
 end
