@@ -35,10 +35,15 @@
 
 /* placeholder, do not edit or remove!!! */
 
-static double mpt_searchTree(double *X, double *U)
+#ifdef tmwtypes_h
+  /* RTW is used, switch to real_T data types to avoid problems with TLC compilation */
+  static long mpt_searchTree(const real_T *X, real_T *U)
+#else
+  static long mpt_searchTree(const double *X, double *U)
+#endif
 {
     int ix, iu;
-    long node = 1;
+    long node = 1, row;
     double hx, k;
     
     /* initialize U to zero*/
@@ -49,17 +54,18 @@ static double mpt_searchTree(double *X, double *U)
     /* find region which contains the state x0 */
     while (node > 0) {
         hx = 0;
+        row = (node-1)*(MPT_NX+3);
         for (ix=0; ix<MPT_NX; ix++) {
-            hx = hx + MPT_ST[(node-1)*(MPT_NX+3)+ix]*X[ix];
+            hx = hx + MPT_ST[row+ix]*X[ix];
         }
-        k = MPT_ST[(node-1)*(MPT_NX+3)+MPT_NX];
+        k = MPT_ST[row+MPT_NX];
         
         if ((hx - k) < 0) {
             /* x0 on plus-side of the hyperplane */
-            node = (long)MPT_ST[(node-1)*(MPT_NX+3)+MPT_NX+2];
+            node = (long)MPT_ST[row+MPT_NX+2];
         } else {
             /* x0 on minus-side of the hyperplane */
-            node = (long)MPT_ST[(node-1)*(MPT_NX+3)+MPT_NX+1];
+            node = (long)MPT_ST[row+MPT_NX+1];
         }
     }
     
