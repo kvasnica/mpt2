@@ -1064,21 +1064,6 @@ end
 
 
 %-----------------------------------------------------------------
-function val = mpt_defaultField(S, fname, default)
-% returns S.fname if 'fname' is a valid field of the structure "S". Otherwise
-% returns "default".
-
-if isfield(S, fname),
-    val = getfield(S, fname);
-elseif nargin==3,
-    val = default;
-else
-    val = [];
-end
-
-
-
-%-----------------------------------------------------------------
 function [soften, slacks, smax, sweights] = sub_prepareslacks(probStruct, N, haveXbounds, haveYbounds, dims)
 % introduce slack variables for soft constraints if necessary
 
