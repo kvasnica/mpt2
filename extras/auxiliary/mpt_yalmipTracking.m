@@ -149,7 +149,7 @@ for dyn=1:length(sysStruct.A),
         Bn{dyn} = [sysStruct.B{dyn}; zeros(refdim,nu)];
         
         Cn{dyn} = [sysStruct.C{dyn} zeros(ny,refdim); ...
-                zeros(refdim,ny) eye(refdim)];
+                zeros(refdim,nx) eye(refdim)];
         
         Dn{dyn} = [sysStruct.D{dyn}; zeros(refdim,nu)];
         
@@ -168,8 +168,8 @@ for dyn=1:length(sysStruct.A),
         Bn{dyn} = [sysStruct.B{dyn}; eye(nu); zeros(refdim,nu)];
         
         Cn{dyn} = [sysStruct.C{dyn} sysStruct.D{dyn} zeros(ny,refdim); ...
-                zeros(nu,ny) eye(nu) zeros(nu,refdim); ...
-                zeros(refdim,ny+nu) eye(refdim)];
+                zeros(nu,nx) eye(nu) zeros(nu,refdim); ...
+                zeros(refdim,nx+nu) eye(refdim)];
         
         Dn{dyn} = [sysStruct.D{dyn}; zeros(nu); zeros(refdim,nu)];
         
