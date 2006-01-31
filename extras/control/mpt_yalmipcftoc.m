@@ -171,13 +171,16 @@ verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move block
 verOpt.verbose = 1;
 verOpt.ybounds_optional = 1;
 verOpt.useyalmip = 1;  % to tell mpt_verifyProbStruct we can deal with move blocking
-pst = probStruct;
+pst = probStruct; orig_pst = mpt_verifyProbStruct(probStruct, struct('verbose', -1));
 for ii = 1:length(SST),
     if ~isfield(SST{ii}, 'verified') | ~isfield(probStruct, 'verified'),
         [SST{ii}, pst] = mpt_verifySysProb(SST{ii}, probStruct, verOpt);
+        if ii==1,
+            orig_pst = pst;
+        end
     end
-    if pst.tracking > 0 & ~isfield(pst, 'tracking_augmented')
-        [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, pst, verOpt);
+    if orig_pst.tracking > 0 & ~isfield(orig_pst, 'tracking_augmented'),
+        [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, orig_pst, verOpt);
     end
     verOpt.verbose = -1;
 end
