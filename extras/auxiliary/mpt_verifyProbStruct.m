@@ -293,7 +293,7 @@ if isfield(probStruct,'x0bounds')
     probStruct.y0bounds=probStruct.x0bounds;
 end
 if ~isfield(probStruct,'y0bounds')
-    if Options.verbose > 0,
+    if Options.verbose > 1,
         disp('Constraints on y0 enabled');
     end
     probStruct.y0bounds=1;
@@ -315,7 +315,7 @@ if ~isfield(probStruct,'Tconstraint')
     probStruct.Tconstraint=1;
 end
 if probStruct.Tconstraint==0,
-    if ~isfield(probStruct,'P_N'),
+    if ~isfield(probStruct,'P_N') & Options.verbose >= 0,
         disp(['No terminal weight "' psn '.P_N" specified... closed-loop stability will not be guaranteed']);
     end
 end
