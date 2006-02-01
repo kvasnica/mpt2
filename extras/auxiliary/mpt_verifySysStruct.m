@@ -380,12 +380,12 @@ sysStruct.umax = sysStruct.umax(:);
 sysStruct.umin = sysStruct.umin(:);
 
 if ~isfield(sysStruct,'dumax'),
-    if Options.verbose>1,
-        disp('Constraints on slew rate of manipulated variable not defined, using -Inf/Inf');
-    end
     sysStruct.dumax=Inf*ones(size(sysStruct.umax));
+end
+if ~isfield(sysStruct, 'dumin'),
     sysStruct.dumin=-Inf*ones(size(sysStruct.umin));
 end
+
 if(size(sysStruct.dumax,2)>size(sysStruct.dumax,1) | size(sysStruct.dumin,2)>size(sysStruct.dumin,1))
     %disp('du constraints must be column vectors (transposing current entry)');
     sysStruct.dumax = sysStruct.dumax(:);
