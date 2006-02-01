@@ -202,7 +202,8 @@ end
 
 
 origSysStruct = sysStruct; origProbStruct = probStruct;
-if probStruct.tracking==2 & (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax)))
+if probStruct.tracking==2 & (isfield(probStruct, 'Rdu') | ...
+        (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax))))
     % if we have deltaU constraints and tracking without deltaU formulation is
     % enabled, we use tracking with deltaU formulation which satisfies both
     % needs
