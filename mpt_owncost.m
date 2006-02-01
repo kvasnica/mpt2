@@ -175,19 +175,7 @@ else
     % display information about a given model
     if Options.verbose > 0,
         % expand the model to see how many binary variables we have
-        [Fexp, failure, cause] = expandmodel(F, obj);
-        if failure,
-            fprintf('\n%s\n\n', cause);
-            error('Cannot deal with given setup, see message above.');
-        end
-
-        % now export the expanded model into MPT format
-        yalmipOptions = mptOptions.sdpsettings;
-        yalmipOptions.expand = 0;
-        [a, b, c, model] = export(Fexp, obj, yalmipOptions);
-        model.parametric_variables = find(ismember(model.used_variables,getvariables(vars.x{1})));
-        model.requested_variables = find(ismember(model.used_variables,getvariables([vars.u{1:end-1}])));
-        Matrices = yalmip2mpt(model);
+        Matrices = mpt_yalmip2mpt(F, obj, vars.x{1}, [vars.u{1:end-1}]);
         nbinary = length(mpt_defaultField(Matrices, 'binary_var_index', []));
         nparam = length(mpt_defaultField(Matrices, 'param_var', []));
         noptim = length(mpt_defaultField(Matrices, 'requested_variables', []));
