@@ -27,8 +27,6 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % ---------------------------------------------------------------------------
 % sysStruct    - System structure in the sysStruct format
 % probStruct   - Problem structure in the probStruct format
-% ctrltype     - Type of controller, can be either 'explicit' or 'on-line'.
-%                If ommited, assuming 'explicit'
 % Options      - Optional: User options to be passed to individual control functions
 % Options.autoTracking
 %           If set to 0, system and problem matrices are assumed to be
@@ -46,14 +44,15 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% ctrl   - explicit controller (see 'help mptctrl' for more details)
+% ctrl   - Controller object (see 'help mptctrl' for more details)
 %
-% see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA
+% see also MPT_OPTCONTROL, MPT_OPTINFCONTROL, MPT_ITERATIVE, MPT_ITERATIVEPWA,
+%          MPT_OPTCONTOLPWA, MPT_YALMIPCFTOC
 %
 
 % Copyright is with the following author(s):
 %
-%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%(C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -106,17 +105,26 @@ elseif nargin==4 & ~isstruct(Options)
     error('MPT_CONTROL: Fourth input argument must be an Options structure!');
 end
 
-if isempty(inputname(1)),
+% ============================================================================
+% set default options
+Options = mpt_defaultOptions(Options, ...
+    'noExtreme', 0, ...
+    'autoTracking', 1, ...
+    'statusbar', 0, ...
+    'qpsolver', mptOptions.qpsolver, ...
+    'sysstructname', inputname(1), ...
+    'probstructname', inputname(2) );
+
+if isempty(Options.sysstructname),
     Options.sysstructname = 'sysStruct';
-else
-    Options.sysstructname = inputname(1);
 end
-if isempty(inputname(2)),
+if isempty(Options.probstructname),
     Options.probstructname = 'probStruct';
-else
-    Options.probstructname = inputname(2);
 end
 
+
+% ============================================================================
+% verify system/problem structures
 if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt.verbose=1;
     verOpt.sysstructname = inputname(1);
@@ -124,24 +132,27 @@ if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
 end
 
+
+% ============================================================================
+% deal with on-line controllers
 if strcmpi(ctrltype, 'on-line') | strcmpi(ctrltype, 'online')
     % compute matrices of on-line controller and return
     ctrl = mptctrl(sysStruct, probStruct, Options);
     return
 end
 
-if ~isfield(Options,'noExtreme')
-    Options.noExtreme=0;
-end
-if ~isfield(Options, 'autoTracking')
-    Options.autoTracking = 1;
-end
-if ~isfield(Options, 'statusbar'),
-    Options.statusbar = 0;
-end
-if ~isfield(Options, 'qpsolver'),
-    Options.qpsolver = mptOptions.qpsolver;
-end
+
+% ============================================================================
+% cannot compute an explicit controller for MLD systems with no corresponding
+% PWA representation
+% Note: this is not fully true, since mpt_yalmipcftoc() can do that, but we
+% reject it here because many other functions rely on existence of the PWA
+% representation. but if you nevertheless want to compute an explicit controller
+% for MLD systems, use this call:
+%
+%   ctrl = mpt_yalmipcftoc(sysStruct, probStruct)
+%
+% and it will return a valid controller object.
 
 if isfield(sysStruct, 'data'),
     if isfield(sysStruct.data, 'onlymld'),
@@ -155,196 +166,317 @@ if isfield(sysStruct, 'data'),
     end
 end
 
-origSysStruct = sysStruct;
-origProbStruct = probStruct;
 
+% ============================================================================
+% there are certain system/problem formulations which mpt_yalmipcftoc() cannot
+% handle
+noyalmip_because = [];
+if isinf(probStruct.N),
+    noyalmip_because = 'prediction horizon is infinity';
+elseif probStruct.subopt_lev > 0,
+    noyalmip_because = sprintf('%s.subopt_lev is not 0', Options.probstructname);
+elseif probStruct.feedback==1,
+    noyalmip_because = 'feedback pre-stabilization is enabled';
+elseif mpt_isnoise(sysStruct.noise),
+    noyalmip_because = 'system with additive noise';
+elseif isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
+    noyalmip_because = 'system with parametric uncertainties';
+elseif isfield(sysStruct, 'dymax') | isfield(sysStruct, 'dymin'),
+    noyalmip_because = 'dymax/dymin constraints';
+end
+
+
+% ============================================================================
+% there are certain system/problem formulations which MPTs native functions
+% cannot handle
+nompt_because = [];
+if isfield(probStruct, 'Sx') | isfield(probStruct, 'Sy') | isfield(probStruct, 'Su') | ...
+        isfield(probStruct, 'sxmax') | isfield(probStruct, 'symax') | ...
+        isfield(probStruct, 'sumax') | isfield(probStruct, 'S')
+    nompt_because = 'soft constraints';
+elseif isfield(probStruct, 'xN'),
+    nompt_because = 'terminal state constraint';
+elseif isfield(probStruct, 'Qdyn') | isfield(probStruct, 'Qswitch'),
+    nompt_because = 'penalized switching';
+end
+
+
+origSysStruct = sysStruct; origProbStruct = probStruct;
 if probStruct.tracking==2 & (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax)))
     % if we have deltaU constraints and tracking without deltaU formulation is
     % enabled, we use tracking with deltaU formulation which satisfies both
     % needs
     probStruct.tracking = 1;
 end
-
-if (probStruct.tracking & Options.autoTracking) | isfield(probStruct,'xref') | ...
-        isfield(probStruct,'uref'),
-    % if tracking is requested, augment system and problem matrices
-    [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct);
-end
-
-useDUmode = 0;
-if isfield(probStruct, 'Rdu'),
-    if any(probStruct.Rdu~=0),
-        useDUmode = 1;
-    end
-end
-if (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax)))
-    useDUmode = 1;
-end
-if useDUmode & ~probStruct.tracking,
-    % augment state vector for deltaU constraints case to guarantee fullfilment
-    % of those constraints in closed loop
-    [sysStruct, probStruct] = mpt_prepareDU(sysStruct, probStruct);
-end
-
-if probStruct.feedback 
-    if iscell(sysStruct.A),
-        error('Feedback Pre-Stabilization not supported for PWA systems!');
-    end
-    if ~isfield(probStruct,'FBgain')
-        % compute the pre-stabilization feedback for LTI system if it is not given
-        [FB,S,E] = mpt_dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
-        probStruct.FBgain = -FB;
-    end
-end
-
 if length(sysStruct.Pbnd)>1 & ~iscell(sysStruct.A),
     % Pbnd is (possibly) non-convex and the system is LTI, convert it to PWA
     % format with sysStruct.guardX and sysStruct.guardC corresponding to each
     % element of sysStruct.Pbnd
     sysStruct = sub_expandPbnd(sysStruct);
 end
-
 [nx,nu,ny,ndyn,nbool,ubool] = mpt_sysStructInfo(sysStruct);
+isPWA = iscell(sysStruct.A);
 
-if iscell(sysStruct.A) & probStruct.norm==2 & probStruct.subopt_lev==2,
-    error('2-norm problems not allowed for subopt_lev=2 and PWA systems!');
-end
+mpt_call = []; yalmip_call = []; no_overlaps = 0; check_feasibility = 0;
+prefered = 'yalmip';
 
-if nbool>0,
-    if nbool==nu,
-        % all inputs are boolean
-        switch probStruct.subopt_lev
-            case 0,
-                if isinf(probStruct.N),
-                    error('No infinite-time solution available for systems with discrete inputs!');
-                end
-                if probStruct.norm==2,
-                    ctrlStruct = mpt_optQuadCtrl(sysStruct, probStruct, Options);
+switch probStruct.subopt_lev,
+    case 0,
+        % optimal solution
+        
+        if isinf(probStruct.N),
+            % CITOC problem (infinite-time solution)
+            
+            if nbool > 0,
+                error('Systems with discrete inputs not supported for infinite-time solutions.');
+            end
+            
+            if isPWA & probStruct.norm == 2,
+                error('No infinite-time solution for PWA systems and quadratic cost.'); 
+                
+            elseif ~isPWA & probStruct.norm == 2,
+                % CITOC for quadratic cost
+                mpt_call = @mpt_optInfControl;
+                
+            elseif probStruct.norm ~= 2,
+                % use CITOC for PWA systems and linear cost, this function also
+                % handles LTI systems 
+                mpt_call = @mpt_optInfControlPWA;
+                
+            else
+                error('Unsupported model/problem combination.');
+                
+            end
+            
+        else
+            % CFTOC problem
+
+            if nbool > 0,
+                % discrete inputs, mpt_yalmipcftoc() handles all norms and
+                % PWA/LTI systems
+                yalmip_call = @mpt_yalmipcftoc;
+            
+            elseif isPWA,
+                % PWA systems with no discrete inputs
+                
+                if probStruct.norm == 2,
+                    % mpt_yalmipcftoc() can do the DP for quadratic cost
+                    yalmip_call = @mpt_yalmipcftoc;
+                    
                 else
-                    ctrlStruct = mpt_optBoolCtrl(sysStruct, probStruct, Options);
+                    % mpt_optControlPWA() is our fast DP procedure for PWA
+                    % systems with linear cost, but we can also use
+                    % mpt_yalmipcftoc() which also does DP (less efficiently,
+                    % though)
+                    mpt_call = @mpt_optControlPWA;
+                    yalmip_call = @mpt_yalmipcftoc;
+                    
+                    % mpt_optControlPWA() is faster than mpt_yalmipcftoc()
+                    prefered = 'mpt';
+                    
                 end
                 
-            case 1,
-                ctrlStruct = mpt_boolMinTime(sysStruct, probStruct, Options);
-            case 2,
-                error('probStruct.subopt_lev = 2 not supported for systems with discrete inputs!');
-        end
-    else
-        % some inputs are continuous, some integer
-        switch probStruct.subopt_lev
-            case 0,
-                if isinf(probStruct.N),
-                    error('No infinite-time solution available for systems with discrete inputs!');
-                end
-                if probStruct.norm==2,
-                    ctrlStruct = mpt_optQuadCtrl(sysStruct, probStruct, Options);
+            elseif ~isPWA,
+                % linear systems with no discrete inputs
+                yalmip_call = @mpt_yalmipcftoc;
+                
+                % for linear costs we would like to use our fast DP procedure in
+                % mpt_optControlPWA, but that one requires the latest mpLP
+                % solver to be working. And we can't use the latest mpLP if
+                % there is no QP solver available.
+                %
+                % Moreover, we must not use mpt_optControlPWA for systems with
+                % uncertainties (additive or parametric)
+                if isfield(Options, 'mplpver'),
+                    mplpver = Options.mplpver;
                 else
-                    ctrlStruct = mpt_optMixedCtrl(sysStruct, probStruct, Options);
+                    % choose the fastest
+                    mplpver = Inf;
                 end
-            case 1,
-                ctrlStruct = mpt_mixedMinTime(sysStruct, probStruct, Options);
-            case 2,
-                error('probStruct.subopt_lev = 2 not supported for systems with integer inputs!');
+                oneshot = 0;
+                % solve the problem in one shot if:
+                %  - older version of the MPLP solver is requested, or
+                %  - no QP solver is available (in which case we cannot
+                %    use newer version of MPLP solver)
+                %  - system has uncertainty
+                if isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
+                    oneshot = 1;
+                elseif mplpver < 4 | Options.qpsolver==-1,
+                    oneshot = 1;
+                elseif isfield(sysStruct, 'noise'),
+                    if mpt_isnoise(sysStruct.noise),
+                        oneshot = 1;
+                    end
+                end                 
+                
+                if probStruct.norm == 2,
+                    % CFTOC for linear systems
+                    mpt_call = @mpt_optControl;
+                    no_overlaps = 1;
+                    
+                    % prefer mpt_optControl() for CFTOC for quadratic cost,
+                    % since it computes a stabilizing LQR set much faster than
+                    % mpt_yalmipcftoc() does.
+                    prefered = 'mpt';
+                    
+                elseif oneshot,
+                    % solve the one-shot formulation
+                    mpt_call = @mpt_optControl;
+                    no_overlaps = 1;
+                    
+                else
+                    % use DP approach with PWA cost-to-go (faster than
+                    % mpt_optControl for linear objectives)
+                    mpt_call = @mpt_optControlPWA;
+                    
+                    % mpt_optControlPWA() is faster than mpt_yalmipcftoc()
+                    prefered = 'mpt';
+                
+                end
+                
+            else
+                error('Unsupported model/problem combination.');
+                
+            end
         end
+        
+    case 1,
+        % minimum-time solution
+        
+        if probStruct.tracking,
+            error('Tracking not supported for minimum-time problems.');
+        end
+
+        if nbool == nu,
+            % all inputs are boolean
+            mpt_call = @mpt_boolMinTime;
+            
+        elseif nbool > 0,
+            % some inputs boolean, some continuous
+            mpt_call = @mpt_mixedMinTime;
+            
+        elseif isPWA,
+            % time-optimal solution for PWA systems
+            mpt_call = @mpt_iterativePWA;
+            
+        elseif ~isPWA,
+            % time-optimal solution for LTI systems
+            mpt_call = @mpt_iterative;
+            
+        else
+            error('Unsupported model/problem combination.');
+            
+        end
+        
+    case 2,
+        % low-complexity solution
+        
+        if nbool > 0,
+            error('probStruct.subopt_lev=2 not supported for systems with discrete inputs!');
+        end
+        
+        if isPWA,
+            % for PWA systems we can only obtain the low-complexity solution for
+            % linear cost
+            
+            if probStruct.norm==2
+                error('2-norm problems not allowed for subopt_lev=2 and PWA systems!');
+                
+            else
+                mpt_call = @mpt_iterativePWA;
+                
+            end
+            
+        elseif ~isPWA,
+            mpt_call = @mpt_oneStepCtrl;
+            check_feasibility = 1;
+            
+        else
+            error('Unsupported model/problem combination.');
+            
+        end
+        
+    otherwise,
+        error('Unknown type of probStruct.subopt_lev');
+        
+end
+
+
+% ============================================================================
+% perform computation
+method_used = '';
+canuse_yalmip = 0; canuse_mpt = 0;
+
+if ~isempty(yalmip_call) & isempty(noyalmip_because),
+    % we can use mpt_yalmipcftoc() for this model/problem, let's do so
+    function_call = yalmip_call;
+    method_used = 'yalmip';
+    canuse_yalmip = 1;
+end
+if ~isempty(mpt_call) & isempty(nompt_because),
+    % we can use MPTs native function for this setup
+    
+    function_call = mpt_call;
+    method_used = 'mpt';
+    canuse_mpt = 1;
+end
+if canuse_mpt==0 & canuse_yalmip==0,
+    % no suitable methjod to deal with given setup
+    
+    fprintf('\nCannot solve this setup because of conflicting objectives:\n');
+    if ~isempty(noyalmip_because)
+        fprintf(' * %s\n', noyalmip_because);
+    end
+    if ~isempty(nompt_because),
+        fprintf(' * %s\n', nompt_because);
+    end
+    fprintf('\nPlease modify your system/problem setup to remove one of the conflicts.\n\n');
+    error('Cannot handle given setup, see message above.');
+end
+
+if isfield(Options, 'prefered'),
+    prefered = Options.prefered;
+end
+
+if canuse_yalmip & canuse_mpt,
+    % we can use both approaches, decide now based on our preference
+    % (mpt_yalmipcftoc() is prefered always but for CFTOC for PWA systems, where
+    % mpt_optControlPWA() is faster)
+    if isequal(prefered, 'mpt'),
+        % prefer MPTs native functions
+        method_used = 'mpt';
+        function_call = mpt_call;
+        
+    elseif isequal(prefered, 'yalmip'),
+        % prefer mpt_yalmipcftoc()
+        method_used = 'yalmip';
+        function_call = yalmip_call;
+    end
+end
+
+if isequal(method_used, 'mpt')
+    % we need to deal with tracking or feedback pre-stabilization if we call
+    % MPTs native functions
+    % (note that tracking is handled directly in mpt_yalmipcftoc())
+    [sysStruct, probStruct] = sub_augmentSetup(sysStruct, probStruct, Options);
+end
+
+% now call the computation
+if check_feasibility,
+    [ctrlStruct, feasible] = feval(function_call, sysStruct, probStruct, Options);
+    if ~feasible,
+        disp('No Lyapunov function was found for this system, the final result may not be a stabilizing controller!!!');
+    else
+        disp('Lyapunov function found, controller is stabilizing');
     end
     
 else
-    % only continuous inputs
-    
-    
-    if ~iscell(sysStruct.A),
-        % LTI systems
-        details=[];
-        if probStruct.subopt_lev==0,
-            % cost-optimal solution
-            if probStruct.N==inf,
-                % infinite time problem
-                if probStruct.norm~=2,
-                    % convert system to PWA
-                    ctrlStruct = mpt_optInfControlPWA(sysStruct,probStruct,Options);
-                else
-                    ctrlStruct=mpt_optInfControl(sysStruct,probStruct,Options);
-                end
-            else
-                % finite horizon problem
-                if probStruct.norm==2,
-                    ctrlStruct=mpt_optControl(sysStruct,probStruct,Options);
-                else
-                    if isfield(Options, 'mplpver'),
-                        mplpver = Options.mplpver;
-                    else
-                        % choose the fastest
-                        mplpver = Inf;
-                    end
-                    useoptcontrol = 0;
-                    % solve the problem in one shot if:
-                    %  - older version of the MPLP solver is requested, or
-                    %  - no QP solver is available (in which case we cannot
-                    %    use newer version of MPLP solver)
-                    %  - system has uncertainty
-                    if isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
-                        useoptcontrol = 1;
-                    elseif mplpver < 4 | Options.qpsolver==-1,
-                        useoptcontrol = 1;
-                    elseif isfield(sysStruct, 'noise'),
-                        if mpt_isnoise(sysStruct.noise),
-                            useoptcontrol = 1;
-                        end
-                    end
-                    
-                    if useoptcontrol,
-                        ctrlStruct = mpt_optControl(sysStruct, probStruct, Options);
-                        ctrlStruct.overlaps = 0;
-                    else
-                        % use DP approach with PWA cost-to-go (faster than
-                        % mpt_optControl for linear objectives)
-                        ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options);
-                        ctrlStruct.overlaps = 0;
-                    end
-                end
-            end
-        else
-            % iterative (low-complexity) solution
-            if probStruct.tracking,
-                error('Tracking not supported for probStruct.subopt_lev>1 and 1/Inf norm problems');
-            end
-
-            if probStruct.subopt_lev == 1,
-                [ctrlStruct]=mpt_iterative(sysStruct,probStruct,Options);
-            else
-                [ctrlStruct,feasible] = mpt_oneStepCtrl(sysStruct, probStruct, Options);
-                if ~feasible,
-                    disp('No PWQ Lyapunov function was found for this system, the final result may not be a stabilizing controller!!!');
-                else
-                    disp('Lyapunov function found, controller is stabilizing');
-                end
-            end
-        end
-    else
-        % PWA systems
-        if probStruct.subopt_lev==0,
-            if probStruct.norm~=2,
-                % linear performance index
-                if isinf(probStruct.N),
-                    % infinite-time solution
-                    ctrlStruct = mpt_optInfControlPWA(sysStruct, probStruct, Options);
-                else
-                    % finite horizon solution
-                    ctrlStruct = mpt_optControlPWA(sysStruct, probStruct, Options);
-                end
-            else
-                % CFTOC for quadratic performance index with PWA systems
-                if isinf(probStruct.N),
-                    error('No infinite-time solution for PWA systems and quadratic cost.');
-                end
-                ctrlStruct = mpt_optQuadCtrl(sysStruct, probStruct, Options);
-            end
-        else
-            % iterative solution
-            ctrlStruct=mpt_iterativePWA(sysStruct,probStruct,Options);
-        end
-    end
+    ctrlStruct = feval(function_call, sysStruct, probStruct, Options);
 end
+
+
+% ============================================================================
+% check for possible errors
 
 if ~exist('ctrlStruct', 'var'),
     error('mpt_control: Problem is infeasible...');
@@ -364,8 +496,9 @@ if isa(ctrlStruct, 'mptctrl'),
     ctrlStruct = struct(ctrlStruct);
 end
 
-if isfield(probStruct,'xref') | isfield(probStruct,'uref'),
-    % for fixed-state tracking, do the substitution back
+if isequal(method_used, 'mpt') & (isfield(probStruct,'xref') | isfield(probStruct,'uref')),
+    % for fixed-state tracking, do the substitution back (but only for MPTs
+    % native functions
     Pn = [];
     xref = probStruct.xref;
     uref = probStruct.uref;
@@ -404,6 +537,9 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref'),
     ctrlStruct.probStruct = probStruct;
 end
 
+
+% ============================================================================
+% compute extreme points of controller regions if asked for
 if dimension(ctrlStruct.Pn)<=3 & length(ctrlStruct.Pn)<1000 & Options.noExtreme==0,
     % if dimension is <= 3, we compute and store also extreme points for faster plotting
     Pn = ctrlStruct.Pn;
@@ -413,6 +549,10 @@ if dimension(ctrlStruct.Pn)<=3 & length(ctrlStruct.Pn)<1000 & Options.noExtreme=
     ctrlStruct.Pn = Pn;
 end
 
+
+% ============================================================================
+% remove expression of the cost function from details (mpt_optControl() returns
+% it there)
 if isfield(ctrlStruct.details,'Bi'),
     ctrlStruct.details = rmfield(ctrlStruct.details,'Bi');
 end
@@ -434,7 +574,7 @@ catch
     fprintf('An unexpected error occured when creating an MPT controller object\n');
     fprintf('Please be so kind and send your system and problem definition to:\n');
     fprintf('   mpt@control.ee.ethz.ch\n\n');
-    fprintf('We will be happy to investigate the problem.\n');
+    fprintf('We will investigate the problem.\n');
     fprintf('Meanwhile, the controller is returned as a ctrlStruct structure...\n\n');
     ctrl = ctrlStruct;
 end
@@ -467,4 +607,40 @@ if length(sysStruct.Pbnd)>1 & ~iscell(sysStruct.A),
         [sysStruct.guardX{ii},sysStruct.guardC{ii}] = double(sysStruct.Pbnd(ii));
     end
     sysStruct.Pbnd = hull(sysStruct.Pbnd);
+end
+
+
+%--------------------------------------------------------------------------
+function [sysStruct, probStruct] = sub_augmentSetup(sysStruct, probStruct, Options)
+% augment setup to deal with tracking or feedback pre-stabilization
+
+if (probStruct.tracking & Options.autoTracking) | isfield(probStruct,'xref') | ...
+        isfield(probStruct,'uref'),
+    % if tracking is requested, augment system and problem matrices
+    [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct);
+end
+useDUmode = 0;
+if isfield(probStruct, 'Rdu'),
+    if any(probStruct.Rdu~=0),
+        useDUmode = 1;
+    end
+end
+if (any(~isinf(sysStruct.dumin)) | any(~isinf(sysStruct.dumax)))
+    useDUmode = 1;
+end
+if useDUmode & ~probStruct.tracking,
+    % augment state vector for deltaU constraints case to guarantee fullfilment
+    % of those constraints in closed loop
+    [sysStruct, probStruct] = mpt_prepareDU(sysStruct, probStruct);
+end
+
+if probStruct.feedback 
+    if iscell(sysStruct.A),
+        error('Feedback Pre-Stabilization not supported for PWA systems!');
+    end
+    if ~isfield(probStruct,'FBgain')
+        % compute the pre-stabilization feedback for LTI system if it is not given
+        [FB,S,E] = mpt_dlqr(sysStruct.A,sysStruct.B,probStruct.Q,probStruct.R);
+        probStruct.FBgain = -FB;
+    end
 end
