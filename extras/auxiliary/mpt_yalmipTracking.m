@@ -1,7 +1,7 @@
 function [sysStruct, probStruct] = mpt_prepareTracking(sysStruct, probStruct, verOpt)
-%MPT_PREPARETRACKING Extends system and problem matrices to deal with tracking
+%MPT_YALMIPTRACKING Extends system and problem matrices to deal with tracking
 %
-% [sysStructTr, probStructTr] = mpt_prepareTracking(sysStruct, probStruct)
+% [sysStructTr, probStructTr] = mpt_yalmipTracking(sysStruct, probStruct)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
