@@ -153,11 +153,12 @@ else
     if ~isfield(vars, 'x') | ~isfield(vars, 'u') | ~isfield(vars, 'y'),
         error('Wrong type of third input argument.');
     end
-    
     if iscell(sysStruct),
         error('Multi-model systems not supported by this function.');
     end
 
+
+    % =================================================================
     % verify sysStruct and probStruct
     verOpt.ybounds_optional = 1;
     verOpt.verbose = -1;    
@@ -170,6 +171,43 @@ else
     end
     
     
+    % =================================================================
+    % display information about a given model
+    if Options.verbose > 0,
+        % expand the model to see how many binary variables we have
+        [Fexp, failure, cause] = expandmodel(F, obj);
+        if failure,
+            fprintf('\n%s\n\n', cause);
+            error('Cannot deal with given setup, see message above.');
+        end
+
+        % now export the expanded model into MPT format
+        yalmipOptions = mptOptions.sdpsettings;
+        yalmipOptions.expand = 0;
+        [a, b, c, model] = export(Fexp, obj, yalmipOptions);
+        model.parametric_variables = find(ismember(model.used_variables,getvariables(vars.x{1})));
+        model.requested_variables = find(ismember(model.used_variables,getvariables([vars.u{1:end-1}])));
+        Matrices = yalmip2mpt(model);
+        nbinary = length(mpt_defaultField(Matrices, 'binary_var_index', []));
+        nparam = length(mpt_defaultField(Matrices, 'param_var', []));
+        noptim = length(mpt_defaultField(Matrices, 'requested_variables', []));
+        isqp = mpt_defaultField(Matrices, 'qp', 0);
+        
+        sol_type = 'mp';
+        if nbinary > 0,
+            sol_type = [sol_type, 'MI'];
+        end
+        if isqp,
+            sol_type = [sol_type 'QP'];
+        else
+            sol_type = [sol_type 'LP'];
+        end
+        fprintf('Solving an %s problem with %d parametric, %d optimization and %d binary variables\n\n', ...
+                sol_type, nparam, noptim, nbinary);
+    end
+    
+    
+    % =================================================================
     % compute the controller
     yalmipOptions = mptOptions.sdpsettings;
     yalmipOptions.debug = 1;
@@ -182,10 +220,7 @@ else
         
     else
         if isempty(sol),
-            fprintf('\n\n');
-            fprintf('========================================================================\n');
-            fprintf('Please send your system and problem definition to mpt@control.ee.ethz.ch\n');
-            fprintf('========================================================================\n\n');
+            fprintf('%s\n', diagnost.info);
             error('mpt_owncost: an error has occurred, see message above.');
         end
         
@@ -202,6 +237,9 @@ else
         error('Problem infeasible or an error occurred!');
     end
 
+    
+    % =================================================================
+    % set necessary fields of the controller structure
     ctrl.details.runTime = cputime - starttime;
     if probStruct.norm~=2,
         nx = length(ctrl.Bi{1});
