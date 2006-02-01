@@ -426,12 +426,10 @@ else
         %-----------------------------------------------------------------------
         % record previous input (for MPC for MLD systems, such that deltaU
         % constraints are satisfied in closed-loop
-        if (~isEXPctrl & iscell(sysStruct.A)),
-            if iN == 1,
-                Options.Uprev = u_prev;
-            else
-                Options.Uprev = Ucl;
-            end
+        if iN == 1,
+            Options.Uprev = u_prev;
+        else
+            Options.Uprev = Ucl;
         end
         
         

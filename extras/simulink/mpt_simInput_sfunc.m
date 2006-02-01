@@ -185,10 +185,13 @@ ref = u(nx+1:nx+dimref);
 
 isMLD = ~isexplicit(ctrl) & iscell(ctrl.sysStruct.A);
 
-if isMLD,
+if isMLD | isfield(ctrl.details, 'yalmipMatrices'),
     % MPC for MLD systems does NOT work with extended state vector. we just need
     % to provide previous input in Options.Uprev, in order to satisfy deltaU
     % constraints in closed-loop.
+    %
+    % same holds if the on-line controller was designed by means of
+    % mpt_yalmipcftoc()
     x0 = xm;
     opt.Uprev = Uprev;
     if tracking > 0,
