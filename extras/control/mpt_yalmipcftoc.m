@@ -180,7 +180,12 @@ for ii = 1:length(SST),
         end
     end
     if orig_pst.tracking > 0 & ~isfield(orig_pst, 'tracking_augmented'),
+        % augment the system to deal with tracking
         [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, orig_pst, verOpt);
+    end
+    if isfield(pst, 'Rdu') | ~(all(isinf(SST{ii}.dumax)) & all(isinf(SST{ii}.dumin))),
+        % augment the system to deal with deltaU constraints
+        [SST{ii}, pst] = mpt_yalmipDU(SST{ii}, orig_pst, verOpt);
     end
     verOpt.verbose = -1;
 end
