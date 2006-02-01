@@ -100,6 +100,13 @@ if probStruct.tracking==2 & verOpt.verbose > -1
     fprintf('===============================================================================\n\n')
 end
 
+if probStruct.tracking==2 & (isfield(probStruct, 'Rdu') | ...
+        ~(all(isinf(sysStruct.dumax)) & all(isinf(sysStruct.dumin))))
+    % tracking=2 with deltaU formulation => we have to switch to tracking=1
+    probStruct.tracking=1;
+end
+    
+
 if ~isfield(probStruct,'Rdu') & probStruct.tracking==1,
     probStruct.Rdu = probStruct.R;
 end
@@ -334,6 +341,7 @@ end
 
 
 sysStruct = rmfield(sysStruct,'verified');
+probStruct = rmfield(probStruct, 'verified');
 verOpt.verbose = verOpt.verbose - 1;
 evalc('sysStruct = mpt_verifySysStruct(sysStruct, verOpt);');
 evalc('probStruct = mpt_verifyProbStruct(probStruct, verOpt);');
