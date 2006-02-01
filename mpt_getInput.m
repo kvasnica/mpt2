@@ -405,7 +405,12 @@ if ~isin
     % no associated control law
     feasible=0;
     if Options.verbose>0,
-        disp(sprintf('MPT_GETINPUT: NO REGION FOUND FOR STATE x = [%s]',num2str(x0')));
+        if isfield(ctrlStruct.sysStruct, 'xmax'),
+            if (any(x0 > ctrlStruct.sysStruct.xmax) | any(x0 < ctrlStruct.sysStruct.xmin)),
+                fprintf('\nState x = %s violates state constraints!\n', mat2str(x0));
+            end
+        end
+        fprintf('MPT_GETINPUT: NO REGION FOUND FOR STATE x = %s\n', mat2str(x0));
     end
     return
 elseif isfield(ctrlStruct.details,'searchTree'),

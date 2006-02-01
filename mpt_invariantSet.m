@@ -162,7 +162,7 @@ if ~isfulldim(Pninv) | isempty(dynamics)
     if Options.verbose > 0,
         fprintf('Invariant set is empty\n');
     end
-    ctrl = mptctrl;
+    invCtrl = mptctrl;
 else
     ctrl = struct(ctrl);
     invCtrl = ctrl;

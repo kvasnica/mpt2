@@ -103,7 +103,7 @@ function out=mpt_init(varargin)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003--2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (C) 2003--2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -127,7 +127,7 @@ function out=mpt_init(varargin)
 % ---------------------------------------------------------------------------
 global mptOptions;
 
-mpt_ver = '2.5';
+mpt_ver = '2.5.1';
 
 try
     matlabrelease = str2num(version('-release'));
@@ -463,7 +463,7 @@ nrescue.extreme = 5;
 
 % set prefered solvers, list organized according to solver's speed on a given
 % problem
-prefered.lp = [0 9 3 15 2 8 14 7 1 13 5 10 11 12 16];
+prefered.lp = [0 9 3 15 2 8 4 14 7 1 13 5 10 11 12 16];
 prefered.qp = [0 1 9 2 8 4 5 6 7 10];
 prefered.milp = [0 7 6 3 2 4 5 1];
 prefered.miqp = [0 5 4 2 3 1];
@@ -1160,7 +1160,7 @@ function sub_printcopyright(mpt_ver)
 % prints the copyright notice
 
 fprintf('\nMPT toolbox %s initialized...\n', mpt_ver);
-fprintf('Copyright (C) 2003-2005 by M. Kvasnica, P. Grieder and M. Baotic\n');
+fprintf('Copyright (C) 2003-2006 by M. Kvasnica, P. Grieder and M. Baotic\n');
 fprintf('\nSend bug reports, questions or comments to mpt@control.ee.ethz.ch\n');
 fprintf('For news, visit the MPT web page at http://control.ee.ethz.ch/~mpt/\n');
 
