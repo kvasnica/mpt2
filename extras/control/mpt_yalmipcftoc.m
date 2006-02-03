@@ -121,7 +121,8 @@ Options = mpt_defaultOptions(Options, ...
     'verbose', mptOptions.verbose, ...
     'includeLQRset', 1, ...
     'pwa_index', [], ...
-    'dont_solve', 0 );
+    'dont_solve', 0, ...
+    'yalmip_online', 0);
 
 
 %===============================================================================
@@ -179,13 +180,20 @@ for ii = 1:length(SST),
             orig_pst = pst;
         end
     end
-    if orig_pst.tracking > 0 & ~isfield(orig_pst, 'tracking_augmented'),
-        % augment the system to deal with tracking
-        [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, orig_pst, verOpt);
-    end
-    if isfield(pst, 'Rdu') | ~(all(isinf(SST{ii}.dumax)) & all(isinf(SST{ii}.dumin))),
-        % augment the system to deal with deltaU constraints
-        [SST{ii}, pst] = mpt_yalmipDU(SST{ii}, orig_pst, verOpt);
+    if Options.yalmip_online==0,
+        % augment system/problem to cope with tracking/deltaU constraints. but
+        % we only do so when computing an explicit solution. in case of on-line
+        % controllers we will provide the previous input (uprev) and the
+        % reference trajectory from outside, therefore it is not needed to
+        % augment the setup.
+        if orig_pst.tracking > 0 & ~isfield(orig_pst, 'tracking_augmented'),
+            % augment the system to deal with tracking
+            [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, orig_pst, verOpt);
+        end
+        if isfield(pst, 'Rdu') | ~(all(isinf(SST{ii}.dumax)) & all(isinf(SST{ii}.dumin))),
+            % augment the system to deal with deltaU constraints
+            [SST{ii}, pst] = mpt_yalmipDU(SST{ii}, orig_pst, verOpt);
+        end
     end
     verOpt.verbose = -1;
 end
@@ -255,8 +263,8 @@ end
 if mpt_isnoise(sysStruct.noise),
     error('mpt_yalmipcftoc: additive noise not supported.');
 end
-if nbool>0 & probStruct.tracking==1,
-    error('mpt_yalmipcftoc: tracking cannot be used for systems with integer inputs.');
+if (nbool>0 & probStruct.tracking==1) & ~Options.yalmip_online,
+    error('mpt_yalmipcftoc: tracking cannot be used for systems with integer inputs. Set probStruct.tracking=2.');
 end
 if isfield(probStruct, 'Aunc') | isfield(probStruct, 'Bunc'),
     error('mpt_yalmipcftoc: parametric uncertainties are not supported.');
@@ -295,6 +303,9 @@ if probStruct.norm==2 & probStruct.Tconstraint==1 & ...
         fprintf('WARNING: No stabilizing target can be computed with time-varying penalties.\n');
         
     else
+        if Options.verbose >= 0,
+            fprintf('Adding stabilizing target set constraint...\n');
+        end
         [Tset, P_N, origin_in_dyn] = sub_stabilizingset(SST{1}, pst, nx, nPWA(1));
         if isempty(origin_in_dyn),
             fprintf(['WARNING: No dynamics contains the origin in it''s interior, '...
@@ -355,7 +366,8 @@ dUconstraints = zeros(1, length(SST));
 for im = 1:length(SST),
     haveXbounds(im) = isfield(SST{im}, 'xmax') & isfield(SST{im}, 'xmin');
     haveYbounds(im) = isfield(SST{im}, 'ymax') & isfield(SST{im}, 'ymin');
-    dUconstraints(im) = any(~isinf(SST{im}.dumin)) | any(~isinf(SST{im}.dumax));
+    dUconstraints(im) = any(~isinf(SST{im}.dumin)) | any(~isinf(SST{im}.dumax)) | ...
+        isfield(probStruct, 'Rdu');
 end
 
 
@@ -414,6 +426,24 @@ for im = 1:length(SST),
         % we just need binary variables for PWA selection
         d{im} = binvar(nPWA(im), 1);
         
+    end
+end
+
+if Options.yalmip_online,
+    uprev = sdpvar(nu, 1);
+    uprev_used = 0;
+    
+    if probStruct.tracking > 0,
+        % we have a varying reference in tracking problems
+        if isfield(probStruct, 'Qy'),
+            % reference has the dimension of outputs
+            reference = sdpvar(ny, 1);
+            yref = reference;
+        else
+            % reference has the dimension of states
+            reference = sdpvar(nx, 1);
+            xref = reference;
+        end
     end
 end
 
@@ -506,8 +536,22 @@ for k = N-1:-1:1
     if dUconstraints(k) & k <= Nc - 1,
         dumin = SST{k}.dumin - slacks.all{k} - slacks.u{k};
         dumax = SST{k}.dumax + slacks.all{k} + slacks.u{k};
-        tag = sprintf('dumin < u_%d - u_%d < umax', iNu+1, iNu);
-        F = F + set(dumin < u{ku+1} - u{ku} < dumax, tag);
+
+        if Options.yalmip_online & k==1,
+            % add constraint dumin < u(0)-u(-1) < dumax, such that we can
+            % enforce deltaU constraints knowing the previous input (which is a
+            % parametric variable)
+            tag = 'dumin < u_0 - u_prev < dumax';
+            du_var = u{k} - uprev;
+            uprev_used = 1;
+            
+        else
+            % add a constraint dumin < u{k+1} - u{k} < dumax
+            tag = sprintf('dumin < u_%d - u_%d < dumax', iNu+1, iNu);
+            du_var = u{ku+1} - u{ku};
+            
+        end
+        F = F + set(dumin < du_var < dumax, tag);
     end
     
     % some inputs can be boolean or from finite alphabet
@@ -731,7 +775,7 @@ for k = N-1:-1:1
     %===============================================================================
     % add penalty on deltaU
     if isfield(probStruct, 'Rdu'),
-        obj = obj + sub_norm(u{ku+1} - u{ku}, probStruct.Rdu{ku}, probStruct.norm);
+        obj = obj + sub_norm(du_var, probStruct.Rdu{ku}, probStruct.norm);
     end
 
 
@@ -810,6 +854,14 @@ end
 if haveMLD,
     variables.z = z;
 end
+if Options.yalmip_online,
+    if probStruct.tracking > 0,
+        variables.ref = reference;
+    end
+    if uprev_used,
+        variables.uprev = uprev;
+    end
+end
 
 if Options.dont_solve,
     % just return constraints, objectives and variables
@@ -825,8 +877,6 @@ end
 %===============================================================================
 % solve the one-shot problem as mpMIQP/mpMILP if necessary
 if Options.dp==0,
-    %[sol{k}, diagnost{k}, Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, u{k});
-    
     % obtain the open-loop solution:
     [sol{k}, diagnost{k}, Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, [u{1:end-1}]);
 end

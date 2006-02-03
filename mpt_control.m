@@ -134,40 +134,6 @@ end
 
 
 % ============================================================================
-% deal with on-line controllers
-if strcmpi(ctrltype, 'on-line') | strcmpi(ctrltype, 'online')
-    % compute matrices of on-line controller and return
-    ctrl = mptctrl(sysStruct, probStruct, Options);
-    return
-end
-
-
-% ============================================================================
-% cannot compute an explicit controller for MLD systems with no corresponding
-% PWA representation
-% Note: this is not fully true, since mpt_yalmipcftoc() can do that, but we
-% reject it here because many other functions rely on existence of the PWA
-% representation. but if you nevertheless want to compute an explicit controller
-% for MLD systems, use this call:
-%
-%   ctrl = mpt_yalmipcftoc(sysStruct, probStruct)
-%
-% and it will return a valid controller object.
-
-if isfield(sysStruct, 'data'),
-    if isfield(sysStruct.data, 'onlymld'),
-        if sysStruct.data.onlymld,
-            % cannot compute an explicit controller if PWA model is not
-            % available
-            fprintf('\nPWA representation of the hybrid system must be available in order to compute explicit solutions.\n');
-            fprintf('Call "%s = mpt_sys(%s.data.MLD)" to get the PWA representation.\n\n', Options.sysstructname, Options.sysstructname);
-            error('Cannot compute explicit solution if PWA representation is not available in sysStruct.');
-        end
-    end
-end
-
-
-% ============================================================================
 % there are certain system/problem formulations which mpt_yalmipcftoc() cannot
 % handle
 noyalmip_because = [];
@@ -198,6 +164,53 @@ elseif isfield(probStruct, 'xN'),
     nompt_because = 'terminal state constraint';
 elseif isfield(probStruct, 'Qdyn') | isfield(probStruct, 'Qswitch'),
     nompt_because = 'penalized switching';
+end
+
+
+% ============================================================================
+% give an error if neither mpt_yalmipcftoc() nor MPTs native functions can
+% handle a given system/problem setup
+error(sub_cannotsolve(noyalmip_because, nompt_because));
+
+
+% ============================================================================
+% deal with on-line controllers
+if strcmpi(ctrltype, 'on-line') | strcmpi(ctrltype, 'online')
+    % compute matrices of on-line controller and return
+    Options = mpt_defaultOptions(Options, ...
+        'force_mpt', ~isempty(noyalmip_because) );
+    if Options.force_mpt & ~isempty(nompt_because),
+        fprintf('Cannot force MPT because of following problem:\n');
+        fprintf(' * %s\n\n', nompt_because);
+        error('Cannot continue.');
+    end
+    ctrl = mptctrl(sysStruct, probStruct, Options);
+    return
+end
+
+
+% ============================================================================
+% cannot compute an explicit controller for MLD systems with no corresponding
+% PWA representation
+% Note: this is not fully true, since mpt_yalmipcftoc() can do that, but we
+% reject it here because many other functions rely on existence of the PWA
+% representation. but if you nevertheless want to compute an explicit controller
+% for MLD systems, use this call:
+%
+%   ctrl = mpt_yalmipcftoc(sysStruct, probStruct)
+%
+% and it will return a valid controller object.
+
+if isfield(sysStruct, 'data'),
+    if isfield(sysStruct.data, 'onlymld'),
+        if sysStruct.data.onlymld,
+            % cannot compute an explicit controller if PWA model is not
+            % available
+            fprintf('\nPWA representation of the hybrid system must be available in order to compute explicit solutions.\n');
+            fprintf('Call "%s = mpt_sys(%s.data.MLD)" to get the PWA representation.\n\n', Options.sysstructname, Options.sysstructname);
+            error('Cannot compute explicit solution if PWA representation is not available in sysStruct.');
+        end
+    end
 end
 
 
@@ -422,17 +435,14 @@ if ~isempty(mpt_call) & isempty(nompt_because),
     canuse_mpt = 1;
 end
 if canuse_mpt==0 & canuse_yalmip==0,
-    % no suitable methjod to deal with given setup
-    
-    fprintf('\nCannot solve this setup because of conflicting objectives:\n');
-    if ~isempty(noyalmip_because)
-        fprintf(' * %s\n', noyalmip_because);
+    % no suitable method to deal with given setup
+    if isempty(noyalmip_because),
+        noyalmip_because = 'No appropriate function to call with this setup.';
     end
-    if ~isempty(nompt_because),
-        fprintf(' * %s\n', nompt_because);
+    if isempty(nompt_because),
+        nompt_because = 'No appropriate function to call with this setup.';
     end
-    fprintf('\nPlease modify your system/problem setup to remove one of the conflicts.\n\n');
-    error('Cannot handle given setup, see message above.');
+    error(sub_cannotsolve(noyalmip_because, nompt_because));
 end
 
 if isfield(Options, 'prefered'),
@@ -645,3 +655,22 @@ if probStruct.feedback
         probStruct.FBgain = -FB;
     end
 end
+
+
+%--------------------------------------------------------------------------
+function err=sub_cannotsolve(noyalmip_because, nompt_because)
+% returns a non-empty error messages if we can't solve a given problem neither
+% by mpt_yalmipcftoc() nor by MPTs native functions
+
+err = '';
+if ~isempty(noyalmip_because) & ~isempty(nompt_because),
+    fprintf('\nCannot solve this setup because of conflicting objectives/constraints:\n');
+    if ~isempty(noyalmip_because)
+        fprintf(' * %s\n', noyalmip_because);
+    end
+    if ~isempty(nompt_because),
+        fprintf(' * %s\n', nompt_because);
+    end
+    fprintf('\nPlease modify your system/problem setup to remove one of the conflicts.\n\n');
+    err='Cannot handle given setup, see message above.';
+end    
