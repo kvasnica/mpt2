@@ -30,4 +30,13 @@ yalmipOptions.expand = 0;
 model.parametric_variables = find(ismember(model.used_variables,getvariables(parametric_vars)));
 model.requested_variables = find(ismember(model.used_variables,getvariables(requested_vars)));
 
+% NOTE NOTE NOTE!!!
+% this is a hack! export(), depending on the default solver, either sets
+% "model.binary_variables" or "model.integer_variables". however the latter is
+% not (currently) being used in yalmip2mpt(). since integer variables are not
+% supported in YALMIP's interface to MPT, they are treated as binaries.
+% therefore we have to update "model.binary_variables" accordingly, otherwise
+% mpt_getInput() will think that the model has no binaries.
+model.binary_variables = [model.binary_variables model.integer_variables];
+
 Matrices = yalmip2mpt(model);
