@@ -641,20 +641,21 @@ for k = N-1:-1:1
         case 'pwa',
             % PWA dynamics
             for i = pwa_index{k}
-                tag = sprintf('d_%d => x_%d == A{%d}*x_%d + B{%d}*u_%d + f{%d}', ...
-                    iN, iN+1, i, iN, i, iNu, i);
+                tag = sprintf('d_%d(%d) => x_%d == A{%d}*x_%d + B{%d}*u_%d + f{%d}', ...
+                    iN, i, iN+1, i, iN, i, iNu, i);
                 F = F + set(implies(d{k}(i), x{k+1} == SST{k}.A{i}*x{k} + ...
                     SST{k}.B{i}*u{ku} + SST{k}.f{i}), tag);
                 
                 if ~YeqSame,
                     % we need to have the output as a variable
-                    tag = sprintf('d_%d => y_%d == C{%d}*x_%d + D{%d}*u_%d + g{%d}', ...
-                        iN, iN, i, iN, i, iNu, i);
+                    tag = sprintf('d_%d(%d) => y_%d == C{%d}*x_%d + D{%d}*u_%d + g{%d}', ...
+                        iN, i, iN, i, iN, i, iNu, i);
                     F = F + set(implies(d{k}(i), y{k} == SST{k}.C{i}*x{k} + ...
                         SST{k}.D{i}*u{ku} + SST{k}.g{i}), tag);
                 end
                 
-                tag = sprintf('d_%d => guardX{%d}*x_%d + guardU{%d}*u_%d <= guardC{%d}', iN, i, iN, i, iNu, i);
+                tag = sprintf('d_%d(%d) => guardX{%d}*x_%d + guardU{%d}*u_%d <= guardC{%d}', ...
+                    iN, i, i, iN, i, iNu, i);
                 F = F + set(implies(d{k}(i),SST{k}.guardX{i}*x{k} + ...
                     SST{k}.guardU{i}*u{ku} <= SST{k}.guardC{i}), tag);
             end
