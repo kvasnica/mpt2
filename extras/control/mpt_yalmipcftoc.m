@@ -387,7 +387,7 @@ xref = mpt_defaultField(probStruct, 'xref', zeros(nx, 1));
 uref = mpt_defaultField(probStruct, 'uref', zeros(nu, 1));
 if haveMLD,
     % references for "d" and "z" variables of an MLD model
-    nd = MLD{m}.nd; nz = MLD{1}.nz;
+    nd = MLD{1}.nd; nz = MLD{1}.nz;
     dref = mpt_defaultField(probStruct, 'dref', zeros(nd, 1));
     zref = mpt_defaultField(probStruct, 'zref', zeros(nz, 1));
 end
@@ -418,7 +418,7 @@ z = cell(1, N);
 for im = 1:length(SST),
     if isequal(dynamics_type{im}, 'mld'),
         % prepare "d" and "z" variables for MLD models
-        nd = MLD{m}.nd; nz = MLD{1}.nz;
+        nd = MLD{im}.nd; nz = MLD{im}.nz;
         d{im} = binvar(nd, 1);
         z{im} = sdpvar(nz, 1);
         
@@ -1090,7 +1090,7 @@ for im = 1:length(SST),
         % we do have an MLD representation
         if isfield(SST{im}.data, 'onlymld'),
             % there is no equivalent PWA representation for this system available
-            MLD{im} = SST{im}.data.MLD
+            MLD{im} = SST{im}.data.MLD;
             % initialize B5 and D5 matrices to zero if they are not given
             if ~isfield(MLD{im}, 'B5'),
                 MLD{im}.B5 = zeros(size(MLD{im}.A, 1), 1);
@@ -1103,6 +1103,7 @@ for im = 1:length(SST),
         else
             % we also have the PWA representation available for this system, use it
             dynamics_type{im} = 'pwa';
+            nPWA(im) = length(SST{im}.A);
             
         end
         
