@@ -92,7 +92,13 @@ end
 sysStruct.dims.nx = nx;
 sysStruct.dims.nu = nu;
 sysStruct.dims.ny = ny;
-
+if nbool > 0 & probStruct.tracking==1,
+    if verOpt.verbose > 0,
+        fprintf('"tracking=1" cannot be used with integer inputs, switching to "tracking=2"...\n');
+    end
+    probStruct.tracking = 2;
+   
+end
 
 if probStruct.tracking==2 & verOpt.verbose > -1
     fprintf('===============================================================================\n')
@@ -258,6 +264,70 @@ if haveYbounds,
     end
 end
 
+sxmax = mpt_defaultField(probStruct, 'sxmax', zeros(nx, 1));
+sumax = mpt_defaultField(probStruct, 'sumax', zeros(nu, 1));
+symax = mpt_defaultField(probStruct, 'symax', zeros(ny, 1));
+Sx = mpt_defaultField(probStruct, 'Sx', 1000*eye(nx));
+Su = mpt_defaultField(probStruct, 'Su', 1000*eye(nu));
+Sy = mpt_defaultField(probStruct, 'Sy', 1000*eye(ny));
+% now augment bounds on slack variables
+if isfield(probStruct, 'sxmax') | isfield(probStruct, 'Sx'),
+    if probStruct.tracking==2,
+        if ycost,
+            n_sxmax = [sxmax; zeros(ny, 1)];
+            n_Sx = [Sx zeros(nx, ny); zeros(ny, nx) Sy];
+        else
+            n_sxmax = [sxmax; zeros(nx, 1)];
+            n_Sx = [Sx zeros(nx, nx); zeros(nx, nx) Sx];
+        end
+        
+    else
+        if ycost,
+            n_sxmax = [sxmax; sumax; zeros(ny, 1)];
+            n_Sx = [Sx zeros(nx, nu) zeros(nx, ny); ...
+                    zeros(nu, nx) Su zeros(nu, ny); ...
+                    zeros(ny, nx) zeros(ny, nu) Sy];
+
+        else
+            n_sxmax = [sxmax; sumax; zeros(nx, 1)];
+            n_Sx = [Sx zeros(nx, nu) zeros(nx, nx); ...
+                    zeros(nu, nx) Su zeros(nu, nx); ...
+                    zeros(nx, nx) zeros(nx, nu) Sx];
+            
+        end
+    end
+    probStruct.sxmax = n_sxmax;
+    probStruct.Sx = n_Sx;
+end
+if isfield(probStruct, 'symax') | isfield(probStruct, 'Sy'),
+    if probStruct.tracking==2,
+        if ycost,
+            n_symax = [symax; zeros(ny, 1)];
+            n_Sy = [Sy zeros(ny, ny); zeros(ny, ny) Sy];
+            
+        else
+            n_symax = [symax; zeros(nx, 1)];
+            n_Sy = [Sy zeros(ny, nx); zeros(nx, ny) Sx];
+            
+        end
+    else
+        if ycost,
+            n_symax = [symax; sumax; zeros(ny, 1)];
+            n_Sy = [Sy zeros(ny, nu) zeros(ny, ny); ...
+                    zeros(nu, ny) Su zeros(nu, ny); ...
+                    zeros(ny, ny) zeros(ny, nu) Sy];
+            
+        else
+            n_symax = [symax; sumax; zeros(nx, 1)];
+            n_Sy = [Sy zeros(ny, nu) zeros(ny, nx); ...
+                    zeros(nu, ny) Su zeros(nu, nx); ...
+                    zeros(nx, ny) zeros(nx, nu) Sx];
+            
+        end
+    end
+    probStruct.symax = n_symax;
+    probStruct.Sy = n_Sy;
+end
 
 
 %===================================================================

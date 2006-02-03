@@ -153,6 +153,29 @@ if haveYbounds,
 end
 
 %===================================================================
+% update slacks
+
+sxmax = mpt_defaultField(probStruct, 'sxmax', zeros(nx, 1));
+sumax = mpt_defaultField(probStruct, 'sumax', zeros(nu, 1));
+symax = mpt_defaultField(probStruct, 'symax', zeros(ny, 1));
+Sx = mpt_defaultField(probStruct, 'Sx', 1000*eye(nx));
+Su = mpt_defaultField(probStruct, 'Su', 1000*eye(nu));
+Sy = mpt_defaultField(probStruct, 'Sy', 1000*eye(ny));
+
+sxmax = [sxmax; sumax];
+Sx = [Sx zeros(nx, nu); zeros(nu, nx) Su];
+symax = [symax; sumax];
+Sy = [Sy zeros(ny, nu); zeros(nu, ny) Su];
+if isfield(probStruct, 'sxmax') | isfield(probStruct, 'Sx'),
+    probStruct.sxmax = sxmax;
+    probStruct.Sx = Sx;
+end
+if isfield(probStruct, 'symax') | isfield(probStruct, 'Sy'),
+    probStruct.symax = symax;
+    probStruct.Sy = Sy;
+end
+
+%===================================================================
 % update Pbnd
 Bu = polytope([eye(nu); -eye(nu)], [sysStruct.umax; -sysStruct.umin]);
 sysStruct.Pbnd = sysStruct.Pbnd * Bu;
