@@ -122,6 +122,7 @@ Options = mpt_defaultOptions(Options, ...
     'includeLQRset', 1, ...
     'pwa_index', [], ...
     'dont_solve', 0, ...
+    'details', 0, ...
     'yalmip_online', 0);
 
 
@@ -218,6 +219,9 @@ if Options.dp,
         Options.dp = 0;
     elseif isfield(probStruct, 'Qswitch'),
         fprintf('WARNING: switching to one-shot formulation because probStruct.Qswitch is given.\n');
+        Options.dp = 0;
+    elseif Options.details == 1,
+        fprintf('WARNING: switching to one-shot formulation because Options.details=1\n');
         Options.dp = 0;
     end
 end
