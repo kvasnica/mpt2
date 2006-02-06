@@ -341,7 +341,7 @@ probStruct = sub_timevarpenalties(probStruct);
 %===============================================================================
 % find out whether sysStruct.C, sysStruct.D and sysStruct.g all contain the same
 % elements for all dynamics. if so, we can simplify things a bit
-if multi_model | haveMLD | Options.dont_solve,
+if multi_model | haveMLD,
     % always consider outputs as separate variables for the multi-model
     % approach, it makes things less messy coding-wise. do the same if we have
     % at least one MLD model.
@@ -499,7 +499,7 @@ for k = N-1:-1:1
     end
     if ~(k==1 & probStruct.y0bounds==0)
         % do not impose constraints on y0 if user does not want to
-        if ~YeqSame & ~(soften.all | soften.y),
+        if ~(soften.all | soften.y),
             % we can't set hard bounds if we have soft constraints
             bounds(y{k}, SST{k}.ymin, SST{k}.ymax);
         end
@@ -588,24 +588,11 @@ for k = N-1:-1:1
         % soften constraints if necessary
         ymin = SST{k}.ymin - slacks.all{k} - slacks.y{k};
         ymax = SST{k}.ymax + slacks.all{k} + slacks.y{k};
-        
-        if YeqSame,
-            % C,D,g are identical, it's enough to consider one dynamics
-            tag = sprintf('ymin < y_%d < ymax', iN);
-            if k > 1 | probStruct.y0bounds==1,
-                % do not impose constraints on y0 if user does not want to
-                F = F + set(ymin < SST{k}.C{1}*x{k} + ...
-                    SST{k}.D{1}*u{ku} + SST{k}.g{1} < ymax, tag);
-            end
-            
-        else
-            tag = sprintf('ymin < y_%d < ymax', iN);
-            if k > 1 | probStruct.y0bounds==1,
-                % do not impose constraints on y0 if user does not want to
-                F = F + set(ymin < y{k} < ymax, tag);
-            end        
-            
-        end
+        tag = sprintf('ymin < y_%d < ymax', iN);
+        if k > 1 | probStruct.y0bounds==1,
+            % do not impose constraints on y0 if user does not want to
+            F = F + set(ymin < y{k} < ymax, tag);
+        end        
     end
     
     
@@ -637,10 +624,9 @@ for k = N-1:-1:1
             % with one dynamics
             tag = sprintf('x_%d == A*x_%d + B*u_%d', iN+1, iN, iNu);
             F = F + set(x{k+1} == SST{k}.A{1}*x{k} + SST{k}.B{1}*u{ku}, tag);
-            if ~YeqSame,
-                tag = sprintf('y_%d == C*x_%d + D*u_%d', iN+1, iN, iNu);
-                F = F + set(y{k} == SST{k}.C{1}*x{k} + SST{k}.D{1}*u{ku}, tag);
-            end
+            
+            tag = sprintf('y_%d == C*x_%d + D*u_%d', iN+1, iN, iNu);
+            F = F + set(y{k} == SST{k}.C{1}*x{k} + SST{k}.D{1}*u{ku}, tag);
             
         case 'pwa',
             % PWA dynamics
@@ -666,6 +652,14 @@ for k = N-1:-1:1
             
             tag = sprintf('sum d_%d = 1', iN);
             F = F + set(sum(d{k}(pwa_index{k})) == 1, tag);
+            
+            if YeqSame,
+                % all output equations are the same for all dynamics, it is
+                % enough to define one output variable
+                tag = sprintf('y_%d == C*x_%d + D*u_%d + g', iN, iNu, iN);
+                F = F + set(y{k} == SST{k}.C{1}*x{k} + ...
+                    SST{k}.D{1}*u{ku} + SST{k}.g{1}, tag);
+            end
             
         case 'mld',
             % MLD dynamics
@@ -740,18 +734,8 @@ for k = N-1:-1:1
     % objective function
     if isfield(probStruct, 'Qy'),
         % add penalty on outputs
+        obj = obj + sub_norm((y{k} - yref), probStruct.Qy{k}, probStruct.norm);
         
-        if YeqSame,
-            % it's enough to consider just one dynamics because C,D,g are
-            % identical for all dynamics
-            obj = obj + sub_norm(SST{k}.C{1}*x{k} + SST{k}.D{1}*u{ku} + ...
-                SST{k}.g{1} - yref, probStruct.Qy{k}, probStruct.norm);
-   
-        else
-            obj = obj + sub_norm((y{k} - yref), probStruct.Qy{k}, probStruct.norm);
-            
-        end
-
     else
         % add penalty on states
         obj = obj + sub_norm((x{k} - xref), probStruct.Q{k}, probStruct.norm);
