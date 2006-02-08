@@ -59,6 +59,8 @@ function [ctrl, F, obj, variables] = mpt_yalmipcftoc(sysStruct, probStruct, Opti
 %                     (Options.mp_algorithm=3 uses different enumeration)
 %    .mp.presolve   - perform pre-solving if this option is true (default)
 %    .dp            - if set to 1, use the DP formulation
+%    .force_mld     - force MLD dynamics (mainly for explicit controllers)
+%    .force_pwa     - force PWA dynamics (mainly for on-line controllers)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -109,6 +111,14 @@ function [ctrl, F, obj, variables] = mpt_yalmipcftoc(sysStruct, probStruct, Opti
 % intend to call this function not via mpt_control, look for appropriate lines
 % in this file and follow the instructions.
 
+% NOTE! if sysStruct contains both the PWA and MLD representations, choice of
+% which dynamics will be used to create the CFTOC model depends on which control
+% strategy is used. For on-line controllers we currently prefere MLD models
+% (they are much faster to solve than PWA models), while for explicit
+% controllers we prefer to use the PWA representation. However, it is possible
+% to force using MLD or PWA representation by setting either "Options.force_mld"
+% or "Options.force_pwa" to 1.
+
 global mptOptions;
 if ~isstruct(mptOptions),
     mpt_error;
@@ -123,6 +133,8 @@ Options = mpt_defaultOptions(Options, ...
     'pwa_index', [], ...
     'dont_solve', 0, ...
     'details', 0, ...
+    'force_pwa', 0, ...
+    'force_mld', 0, ...
     'yalmip_online', 0);
 
 
@@ -234,7 +246,7 @@ end
 
 %===============================================================================
 % do we have an LTI, PWA or an MLD dynamics?
-[dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct);
+[dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct, Options);
 
 % do we have at least one MLD/PWA/LTI system?
 haveMLD = ~isempty(findstr([dynamics_type{:}], 'mld'));
@@ -401,6 +413,22 @@ if isfield(probStruct, 'xref_augmented') | probStruct.tracking>0,
     % we MUST set xref/uref to zero
     xref = 0*xref;
     uref = 0*uref;
+end
+
+
+%===============================================================================
+if Options.yalmip_online,
+    if Options.verbose > 0,
+        if multi_model,
+            fprintf('Using mixed model...\n');
+        elseif haveMLD,
+            fprintf('Using MLD model...\n');
+        elseif havePWA,
+            fprintf('Using PWA model...\n');
+        else
+            fprintf('Using LTI model...\n');
+        end
+    end
 end
 
 
@@ -1067,7 +1095,7 @@ SST = cell(1, N);
 
 
 %-----------------------------------------------------------------
-function [dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct)
+function [dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct, Options)
 % checks whether we have MLD, PWA or LTI systems
 
 dynamics_type = cell(1, length(SST));
@@ -1075,10 +1103,49 @@ nPWA = zeros(1, length(SST));
 MLD = cell(1, length(SST));
 
 for im = 1:length(SST),
-    if isfield(SST{im}, 'data'),
-        % we do have an MLD representation
+    canuse_mld = isfield(SST{im}, 'data');
+    canuse_pwa = iscell(SST{im}.A);
+    canuse_lti = ~iscell(SST{im}.A);
+    
+    if canuse_mld,
         if isfield(SST{im}.data, 'onlymld'),
             % there is no equivalent PWA representation for this system available
+            canuse_pwa = 0;
+        end
+    end
+    
+    if Options.force_mld & ~canuse_mld,
+        error('Cannot force MLD model because it is not available.');
+    end
+    if Options.force_pwa & ~canuse_pwa,
+        error('Cannot force PWA model because it is not available.');
+    end
+    
+    if Options.force_mld,
+        dynamics_type{im} = 'mld';
+        
+    elseif Options.force_pwa,
+        dynamics_type{im} = 'pwa';
+
+    elseif canuse_mld & Options.yalmip_online,
+        % for on-line controllers we prefer MLD models
+        dynamics_type{im} = 'mld';
+        
+    elseif canuse_pwa,
+        dynamics_type{im} = 'pwa';
+        
+    elseif canuse_mld,
+        dynamics_type{im} = 'mld';
+        
+    elseif canuse_lti,
+        dynamics_type{im} = 'lti';
+        
+    else
+        error('Unknown type of dynamical model.');
+    end
+    
+    switch dynamics_type{im},
+        case 'mld',
             MLD{im} = SST{im}.data.MLD;
             % initialize B5 and D5 matrices to zero if they are not given
             if ~isfield(MLD{im}, 'B5'),
@@ -1087,27 +1154,17 @@ for im = 1:length(SST),
             if ~isfield(MLD{im}, 'D5'),
                 MLD{im}.D5 = zeros(size(MLD{im}.C, 1), 1);
             end
-            dynamics_type{im} = 'mld';
-            
-        else
-            % we also have the PWA representation available for this system, use it
-            dynamics_type{im} = 'pwa';
+
+        case 'pwa',
             nPWA(im) = length(SST{im}.A);
             
-        end
-        
-    elseif iscell(SST{im}.A),
-        dynamics_type{im} = 'pwa';
-        nPWA(im) = length(SST{im}.A);
-        
-    else
-        % convert the LTI system into a PWA form, it will allow simplier code later
-        dynamics_type{im} = 'lti';
-        SST{im} = mpt_lti2pwa(SST{im});
-        sysStruct = mpt_lti2pwa(sysStruct);
-        nPWA(im) = 1;
-        
+        case 'lti',
+            % convert the LTI system into a PWA form, it will allow simplier code later
+            SST{im} = mpt_lti2pwa(SST{im});
+            sysStruct = mpt_lti2pwa(sysStruct);
+            nPWA(im) = 1;
     end
+    
 end
 
 
