@@ -693,7 +693,7 @@ for unc_ctr=1:max_uncert
                     dymaxadded=1;
                 end
 
-            elseif(constraints_xN & all(D==0))
+            elseif(constraints_xN & all(all(D==0)))
                 %extract the state constraints for the final state x_N (there is no input u_N)
                 GU=GU(1:(end-2*nu),:);          %Add state constraints for step horizon (=xN)
                 G=[G;GU];                       %Add state constraints for step horizon (=xN)
@@ -896,7 +896,7 @@ if(probStruct.norm==2)
             Cf=Cf+2*(f'*Asum'*C'+ gg')*Q*(C*vecX+D*vecU);   %build Cf*U
             Cx=Cx+2*(f'*Asum'*C'+gg')*Q*C*AAi;              %build Cx*x
             Cc=Cc+(f'*Asum'*C'+gg')*Q*(C*Asum*f+gg);        %build Cc
-        elseif(all(D==0) | all(P==0))
+        elseif(all(all(D==0)) | all(all(P==0)))
             %     x(i)=AAi*x(0)+vecX*U+Asum*f and  y(i)=C*x(i)+D*vecX*U+gg 
             %     Therefore:
             %     y(i)=(C*AAi)*x(0) + (C*vecX+D*vecX)*U + (C*Asum*f+gg)
