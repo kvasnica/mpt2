@@ -791,7 +791,7 @@ for k = N-1:-1:1
     
     %===============================================================================
     % add penalty on deltaU
-    if isfield(probStruct, 'Rdu'),
+    if isfield(probStruct, 'Rdu') & k <= Nc - 1,
         obj = obj + sub_norm(du_var, probStruct.Rdu{ku}, probStruct.norm);
     end
 
