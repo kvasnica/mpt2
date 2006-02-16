@@ -136,6 +136,7 @@ if isfield(probStruct,'xref') | isfield(probStruct,'uref')
         probStruct.uref = uref;
     end
     probStruct.tracking = 0;
+    probStruct.xref_augmented = 1;
     sysStructTr = sysStruct;
     probStructTr = probStruct;
     return

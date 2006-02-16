@@ -155,7 +155,114 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     sysStruct = ctrl.sysStruct;
     probStruct = ctrl.probStruct;
     
-    if iscell(sysStruct.A),
+    if isfield(ctrl.details, 'yalmipMatrices'),
+        % we do have an optimization problem constructed by mpt_yalmipcftoc(),
+        % solve the corresponding LP/QP/MILP/MIQP problem
+        M = ctrl.details.yalmipMatrices;
+        mi_problem = ~isempty(M.binary_var_index);
+        qp_problem = M.qp;
+        
+        %==================================================================
+        % set default values of Options.Uprev and/or Options.reference
+        if M.uprev_length > 0,
+            if ~isfield(Options, 'Uprev'),
+                fprintf('WARNING: deltaU constraints can only be satisfied if Options.Uprev is given.\n');
+            end
+            uprev = mpt_defaultField(Options, 'Uprev', zeros(ctrl.details.dims.nu, 1));
+            uprev = uprev(:);
+            if length(uprev) ~= M.uprev_length,
+                error(sprintf('Wrong size of "Options.uprev". Expecting %d elements, got %d.', ...
+                    M.uprev_length, length(uprev)));
+            end
+            x0 = [x0; uprev];
+        end
+        if M.reference_length > 0,
+            if ~isfield(Options, 'reference'),
+                fprintf('WARNING: Options.reference not specified, assuming zero.');
+            end
+            ref = mpt_defaultField(Options, 'reference');
+            if isempty(ref),
+                if isfield(ctrl.probStruct, 'Qy'),
+                    % reference has the dimension of output
+                    ref = zeros(ctrl.details.dims.ny, 1);
+                else
+                    % reference has the dimension of state
+                    ref = zeros(ctrl.details.dims.nx, 1);
+                end
+            end
+            ref = ref(:);
+            if length(ref) ~= M.reference_length,
+                error(sprintf('Wrong size of "Options.reference". Expecting %d elements, got %d.', ...
+                    M.reference_length, length(ref)));
+            end
+            x0 = [x0; ref];
+        end
+
+        %==================================================================
+        % prepare constraints, plug in the parametric variables
+        nvars = size(M.G, 2);
+        nparams = length(M.param_var);
+        A = M.G;
+        B = M.W + M.E*x0;
+        Aeq = M.Aeq;
+        Beq = M.beq - M.Beq*x0;
+        lb = M.lb(1:end-nparams);  % bounds on parametric variables are always last!
+        ub = M.ub(1:end-nparams);
+
+
+        %==================================================================
+        % denote respective variables as binary, enforce bounds as constraints
+        % if necessary (for mpt_solveLP and mpt_solveQP)
+        if mi_problem,
+            % denote selected variables as binary
+            vartype = repmat('C', nvars, 1);
+            vartype(M.binary_var_index) = 'B';
+            
+        elseif ~isempty(lb)
+            % mpt_solveLP() and mpt_solveQP() currently do not support
+            % lower/upper bound on variables, therefore we have to convert them
+            % into dummy constraints
+            A = [A; eye(nvars); -eye(nvars)];
+            B = [B; ub; -lb];
+            lb = []; ub = [];
+        end
+        
+        %==================================================================
+        % solve the problem
+        starttime = cputime;
+        if qp_problem,
+            % QP/MIQP problem
+            if mi_problem,
+                [xopt, cost, how, exitflag] = mpt_solveMIQP(...
+                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq, lb, ub, vartype);
+                
+            else
+                [xopt, lambda, how, exitflag, cost] = mpt_solveQP(...
+                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq);
+                
+            end
+            cost = cost + x0'*M.Y*x0 + M.Cx*x0 + M.Cc;
+            
+        else
+            % LP/MILP problem
+            if mi_problem,
+                [xopt, cost, how, exitflag] = mpt_solveMILP(...
+                    M.H, A, B, Aeq, Beq, lb, ub, vartype);
+                
+            else
+                [xopt, cost, lambda, exitflag, how] = mpt_solveLP(...
+                    M.H, A, B, Aeq, Beq);
+                
+            end
+            
+        end
+        runtime = cputime - starttime;
+        feasible = strcmp(how, 'ok');
+        %U = reshape(xopt(M.requested_variables), ctrl.details.dims.nu, ctrl.probStruct.N)';
+        U = xopt(M.requested_variables);
+        fullopt = xopt;
+        
+    elseif iscell(sysStruct.A),
         % PWA system
         
         if ctrl.details.dims.nx~=length(x0),

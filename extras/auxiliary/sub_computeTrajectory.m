@@ -243,9 +243,13 @@ if Options.openloop,
     end
     x0 = extend_x0(ctrl, x0, u_prev, Options.reference, isEXPctrl, isDUmode);
     if isEXPctrl,
-        if iscell(sysStruct.A),
+        if iscell(sysStruct.A) & size(ctrl.Fi{1}, 1)<=nu,
             % we have a PWA system, call mpt_computeTrajectory which calculates
-            % open-loop trajectory for PWA system
+            % open-loop trajectory for PWA system.
+            %
+            % however if mpt_yalmipcftoc() was used to compute the open-loop
+            % solution, it is stored directly in ctrl.Fi and ctrl.Gi terms as in
+            % case of linear systems
             [X,U,Y,D,cost,trajectory,feasible,dyns] = mpt_computeTrajectory(struct(ctrl), x0, N, Options);
             return
         end
@@ -426,12 +430,10 @@ else
         %-----------------------------------------------------------------------
         % record previous input (for MPC for MLD systems, such that deltaU
         % constraints are satisfied in closed-loop
-        if (~isEXPctrl & iscell(sysStruct.A)),
-            if iN == 1,
-                Options.Uprev = u_prev;
-            else
-                Options.Uprev = Ucl;
-            end
+        if iN == 1,
+            Options.Uprev = u_prev;
+        else
+            Options.Uprev = Ucl;
         end
         
         

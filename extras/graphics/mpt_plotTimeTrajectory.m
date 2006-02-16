@@ -120,6 +120,9 @@ end
 if ~isfield(Options, 'guierrors')
     Options.guierrors = 0;
 end
+if ~isfield(Options, 'legend')
+    Options.legend = 1;
+end
 
 if ~isinf(horizon),
     Options.minnorm=-1;
@@ -336,7 +339,9 @@ else
     xlabel('Sampling Instances');
     ylabel('States');
 end
-legend(handleX,legendXtext);
+if Options.legend,
+    legend(handleX,legendXtext);
+end
 
 
 %% second subplot - output trajectories
@@ -420,7 +425,9 @@ else
     xlabel('Sampling Instances');
     ylabel('Outputs');
 end    
-legend(handleY,legendYtext);
+if Options.legend,
+    legend(handleY,legendYtext);
+end
 
 
 % third subplot - control moves
@@ -461,7 +468,9 @@ else
     xlabel('Sampling Instances');
     ylabel('Inputs');
 end
-legend(handleU,legendUtext);
+if Options.legend,
+    legend(handleU,legendUtext);
+end
 
 
 if all(all(D==0)),
@@ -550,7 +559,9 @@ else
         xlabel('Sampling Instances');
         ylabel('Disturbances');
     end
-    legend(handleD,legendDtext);
+    if Options.legend,
+        legend(handleD,legendDtext);
+    end
 end
 
 

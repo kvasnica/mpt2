@@ -1,5 +1,5 @@
 function [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,param,options,solver)
-%MPT_SOLVEMILP Interface to various MIQP solvers
+%MPT_SOLVEMIQP Interface to various MIQP solvers
 %
 % [xmin,fmin,how,exitflag]=mpt_solveMIQP(H,f,A,B,Aeq,Beq,lb,ub,vartype,param,options,solver)
 %
