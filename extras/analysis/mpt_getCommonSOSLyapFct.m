@@ -939,7 +939,7 @@ for ii = 1:nRegions,
         % if the region contains the origin, it has to be the
         % equilibrium point
         %
-        if ( all(abs(bigBG(rowRange))) < Options.epsilon ),
+        if ( all(abs(bigBG(rowRange)) < Options.epsilon )),
             idxContainsOrigin(end+1) = ii;
         end
     end
@@ -976,7 +976,7 @@ if ( isNoisy ),
             for jj = idxContainsOrigin,
                 auxIntersect = intersect(Pnorig(ii),Pn(jj));
                 if ( ~isempty(auxIntersect) ),
-                    newPnorig(end+1) = auxIntersect;
+                    newPnorig = [newPnorig auxIntersect];
                     auxDyn(end+1) = jj;
                 end
             end
