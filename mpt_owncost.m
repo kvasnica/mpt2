@@ -1,8 +1,8 @@
-function varargout = mpt_owncost(sysStruct, probStruct, F, obj, vars)
+function varargout = mpt_owncost(varargin)
 % MPT_OWNCOST The "Design your own cost" function
 %
 % mpt_owncost(sysStruct, probStruct)
-% [C, O, V] = mpt_owncost(sysStruct, probStruct)
+% [CON, OBJ, VAR] = mpt_owncost(sysStruct, probStruct)
 % ctrl = mpt_owncost(CON, OBJ, VAR)
 %
 % ---------------------------------------------------------------------------
@@ -25,7 +25,7 @@ function varargout = mpt_owncost(sysStruct, probStruct, F, obj, vars)
 %
 %     [H, K] = double(unitbox(2, 2));   % polytopic constraints
 %     Double_Integrator
-%     mpt_owncost(sysStruct, probStruct);
+%     [CON, OBJ, VAR] = mpt_owncost(sysStruct, probStruct);
 %     for k = 2:length(VAR.x)
 %       % k==1 corresponds to x0, k==2 to x1 etc.
 %       CON = CON + set(H*VAR.x{k} <= K);
@@ -45,9 +45,9 @@ function varargout = mpt_owncost(sysStruct, probStruct, F, obj, vars)
 % OUTPUT
 % ---------------------------------------------------------------------------
 % ctrl          - MPTCTRL object 
-% C             - Constraints (optional)
-% O             - Objective (optional)
-% V             - Variables (optional)
+% CON           - Constraints
+% OBJ           - Objective
+% VAR           - Variables
 %
 % see also MPT_CONTROL, MPT_YALMIPCFTOC
 %
@@ -88,12 +88,34 @@ Options = mpt_defaultOptions(Options, ...
     'dont_solve', 1, ...
     'dp', 0);
 
-if ~(nargin==2 | nargin==5),
-    error('Wrong number of input arguments.');
+% by default we compute an explicit controller
+ctrltype = 'explicit';
+designphase = 1;
+sysStruct = varargin{1};
+probStruct = varargin{2};
+if nargin > 2,
+    if ischar(varargin{3}),
+        if nargin ~= 3,
+            error('Wrong number of input arguments.');
+        end
+        ctrltype = varargin{3};
+    else
+        if nargin < 5,
+            error('Wrong number of input arguments.');
+        end
+        F = varargin{3};
+        obj = varargin{4};
+        vars = varargin{5};
+        designphase = 0;
+    end
+end
+if nargin==6,
+    ctrltype = varargin{6};
+    designphase = 0;
 end
 
 ctrl = [];
-if nargin==2,
+if designphase,
     % generate constraints, objective and variables
 
     if ~(iscell(sysStruct) | isstruct(sysStruct)),
@@ -101,6 +123,13 @@ if nargin==2,
     end
     if ~isstruct(probStruct),
         error('Second input must be a structure.');
+    end
+
+    if isequal(lower(ctrltype), 'online') | isequal(lower(ctrltype), 'on-line'),
+        % we need the following special setting for on-line controllers
+        Options.yalmip_online = 1;
+        Options.dont_solve = 1;
+        Options.dp = 0;
     end
     
     try
@@ -142,16 +171,16 @@ else
     % compute controller based on custom constraints/objective
     
     if ~(isa(F, 'lmi') | isa(F, 'set')),
-        error('First input must be a set of constraints.');
+        error('Third input must be a set of constraints.');
     end
     if ~isa(obj, 'sdpvar'),
-        error('Second input must be an optimization objective.');
+        error('Fourth input must be an optimization objective.');
     end
     if ~isstruct(vars),
-        error('Third input must be a structure.');
+        error('Fifth input must be a structure.');
     end
     if ~isfield(vars, 'x') | ~isfield(vars, 'u') | ~isfield(vars, 'y'),
-        error('Wrong type of third input argument.');
+        error('Wrong type of fifth input argument.');
     end
     if iscell(sysStruct),
         error('Multi-model systems not supported by this function.');
@@ -166,10 +195,29 @@ else
     [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct, verOpt);
     origSysStruct = sysStruct;
     origProbStruct = probStruct;
+
+    
+    % =================================================================
+    % generate an on-line controller
+    if isequal(lower(ctrltype), 'online') | isequal(lower(ctrltype), 'on-line'),
+        % we need the following special setting for on-line controllers
+        Options.yalmip_data.constraints = F;
+        Options.yalmip_data.objective = obj;
+        Options.yalmip_data.variables = vars;
+        ctrl = mptctrl(sysStruct, probStruct, Options);
+        varargout{1} = ctrl;
+        return
+    end
+    
+    
+    % =================================================================
+    % augment system to deal with tracking (on-line controllers use Uprev
+    % and the reference directly as additional variables, hence we must not do
+    % this augmentation for such case)
     if probStruct.tracking > 0 & ~isfield(probStruct, 'tracking_augmented')
         [sysStruct, probStruct] = mpt_yalmipTracking(sysStruct, probStruct, verOpt);
     end
-    
+
     
     % =================================================================
     % display information about a given model
@@ -202,14 +250,19 @@ else
     yalmipOptions.verbose = 1;
     starttime = cputime;
     [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, [vars.u{1:end-1}]);
+    if diagnost.problem ~= 0,
+        fprintf('%s\n', diagnost.info);
+        error('mpt_owncost: an error has occurred, see message above.');
+    end
+    
     if length(sol)==1,
         ctrl = sol{1};
         overlaps = 0;
         
     else
         if isempty(sol),
-            fprintf('%s\n', diagnost.info);
-            error('mpt_owncost: an error has occurred, see message above.');
+            ctrl = mptctrl;
+            fprintf('The problem is infeasible.\n', diagnost.info);
         end
         
         if probStruct.norm==2,
@@ -221,10 +274,14 @@ else
         end
     end
 
-    if isempty(ctrl),
-        error('Problem infeasible or an error occurred!');
+    if isempty(sol),
+        error('Problem is infeasible or an error occurred.');
     end
-
+    if iscell(sol),
+        if isempty(sol{1}),
+            error('Problem is infeasible or an error occurred.');
+        end
+    end
     
     % =================================================================
     % set necessary fields of the controller structure

@@ -257,17 +257,26 @@ elseif nargin==2 | nargin==3
     end
     Options = mpt_defaultOptions(Options, ...
         'verbose', mptOptions.verbose, ...
+        'yalmip_data', [], ...
         'force_mpt', 0 );
 
-    if Options.force_mpt == 0,
+    if Options.force_mpt == 0 | ~isempty(Options.yalmip_data),
         % we can use mpt_yalmipcftoc(), do so
         
-        fprintf('Using mpt_yalmipcftoc() to construct the optimization problem.\n');
-        % first construct constraints and optimization objective
-        Options.yalmip_online = 1;
-        Options.dont_solve = 1;
-        Options.dp = 0;
-        [dummy, F, obj, vars] = mpt_yalmipcftoc(sysStruct, probStruct, Options);
+        if isempty(Options.yalmip_data),
+            fprintf('Using mpt_yalmipcftoc() to construct the optimization problem.\n');
+            % first construct constraints and optimization objective
+            Options.yalmip_online = 1;
+            Options.dont_solve = 1;
+            Options.dp = 0;
+            [dummy, F, obj, vars] = mpt_yalmipcftoc(sysStruct, probStruct, Options);
+            
+        else
+            % use data provided from mpt_owncost()
+            F = Options.yalmip_data.constraints;
+            obj = Options.yalmip_data.objective;
+            vars = Options.yalmip_data.variables;
+        end
         
         % now convert the optimization problem into MPTs native form
         % vars.x{1} corresponds to x0
@@ -301,7 +310,7 @@ elseif nargin==2 | nargin==3
             % we must not set tracking=1 because that would confuse
             % sim()/simplot() functions which would think that we have a deltaU
             % formulation, which we don't
-            if probStruct.tracking==1,
+            if probStruct.tracking==1 & isempty(Options.yalmip_data),
                 fprintf(['The on-line controller will not use deltaU formulation, ' ...
                         'switching to probStruct.tracking=2']);
             end
