@@ -277,19 +277,19 @@ elseif dimension(PA)==2,
     h=gcf;
     if isfield(Options, 'shade')
         for ii = 1:length(Jhandles),
-            set(Jhandles, 'FaceAlpha', Options.shade);
+            set(Jhandles(ii), 'FaceAlpha', Options.shade);
         end
     else
         set(h, 'Renderer', 'painters');
     end
     if isfield(Options, 'edgecolor')
         for ii = 1:length(Jhandles),
-            set(Jhandles, 'EdgeColor', Options.edgecolor);
+            set(Jhandles(ii), 'EdgeColor', Options.edgecolor);
         end
     end
     if isfield(Options, 'edgewidth')
         for ii = 1:length(Jhandles),
-            set(Jhandles, 'LineWidth', Options.edgewidth);
+            set(Jhandles(ii), 'LineWidth', Options.edgewidth);
         end
     end
     h1 = get(h,'CurrentAxes');

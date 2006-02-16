@@ -260,7 +260,9 @@ if havenoise,
 	Kn={};
 	Fi={};
 	Gi={};
-
+    if iscell(sysStruct.C),
+        error('PWA systems with additive noise are not supported.');
+    end
     %extract RPI set from region 1
     X=polytope([sysStruct.C*eye(nx);-sysStruct.C*eye(nx)],[sysStruct.ymax;-sysStruct.ymin]);
     ctr=0; index=[];
