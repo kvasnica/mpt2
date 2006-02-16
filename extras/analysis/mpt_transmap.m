@@ -144,7 +144,7 @@ if havetarget,
         ext{is} = E';
     end
 end
-if isempty(ext) | isempty(ex)
+if (havetarget & isempty(ext)) | isempty(ex)
     error('Extreme point enumeration failed, see "help mpt_transmap" for details.');
 end
 
