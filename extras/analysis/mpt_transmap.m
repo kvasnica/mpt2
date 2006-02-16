@@ -7,6 +7,12 @@ function [tmap,Pn,ex,explus] = mpt_transmap(Pn, Acell, fcell, Options)
 % Prunes infeasible transitions. Specifically:
 %   domain(P2(j), A{i}, f{i}, P1(i)) is NOT feasible if tmap(i, j) is 0
 %
+% NOTE! If the function complains that extreme point enumeration failed, try to
+% change the vertex enumeration method by:
+%   mpt_options('extreme_solver', 'matlab')
+% or
+%   mpt_options('extreme_solver', 'cdd')
+%
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
@@ -116,6 +122,7 @@ else
 end
 
 % Vertex enumeration
+ext = {}; ex = {};
 for is=1:lenP
     [E, R, Pn(is)] = extreme(Pn(is), Options);
     % round almost-zero elements
@@ -136,6 +143,9 @@ if havetarget,
         E(find(abs(E) < 1e-12)) = 0;
         ext{is} = E';
     end
+end
+if isempty(ext) | isempty(ex)
+    error('Extreme point enumeration failed, see "help mpt_transmap" for details.');
 end
 
 n = dimension(Pn);
