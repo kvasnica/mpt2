@@ -230,7 +230,7 @@ if (iscell(sysStruct.A))
         error('Cannot handLe PWA systems with polytopic uncertainty')
     end
     Acell=sysStruct.A;
-    Bcell=sysStruct.B;
+    Bcell=sysStruct.B; 
     fcell=sysStruct.f;
     pwasystem=1;
     if length(Acell)~=length(Pn)
@@ -258,7 +258,11 @@ if (iscell(sysStruct.A))
                 error('Faulty partition: Region could not be linked to any dynamic !!')
             end
         end
+    else
+        ABFcell = sysStruct.A; 
+        BGcell = sysStruct.f;
     end
+    
 elseif ~isfield(sysStruct,'Aunc') | ~isfield(sysStruct,'Bunc')
     %no polytopic uncertainty 
     Acell{1}=sysStruct.A;
@@ -857,7 +861,11 @@ if(~Options.enforcePositivity)
         end
     end
     
-    solution = solvesdp(myprog,[],options);                        %find solution using LMI solver
+    if all(containsOrigin),
+        fprintf('mpt_getPWQLyapFct: Skipping verification because all regions contain the origin.\n');
+    else
+        solution = solvesdp(myprog,[],options);                        %find solution using LMI solver
+    end
     
     %analyze solver output
     if(solution.problem==4) 
