@@ -13,6 +13,7 @@
 %
 % Control routines
 %   mpt_control            - Computes an explicit or an on-line MPC controller
+%   mpt_ownmpc             - "Design your own MPC problem" function
 %
 % Simulink library and code generation
 %   mpt_sim                - MPT Simulink library
