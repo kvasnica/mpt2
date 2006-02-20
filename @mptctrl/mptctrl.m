@@ -162,8 +162,9 @@ if nargin==0,
 end
 
 % =========================================================================
-% first input has always to be a structure
-if ~isstruct(varargin{1})
+% first input has always to be a structure or a cell array (if we have
+% multi-model dynamics)
+if ~(isstruct(varargin{1}) | iscell(varargin{1}))
     error('MPTCTRL: first input must be a structure!');
 end
 
@@ -195,12 +196,48 @@ if isfield(varargin{1}, 'Pn') & isfield(varargin{1}, 'Fi')
         ctrl.type = 'explicit';
     end
     
+elseif nargin==1 & mpt_issysstruct(varargin{1}),
+    
+    % =========================================================================
+    % input is a system structure
+
+    sysStruct = mpt_verifySysStruct(varargin{1});
+    
+    if ~isstruct(sysStruct.A),
+        sysStruct = mpt_lti2pwa(sysStruct);
+    end
+    if nnz([sysStruct.B{:}])>0,
+        error('MPTCTRL: only autonomous systems can be converted.');
+    end
+    [nx, nu, ny, ndyn, nbool, ubool, intInfo] = mpt_sysStructInfo(sysStruct);
+    
+    ctrl.sysStruct = sysStruct;
+    probStruct = struct('Q', eye(nx), 'R', eye(nu), 'N', 1, 'norm', 1, 'subopt_lev', 0);
+    ctrl.probStruct = mpt_verifyProbStruct(probStruct);
+    ctrl.details.origSysStruct = sysStruct;
+    ctrl.details.origProbStruct = probStruct;
+    
+    ctrl.Pn = polytope(intInfo.PdynX);
+    ctrl.Pfinal = ctrl.Pn;
+    ctrl.Fi = cell(1, ndyn); [ctrl.Fi{:}] = deal(zeros(nu, nx));
+    ctrl.Gi = cell(1, ndyn); [ctrl.Gi{:}] = deal(zeros(nu, 1));
+    ctrl.Ai = cell(1, ndyn); [ctrl.Ai{:}] = deal(zeros(nx, nx));
+    ctrl.Bi = cell(1, ndyn); [ctrl.Bi{:}] = deal(zeros(nx, 1));
+    ctrl.Ci = cell(1, ndyn); [ctrl.Ci{:}] = deal(0);
+    ctrl.dynamics = zeros(1, ndyn);
+    ctrl.details.runTime = 0;
+    ctrl.type = 'explicit';
+    
 elseif nargin==2 | nargin==3
     
     % =========================================================================
     % two inputs, possibly sysStruct + probStruct case, verify that
     sysStruct = varargin{1};
     probStruct = varargin{2};
+    userSysStruct = sysStruct;    
+    if iscell(userSysStruct),
+        sysStruct = userSysStruct{1};
+    end
     if ~isstruct(sysStruct) | ~isstruct(probStruct)
         error('MPTCTRL: both input arguments must be structures!');
     end
@@ -255,11 +292,73 @@ elseif nargin==2 | nargin==3
     else
         Options = [];
     end
-    if ~isfield(Options, 'verbose'),
-        Options.verbose = mptOptions.verbose;
+    Options = mpt_defaultOptions(Options, ...
+        'verbose', mptOptions.verbose, ...
+        'yalmip_data', [], ...
+        'force_mpt', 0 );
+
+    if Options.force_mpt == 0 | ~isempty(Options.yalmip_data) | iscell(userSysStruct),
+        % we can use mpt_yalmipcftoc(), do so
+        
+        if isempty(Options.yalmip_data),
+            if Options.verbose > 1,
+                fprintf('Using mpt_yalmipcftoc() to construct the optimization problem.\n');
+            end
+            % first construct constraints and optimization objective
+            Options.yalmip_online = 1;
+            Options.dont_solve = 1;
+            Options.dp = 0;
+            [dummy, F, obj, vars] = mpt_yalmipcftoc(userSysStruct, probStruct, Options);
+            
+        else
+            % use data provided from mpt_owncost()
+            F = Options.yalmip_data.constraints;
+            obj = Options.yalmip_data.objective;
+            vars = Options.yalmip_data.variables;
+        end
+        
+        % now convert the optimization problem into MPTs native form
+        % vars.x{1} corresponds to x0
+        % vars.uprev corresponds to previous input (for deltaU constraints)
+        uprev_length = 0; reference_length = 0;
+        parametric_vars = vars.x{1};
+        if isfield(vars, 'uprev'),
+            parametric_vars = [parametric_vars; vars.uprev];
+            uprev_length = length(vars.uprev);
+        end
+        if isfield(vars, 'ref'),
+            % we have the reference as a parametric variable
+            parametric_vars = [parametric_vars; vars.ref];
+            reference_length = length(vars.ref);
+        end
+        % define which variables should be optimization variables
+        requested_vars = [vars.u{1:end-1}];
+        
+        % expand the YALMIP model into MPT format
+        ctrl.details.yalmipMatrices = mpt_yalmip2mpt(F, obj, parametric_vars, requested_vars);
+        ctrl.details.yalmipMatrices.uprev_length = uprev_length;
+        ctrl.details.yalmipMatrices.reference_length = reference_length;
+        
+        if probStruct.tracking>0,
+            % we need to set ctrl.sysStruct.dims because we didn't run
+            % mpt_yalmipTracking()
+            [nx, nu, ny] = mpt_sysStructInfo(sysStruct);
+            dims = struct('nx', nx, 'nu', nu, 'ny', ny);
+            sysStruct.dims = dims;
+            
+            % we must not set tracking=1 because that would confuse
+            % sim()/simplot() functions which would think that we have a deltaU
+            % formulation, which we don't
+            if probStruct.tracking==1 & isempty(Options.yalmip_data),
+                fprintf(['The on-line controller will not use deltaU formulation, ' ...
+                        'switching to probStruct.tracking=2']);
+            end
+            probStruct.tracking = 2;
+        end
+        
     end
     
-    if iscell(sysStruct.A)
+    if iscell(sysStruct.A) & Options.force_mpt == 1,
     
         % =========================================================================
         % we have a PWA system, check if MLD model is available in sysStruct
@@ -312,7 +411,7 @@ elseif nargin==2 | nargin==3
         end
         ctrl.details.Matrices = sub_getMLDmatrices(sysStruct, probStruct, Options);
         
-    else
+    elseif Options.force_mpt == 1,
         % =========================================================================
         % we have an LTI system, construct matrices
 

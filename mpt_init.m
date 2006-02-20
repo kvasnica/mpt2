@@ -595,7 +595,8 @@ try
         try
             % update mptOptions.sdpsettings if somebody installed a new version
             % of YALMIP
-            mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, 'cachesolvers', 1);
+            mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, ...
+                'cachesolvers', 1, 'bnb.branchrule', 'weight');
         catch
             warning('YALMIP not found, some functionality may not be accessible.');
             mptOptions.sdpsettings = [];
@@ -684,7 +685,8 @@ if rem(nargs, 2)~=0,
 end
 
 try
-    mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, 'cachesolvers', 1);
+    mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, ...
+        'cachesolvers', 1, 'bnb.branchrule', 'weight');
 catch
     warning('YALMIP not found, some functionality may not be accessible.');
     mptOptions.sdpsettings = [];

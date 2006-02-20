@@ -188,6 +188,8 @@ if (iscell(sysStruct.A))
         error('Cannot handle PWA systems with polytopic uncertainty')
     end
     pwasystem=1;
+    Acell = sysStruct.A;
+    Bcell = sysStruct.B;
     if length(sysStruct.A)~=length(Pn)
         disp('In PWA case, each dynamics has to be associated with exactly one region!');
         disp('Linking dynamics to regions...');
@@ -209,7 +211,11 @@ if (iscell(sysStruct.A))
                 error('Faulty partition: Region could not be linked to any dynamic !!')
             end
         end
+    else
+        ABFcell = sysStruct.A;
+        BGcell = sysStruct.f;
     end
+        
 elseif ~isfield(sysStruct,'Aunc') | ~isfield(sysStruct,'Bunc')
     %no polytopic uncertainty 
     Acell{1}=sysStruct.A;
@@ -295,7 +301,7 @@ if havenoise,
     end
 
 else
-    [Hn,Kn]=double(Pn);
+    [Hn, Kn] = pelemfun(@double, Pn);
     Fi=ctrlStruct.Fi;
     Gi=ctrlStruct.Gi;
 end

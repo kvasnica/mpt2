@@ -1,30 +1,26 @@
-function newCS = mpt_mergeCS(CScell)
-%MPT_GLUECS Merges a cell array of ctrlStruct structures
+function value = mpt_defaultField(structure, fieldname, defaultvalue)
+%MPT_DEFAULTFIEL Sets default value of field of a structure
 %
-% newCS = mpt_glueCS(CScell)
-%
+% v = mpt_defaultField(S, fname, default)
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Merges a cell array of ctrlStruct structures
-%
-% internal function
+% If the structure S does contain a field "fname", this field will be returned.
+% Otherwise the function will return the value specified as "default".
 %
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
-% CScell   - cell array of ctrlStruct structures
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% newCS    - merged ctrlStruct structure
 %
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
+%     kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
 % Legal note:
@@ -46,26 +42,16 @@ function newCS = mpt_mergeCS(CScell)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(1,1,nargin));
+% returns S.fname if 'fname' is a valid field of the structure "S". Otherwise
+% returns "default".
 
-if ~iscell(CScell)
-    newCS = CScell;
-elseif length(CScell)==1,
-    newCS = CScell;
+if isfield(structure, fieldname),
+    value = getfield(structure, fieldname);
+    
+elseif nargin==3,
+    value = defaultvalue;
+    
 else
-    newCS = CScell{1};
-    for ctr=2:length(CScell),
-        if isempty(CScell{ctr}),
-            continue
-        end
-        oneCS = CScell{ctr};
-        newCS.Pn = [newCS.Pn oneCS.Pn];
-        newCS.Pfinal = [newCS.Pfinal oneCS.Pfinal];
-        newCS.Fi = {newCS.Fi{:}, oneCS.Fi{:}};
-        newCS.Gi = {newCS.Gi{:}, oneCS.Gi{:}};
-        newCS.Ai = {newCS.Ai{:}, oneCS.Ai{:}};
-        newCS.Bi = {newCS.Bi{:}, oneCS.Bi{:}};
-        newCS.Ci = {newCS.Ci{:}, oneCS.Ci{:}};
-        newCS.dynamics = [newCS.dynamics oneCS.dynamics];
-    end
+    value = [];
+    
 end

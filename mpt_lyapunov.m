@@ -88,7 +88,15 @@ if ~isstruct(mptOptions)
     mpt_error;
 end
 
-if ~isa(ctrl, 'mptctrl')
+if isstruct(ctrl) & mpt_issysstruct(ctrl),
+    % convert the system structure into a dummy controller
+    try
+        ctrl = mptctrl(ctrl);
+    catch
+        rethrow(lasterror);
+    end
+        
+elseif ~isa(ctrl, 'mptctrl')
     error('MPT_LYAPUNOV: First input argument must be a valid MPTCTRL object!');
 end
 

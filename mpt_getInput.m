@@ -1,7 +1,7 @@
-function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,Options)
+function [U,feasible,region,cost,details]=mpt_getInput(ctrl,x0,Options)
 %MPT_GETINPUT For a given state, extracts the (optimal) output from a controller structure
 %
-% [U,feasible,region,cost,inwhich] = mpt_getInput(ctrlStruct,x0,Options)
+% [U,feasible,region,cost,details] = mpt_getInput(ctrlStruct,x0,Options)
 %
 % ------------------------------------------------------------------------------
 % DESCRIPTION
@@ -47,12 +47,21 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 %                   the invariant set(s) in case of time-optimal controller!
 % feasible  - returns 1 if  the there is at least one control law associated to
 %             a given state x0, 0 otherwise
+% details
+%  .inwhich - vector of indicies of regions which contain state x0
+%  .fullopt - full optimizer associated to the state x0
+%  .runtime - runtime of the on-line MPC
+%  .nops    - number of numerical operations (multiplications, summations,
+%             comparisons) needed to identify and compute a control action
+%             associated to a given x0 (only for explicit controllers)
 %
 % see also MPT_COMPUTETRAJECTORY, MPT_PLOTTIMETRAJECTORY
 %
 
 % Copyright is with the following author(s):
 %
+% (c) 2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
 % (c) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
@@ -135,9 +144,10 @@ end
 
 
 x0=x0(:);
-inwhich = [];
-fullopt = [];
-runtime = [];
+nops.multiplications = 0;
+nops.summations = 0;
+nops.comparisons = 0;
+details = struct('inwhich', [], 'fullopt', [], 'runtime', [], 'nops', nops);
 
 if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     % solve an QP/LP/MIQP/MILP for on-line controllers
@@ -145,7 +155,114 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     sysStruct = ctrl.sysStruct;
     probStruct = ctrl.probStruct;
     
-    if iscell(sysStruct.A),
+    if isfield(ctrl.details, 'yalmipMatrices'),
+        % we do have an optimization problem constructed by mpt_yalmipcftoc(),
+        % solve the corresponding LP/QP/MILP/MIQP problem
+        M = ctrl.details.yalmipMatrices;
+        mi_problem = ~isempty(M.binary_var_index);
+        qp_problem = M.qp;
+        
+        %==================================================================
+        % set default values of Options.Uprev and/or Options.reference
+        if M.uprev_length > 0,
+            if ~isfield(Options, 'Uprev'),
+                fprintf('WARNING: deltaU constraints can only be satisfied if Options.Uprev is given.\n');
+            end
+            uprev = mpt_defaultField(Options, 'Uprev', zeros(ctrl.details.dims.nu, 1));
+            uprev = uprev(:);
+            if length(uprev) ~= M.uprev_length,
+                error(sprintf('Wrong size of "Options.uprev". Expecting %d elements, got %d.', ...
+                    M.uprev_length, length(uprev)));
+            end
+            x0 = [x0; uprev];
+        end
+        if M.reference_length > 0,
+            if ~isfield(Options, 'reference'),
+                fprintf('WARNING: Options.reference not specified, assuming zero.');
+            end
+            ref = mpt_defaultField(Options, 'reference');
+            if isempty(ref),
+                if isfield(ctrl.probStruct, 'Qy'),
+                    % reference has the dimension of output
+                    ref = zeros(ctrl.details.dims.ny, 1);
+                else
+                    % reference has the dimension of state
+                    ref = zeros(ctrl.details.dims.nx, 1);
+                end
+            end
+            ref = ref(:);
+            if length(ref) ~= M.reference_length,
+                error(sprintf('Wrong size of "Options.reference". Expecting %d elements, got %d.', ...
+                    M.reference_length, length(ref)));
+            end
+            x0 = [x0; ref];
+        end
+
+        %==================================================================
+        % prepare constraints, plug in the parametric variables
+        nvars = size(M.G, 2);
+        nparams = length(M.param_var);
+        A = M.G;
+        B = M.W + M.E*x0;
+        Aeq = M.Aeq;
+        Beq = M.beq - M.Beq*x0;
+        lb = M.lb(1:end-nparams);  % bounds on parametric variables are always last!
+        ub = M.ub(1:end-nparams);
+
+
+        %==================================================================
+        % denote respective variables as binary, enforce bounds as constraints
+        % if necessary (for mpt_solveLP and mpt_solveQP)
+        if mi_problem,
+            % denote selected variables as binary
+            vartype = repmat('C', nvars, 1);
+            vartype(M.binary_var_index) = 'B';
+            
+        elseif ~isempty(lb)
+            % mpt_solveLP() and mpt_solveQP() currently do not support
+            % lower/upper bound on variables, therefore we have to convert them
+            % into dummy constraints
+            A = [A; eye(nvars); -eye(nvars)];
+            B = [B; ub; -lb];
+            lb = []; ub = [];
+        end
+        
+        %==================================================================
+        % solve the problem
+        starttime = cputime;
+        if qp_problem,
+            % QP/MIQP problem
+            if mi_problem,
+                [xopt, cost, how, exitflag] = mpt_solveMIQP(...
+                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq, lb, ub, vartype);
+                
+            else
+                [xopt, lambda, how, exitflag, cost] = mpt_solveQP(...
+                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq);
+                
+            end
+            cost = cost + x0'*M.Y*x0 + M.Cx*x0 + M.Cc;
+            
+        else
+            % LP/MILP problem
+            if mi_problem,
+                [xopt, cost, how, exitflag] = mpt_solveMILP(...
+                    M.H, A, B, Aeq, Beq, lb, ub, vartype);
+                
+            else
+                [xopt, cost, lambda, exitflag, how] = mpt_solveLP(...
+                    M.H, A, B, Aeq, Beq);
+                
+            end
+            
+        end
+        runtime = cputime - starttime;
+        feasible = strcmp(how, 'ok');
+        %U = reshape(xopt(M.requested_variables), ctrl.details.dims.nu, ctrl.probStruct.N)';
+        U = xopt(M.requested_variables);
+        fullopt = xopt;
+        
+    elseif iscell(sysStruct.A),
         % PWA system
         
         if ctrl.details.dims.nx~=length(x0),
@@ -273,8 +390,8 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         feasible = strcmp(Eflag.solverflag, 'ok');
         cost = Eflag.fopt;
         U = Eflag.u(:);
-        fullopt = Eflag.full_xopt;
-        runtime = Eflag.runtime;
+        details.fullopt = Eflag.full_xopt;
+        details.runtime = Eflag.runtime;
     else
         % LTI system
         isycost = isfield(probStruct, 'Qy');
@@ -325,8 +442,6 @@ region=0;
 if Options.useXU
     [U, feasible, region, XUreg] = mpt_getInputXU(ctrlStruct, x0, Options);
     cost = 0;
-    fullopt = [];
-    runtime = 0;
     return
 end
 
@@ -353,7 +468,7 @@ else
 end
 
 
-U=[];
+U = []; inwhich = [];
 cost=-Inf;
 feasible=0;
 region=0;
@@ -400,6 +515,7 @@ else
     
     [isin, inwhich] = isinside(ctrlStruct.Pn,x0,Options);
 end
+details.inwhich = inwhich;
 
 if ~isin
     % no associated control law
@@ -418,8 +534,9 @@ elseif isfield(ctrlStruct.details,'searchTree'),
     % contributed by Arne Linder
     searchTree = ctrlStruct.details.searchTree;
     [lenST colST]=size(searchTree);
-    node=1;
+    node=1; niter = 0;
     while node>0  % node<0 means node is now number of control law
+        niter = niter + 1;
         H=searchTree(node,1:colST-3);
         K=searchTree(node,colST-2);
         if H*x0-K<0
@@ -430,6 +547,7 @@ elseif isfield(ctrlStruct.details,'searchTree'),
     end
 
     node = -round(node);
+    
     U = ctrlStruct.Fi{node}*x0+ctrlStruct.Gi{node};
     cost = x0'*ctrlStruct.Ai{node}*x0 + ctrlStruct.Bi{node}(:)'*x0 + ctrlStruct.Ci{node};
     region = node;
@@ -438,6 +556,24 @@ elseif isfield(ctrlStruct.details,'searchTree'),
         % return just U at time 0
         U = U(1:nu);
     end
+
+    %====================================================================
+    % compute number of operations needed to find the optimal control law
+    
+    % H*x0, where H is a row vector needs "nx" multiplications
+    details.nops.multiplications = niter*length(x0);
+        
+    % H*x0   requires "nx" summations
+    % H*x0-K requires 1 additional summation (adding -K)
+    details.nops.summations = niter*(length(x0) + 1);
+        
+    % comparing (H*x0 - K)<0 needs 1 comparison, since H is a row vector
+    details.nops.comparisons = niter;
+        
+    % F*x0 + G
+    details.nops.multiplications = details.nops.multiplications + nu*length(x0);
+    details.nops.summations = details.nops.summations + nu + nu*length(x0);
+    
     return
 
 elseif length(inwhich)==1,
@@ -524,7 +660,7 @@ if ~Options.openloop
 end
 
 if nargout<5,
-    clear inwhich
+    clear details
 end
 return
 
