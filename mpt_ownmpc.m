@@ -1,20 +1,20 @@
 function varargout = mpt_ownmpc(varargin)
 % MPT_OWNMPC The "Design your own MPC" function
 %
-% mpt_ownmpc(sysStruct, probStruct)
 % [CON, OBJ, VAR] = mpt_ownmpc(sysStruct, probStruct)
-% ctrl = mpt_ownmpc(CON, OBJ, VAR)
+% ctrl = mpt_ownmpc(sysStruct, probStruct, CON, OBJ, VAR)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% "Design Your Own Cost". This function operates in two modes:
+% "Design Your Own MPC problem". This function operates in two modes:
 % 
 % 1. Problem construction phase:
 %      In this step, matrices defining constraints and objective of a given MPC
 %      problem are formulated. The matrices, together with variables which
 %      define them, are stored to your workspace as CON (constraints), OBJ
 %      (objective) and VAR (variables) objects.
+%
 % 2. Computation phase:
 %      In this step, a control law is calculated according to constraints and
 %      objective provided.
@@ -32,24 +32,12 @@ function varargout = mpt_ownmpc(varargin)
 %     end
 %     ctrl = mpt_ownmpc(sysStruct, probStruct, CON, OBJ, VAR)
 %
-% ---------------------------------------------------------------------------
-% INPUT
-% ---------------------------------------------------------------------------
-% sysStruct     - System structure in the sysStruct format
-% probStruct    - Problem structure in the probStruct format
-% CON           - Constraints
-% OBJ           - Objective
-% VAR           - Variables
+% Note!
+%   To design an on-line MPC controller, you must append an additional 'online'
+%   flag when calling this function, i.e.:
 %
-% ---------------------------------------------------------------------------
-% OUTPUT
-% ---------------------------------------------------------------------------
-% ctrl          - MPTCTRL object 
-% CON           - Constraints
-% OBJ           - Objective
-% VAR           - Variables
-%
-% see also MPT_CONTROL, MPT_YALMIPCFTOC
+%     [C, O, V] = mpt_ownmpc(sysStruct, probStruct, 'online')
+%     ctrl = mpt_ownmpc(sysStruct, probStruct, C, O, V, 'online')
 %
 
 % Copyright is with the following author(s):
