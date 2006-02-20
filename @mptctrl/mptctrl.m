@@ -162,8 +162,9 @@ if nargin==0,
 end
 
 % =========================================================================
-% first input has always to be a structure
-if ~isstruct(varargin{1})
+% first input has always to be a structure or a cell array (if we have
+% multi-model dynamics)
+if ~(isstruct(varargin{1}) | iscell(varargin{1}))
     error('MPTCTRL: first input must be a structure!');
 end
 
@@ -201,6 +202,10 @@ elseif nargin==2 | nargin==3
     % two inputs, possibly sysStruct + probStruct case, verify that
     sysStruct = varargin{1};
     probStruct = varargin{2};
+    userSysStruct = sysStruct;    
+    if iscell(userSysStruct),
+        sysStruct = userSysStruct{1};
+    end
     if ~isstruct(sysStruct) | ~isstruct(probStruct)
         error('MPTCTRL: both input arguments must be structures!');
     end
@@ -260,16 +265,18 @@ elseif nargin==2 | nargin==3
         'yalmip_data', [], ...
         'force_mpt', 0 );
 
-    if Options.force_mpt == 0 | ~isempty(Options.yalmip_data),
+    if Options.force_mpt == 0 | ~isempty(Options.yalmip_data) | iscell(userSysStruct),
         % we can use mpt_yalmipcftoc(), do so
         
         if isempty(Options.yalmip_data),
-            fprintf('Using mpt_yalmipcftoc() to construct the optimization problem.\n');
+            if Options.verbose > 1,
+                fprintf('Using mpt_yalmipcftoc() to construct the optimization problem.\n');
+            end
             % first construct constraints and optimization objective
             Options.yalmip_online = 1;
             Options.dont_solve = 1;
             Options.dp = 0;
-            [dummy, F, obj, vars] = mpt_yalmipcftoc(sysStruct, probStruct, Options);
+            [dummy, F, obj, vars] = mpt_yalmipcftoc(userSysStruct, probStruct, Options);
             
         else
             % use data provided from mpt_owncost()

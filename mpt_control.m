@@ -82,7 +82,7 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
-if ~isstruct(sysStruct)
+if ~(isstruct(sysStruct) | iscell(sysStruct))
     error('MPT_CONTROL: First input argument must be a system structure!');
 end
 if ~isstruct(probStruct)
@@ -123,12 +123,16 @@ if isempty(Options.probstructname),
 end
 
 
+userSysStruct = sysStruct;
+if iscell(sysStruct),
+    sysStruct = sysStruct{1};
+end
+
 % ============================================================================
 % verify system/problem structures
 if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
+    verOpt = Options;
     verOpt.verbose=1;
-    verOpt.sysstructname = inputname(1);
-    verOpt.probstructname = inputname(2);
     [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
 end
 
@@ -164,6 +168,8 @@ elseif isfield(probStruct, 'xN'),
     nompt_because = 'terminal state constraint';
 elseif isfield(probStruct, 'Qdyn') | isfield(probStruct, 'Qswitch'),
     nompt_because = 'penalized switching';
+elseif iscell(userSysStruct),
+    nompt_because = 'multi-model dynamics';
 end
 
 
@@ -184,7 +190,12 @@ if strcmpi(ctrltype, 'on-line') | strcmpi(ctrltype, 'online')
         fprintf(' * %s\n\n', nompt_because);
         error('Cannot continue.');
     end
-    ctrl = mptctrl(sysStruct, probStruct, Options);
+    if iscell(userSysStruct),
+        % handle multi-model dynamics
+        ctrl = mptctrl(userSysStruct, probStruct, Options);
+    else
+        ctrl = mptctrl(sysStruct, probStruct, Options);
+    end
     return
 end
 
@@ -470,6 +481,7 @@ if isequal(method_used, 'mpt')
     % MPTs native functions
     % (note that tracking is handled directly in mpt_yalmipcftoc())
     [sysStruct, probStruct] = sub_augmentSetup(sysStruct, probStruct, Options);
+
 end
 
 % now call the computation
@@ -482,7 +494,12 @@ if check_feasibility,
     end
     
 else
-    ctrlStruct = feval(function_call, sysStruct, probStruct, Options);
+    if iscell(userSysStruct),
+        % handle multi-model dynamics (sysStruct is a cell)
+        ctrlStruct = feval(function_call, userSysStruct, probStruct, Options);
+    else
+        ctrlStruct = feval(function_call, sysStruct, probStruct, Options);
+    end
 end
 
 

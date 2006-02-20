@@ -182,16 +182,16 @@ else
     if ~isfield(vars, 'x') | ~isfield(vars, 'u') | ~isfield(vars, 'y'),
         error('Wrong type of fifth input argument.');
     end
-    if iscell(sysStruct),
-        error('Multi-model systems not supported by this function.');
-    end
-
 
     % =================================================================
     % verify sysStruct and probStruct
     verOpt.ybounds_optional = 1;
     verOpt.verbose = -1;    
     verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move blocking
+    userSysStruct = sysStruct;
+    if iscell(userSysStruct),
+        sysStruct = userSysStruct{1};
+    end
     [sysStruct, probStruct] = mpt_verifySysProb(sysStruct, probStruct, verOpt);
     origSysStruct = sysStruct;
     origProbStruct = probStruct;
@@ -204,7 +204,7 @@ else
         Options.yalmip_data.constraints = F;
         Options.yalmip_data.objective = obj;
         Options.yalmip_data.variables = vars;
-        ctrl = mptctrl(sysStruct, probStruct, Options);
+        ctrl = mptctrl(userSysStruct, probStruct, Options);
         varargout{1} = ctrl;
         return
     end
