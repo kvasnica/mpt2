@@ -1,9 +1,9 @@
-function varargout = mpt_owncost(varargin)
-% MPT_OWNCOST The "Design your own cost" function
+function varargout = mpt_ownmpc(varargin)
+% MPT_OWNMPC The "Design your own MPC" function
 %
-% mpt_owncost(sysStruct, probStruct)
-% [CON, OBJ, VAR] = mpt_owncost(sysStruct, probStruct)
-% ctrl = mpt_owncost(CON, OBJ, VAR)
+% mpt_ownmpc(sysStruct, probStruct)
+% [CON, OBJ, VAR] = mpt_ownmpc(sysStruct, probStruct)
+% ctrl = mpt_ownmpc(CON, OBJ, VAR)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -25,12 +25,12 @@ function varargout = mpt_owncost(varargin)
 %
 %     [H, K] = double(unitbox(2, 2));   % polytopic constraints
 %     Double_Integrator
-%     [CON, OBJ, VAR] = mpt_owncost(sysStruct, probStruct);
+%     [CON, OBJ, VAR] = mpt_ownmpc(sysStruct, probStruct);
 %     for k = 2:length(VAR.x)
 %       % k==1 corresponds to x0, k==2 to x1 etc.
 %       CON = CON + set(H*VAR.x{k} <= K);
 %     end
-%     ctrl = mpt_owncost(sysStruct, probStruct, CON, OBJ, VAR)
+%     ctrl = mpt_ownmpc(sysStruct, probStruct, CON, OBJ, VAR)
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -252,7 +252,7 @@ else
     [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, [vars.u{1:end-1}]);
     if diagnost.problem ~= 0,
         fprintf('%s\n', diagnost.info);
-        error('mpt_owncost: an error has occurred, see message above.');
+        error('mpt_ownmpc: an error has occurred, see message above.');
     end
     
     if length(sol)==1,
