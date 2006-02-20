@@ -506,6 +506,16 @@ mptpath_examples = {
         ['examples' filesep 'watertanks']
 };
 
+% check if mpt_solverInfo is on the path
+w = which('mpt_solverInfo');
+if isempty(w),
+    fprintf('\n\nPath is not set correctly!\n');
+    fprintf('Did you use "addpath(genpath(''/path/to/mpt/''))"?\n\n');
+    fprintf('Read the installation notes for more details:\n');
+    fprintf('http://control.ee.ethz.ch/~mpt/docs/install.php\n\n');
+    error('Cannot continue, you must set path to all subdirectories of MPT first.');
+end
+
 % check if YALMIP is on path just once
 yalmiplocation = which('yalmip.m', '-all');
 if any(size(yalmiplocation)>1),
