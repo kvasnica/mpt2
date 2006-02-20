@@ -68,7 +68,7 @@ Options = mpt_defaultOptions(Options, ...
     'verbose', mptOptions.verbose, ...
     'sysstructname', inputname(1), ...
     'guierrors', 0, ...
-    'ybounds_optional', 0);
+    'ybounds_optional', 1);
 
 if isempty(Options.sysstructname),
     Options.sysstructname = 'sysStruct';
@@ -136,6 +136,11 @@ if ~isfield(sysStruct, 'ymax') & Options.ybounds_optional==0,
     else
         error(['"' ssn '.ymax" must be defined!']);
     end
+end
+
+if (~isfield(sysStruct, 'ymax') & ~isfield(sysStruct, 'ymin')) & ...
+        (~isfield(sysStruct, 'xmax') & ~isfield(sysStruct, 'xmin')),
+    error('Either output or state constraints must be provided.');
 end
 
 if iscell(sysStruct.A),
