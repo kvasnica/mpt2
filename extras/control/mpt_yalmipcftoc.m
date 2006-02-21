@@ -581,6 +581,9 @@ for k = N-1:-1:1
         umin = SST{k}.umin - slacks.all{k} - slacks.u{k};
         umax = SST{k}.umax + slacks.all{k} + slacks.u{k};
         tag = sprintf('umin < u_%d < umax', iNu);
+        if soften.u,
+            tag = [tag ' (soft)'];
+        end
         F = F + set(umin < u{ku} < umax, tag);
     end
    
@@ -626,6 +629,9 @@ for k = N-1:-1:1
         xmin = SST{k}.xmin - slacks.all{k} - slacks.x{k};
         xmax = SST{k}.xmax + slacks.all{k} + slacks.x{k};
         tag = sprintf('xmin < x_%d < xmax', iN);
+        if soften.x,
+            tag = [tag ' (soft)'];
+        end        
         F = F + set(xmin < x{k} < xmax, tag);
     end
 
@@ -637,6 +643,9 @@ for k = N-1:-1:1
         ymin = SST{k}.ymin - slacks.all{k} - slacks.y{k};
         ymax = SST{k}.ymax + slacks.all{k} + slacks.y{k};
         tag = sprintf('ymin < y_%d < ymax', iN);
+        if soften.y,
+            tag = [tag ' (soft)'];
+        end
         if k > 1 | probStruct.y0bounds==1,
             % do not impose constraints on y0 if user does not want to
             F = F + set(ymin < y{k} < ymax, tag);
