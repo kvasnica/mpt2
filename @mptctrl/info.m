@@ -1,7 +1,7 @@
 function info(ctrl)
-%DISPLAY Displays more detailed information a given MPT controller
+%INFO Displays more detailed information a given MPT controller
 %
-% sys = display(ctrl)
+% info(ctrl)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
