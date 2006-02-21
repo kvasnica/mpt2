@@ -1,10 +1,63 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.5 23-Nov-2005
+% Version 2.6 ??-Mar-2006
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
+
+Version 2.6 (??-Mar-2006)
+-------------------------
+
+[NEW] "Design your own MPC" function. see 'help mpt_ownmpc' for details
+
+[NEW] support for soft constraints
+(see 'help mpt_yalmipcftoc' for details)
+ 
+[NEW] support for move blocking for PWA/MLD systems
+(see 'help mpt_yalmipcftoc' for details)
+
+[NEW] support for multi-model dynamics
+(see 'help mpt_yalmipcftoc' for details)
+
+[NEW] support for terminal state constraints defined in "probStruct.xN"
+(see 'help mpt_yalmipcftoc' for details)
+
+[NEW] export search tree into C-code (see 'help mpt_exportST' for details)
+
+[NEW] mpt_lyapunov now allows to analyze stability of autonomous systems
+where the input argument to mpt_lyapunov() is a system structure
+
+[NEW] new function to display detailed information about a given
+explicit controller (see 'help mptctrl/info' for details)
+
+[NEW] output constraints are no longer mandatory and are not required
+if state constraints are defined
+
+[NEW] mpt_plotTimeTrajectory/simplot: allow to disable displaying of
+legends (see 'help mpt_plotTimeTrajectory' for details)
+
+[NEW] included latest version of MEXCLP
+
+[NEW] polytope/plot: now supports Options.elevate to enable "elevation" of
+plotted polytopes (see 'help polytope/plot' for details)
+
+[PATCH] mpt_computePWATset: include state constraints if they are given
+
+[PATCH] mpt_lyapunov: fix crashes when no lyapunov function was found
+
+[PATCH] mpt_mplp, mpt_mpqp: speedup
+
+[PATCH] mpt_mpqp: give warning when the problem is not strictly positive
+definite
+
+[PATCH] polytope/projection: add protection against cycling
+
+[PATCH] mpt_getInput: give a warning if x0 violates constraints
+
+[PATCH] mpt_init: added better detection of path
+
+
 
 Version 2.5 (23-Nov-2005)
 -------------------------

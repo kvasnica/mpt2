@@ -1,5 +1,5 @@
 % Multi-Parametric Toolbox
-% Version 2.5 (R14SP3) 23-Nov-2005
+% Version 2.6 (R14SP3) ??-Mar-2006
 %
 %
 % Information
