@@ -17,8 +17,8 @@ function pwafcn = mpt_norm2pwa(P,l,Options)
 %                set)
 % Options      - optional arguments
 %   .Pn        - one polytope over which the norm should be defined
-%   .method    - if 1 (default) solution will be found via YALMIP
-%                if 2, solution is found via enumeration 
+%   .method    - if 1 (default) solution is found via enumeration 
+%                if 2 solution will be found via YALMIP [should be used for larger problems!]
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -32,6 +32,11 @@ function pwafcn = mpt_norm2pwa(P,l,Options)
 %                (only existent if Options.method=1)
 %
 % Note: for simple plotting use plot(pwafcn.epi)
+%
+%
+%
+% see also  MPT_DLYAP_INFNORM   MPT_LYAPUNOV
+
 
 % Copyright is with the following author(s):
 %
@@ -98,18 +103,18 @@ if nx~= size(H,2)
 end
     
 if ~isfield(Options,'method')
-    Options.method = 1; %YALMIP
+    Options.method = 1; %ENUMERATION
 end
 
 
-if Options.method == 1
+if Options.method == 2
     % use a more efficient epi graph way to describe the norm.
     % (more efficient than enumerating the possibilities)
     x = sdpvar(nx,1);
     [pwafcn.epi,pwafcn.Bi,pwafcn.Ci,pwafcn.Pn] = pwa(norm(P*x,l),set(H*x<=K));
     pwafcn.Pfinal = Pn;
     
-elseif Options.method == 2
+elseif Options.method == 1
     % using 'enumeration' of the parts
     
         if l==1

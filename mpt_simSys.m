@@ -1,7 +1,7 @@
 function [X,U,Y,mode]=mpt_simSys(sysStruct,x0,inU,Options)
 %MPT_SIMSYS Simulates evolution of a given system
 %
-% [X,U,Y]=mpt_simSys(sysStruct,x0,inU)
+% [X,U,Y,mode]=mpt_simSys(sysStruct,x0,inU)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION

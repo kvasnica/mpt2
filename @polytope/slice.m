@@ -1,9 +1,7 @@
-function Pcut = slice(PA,cut_dim,cut_value)
+function [Pcut, sliced] = slice(PA,cut_dim,cut_value)
 %SLICE cuts a polytope (polytope array) at prespecified values
 %
-%
-% Pcut = slice(PA,cut_dim,cut_value,Options)
-% 
+% [Pcut, sliced] = slice(PA,cut_dim,cut_value,Options)
 %
 % ---------------------------------------------------------------------------
 % DESCRIPTION
@@ -22,11 +20,15 @@ function Pcut = slice(PA,cut_dim,cut_value)
 % ---------------------------------------------------------------------------
 % OUTPUT
 % ---------------------------------------------------------------------------
-% Pcut            - polytope array
+% Pcut           - polytope array
+% sliced         - indicies of polytopes for which the slice is fully
+%                  dimensional 
 %
 
 % Copyright is with the following author(s):
 %
+% (C) 2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
 
@@ -98,8 +100,15 @@ if lenPA==0,
     HH = H(:,tokeep);
     KK = K-H(:,tokick(1,:))*tokick(2,:)';
     Pcut = polytope(HH, KK);
+    if isfulldim(Pcut),
+        sliced = 1;
+    else
+        sliced = [];
+    end
+
 else    
     % input is a polytope array
+    sliced = zeros(1, lenPA);
     for ii = 1:lenPA,
         H=[];K=[]; 
         HH=[];KK=[];
@@ -109,6 +118,11 @@ else
         
         HH = H(:,tokeep);
         KK = K-H(:,tokick(1,:))*tokick(2,:)';
-        Pcut = [Pcut polytope(HH,KK)];
+        P = polytope(HH,KK);
+        if isfulldim(P),
+            sliced(ii) = 1;
+            Pcut = [Pcut P];            
+        end
     end
+    sliced = find(sliced);
 end

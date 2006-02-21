@@ -439,7 +439,9 @@ else
         
         %-----------------------------------------------------------------------
         % obtain control input
-        [Ucl, feasible, region, costCL, inwhich, fullopt] = mpt_getInput(ctrl, x0, Options);
+        [Ucl, feasible, region, costCL, gi_details] = mpt_getInput(ctrl, x0, Options);
+        inwhich = gi_details.inwhich;
+        fullopt = gi_details.fullopt;
         if Options.usexinit,
             Options.usex0 = fullopt;
         end
