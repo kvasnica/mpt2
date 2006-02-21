@@ -112,6 +112,12 @@
 % 
 %   probStruct.Qy       - cost on outputs. Mandatory for output regulation and
 %     output tracking problems.
+%  
+%   probStruct.Qd       - penalty on boolean variables (only for control of MLD
+%                         systems) 
+%
+%   probStruct.Qz       - penalty on auxiliary variables (only for control of
+%                         MLD systems) 
 %
 %   probStruct.y0bounds - a true/false (1/0) flag denoting
 %     whether or not to impose constraints also on the initial system output
@@ -139,6 +145,21 @@
 %     difference of the actual output and the given reference. you will need to
 %     define "probStruct.Qy" in order to use this option.
 %   
+%   probStruct.xref     - by default the toolbox designs a controller which
+%     forces the state vector to convert to the origin. If you want to track
+%     some a-priori given reference point, provide the reference state in this
+%     variable. probStruct.tracking has to be 0 (zero) to use this option!
+%
+%   probStruct.uref     - Similarly a reference point for the manipulated
+%     variable (i.e. the equilibrium $u$ for state probStruct.xref can be
+%     specified here. If it is not given, it is assumed to be zero. 
+%
+%   probStruct.dref     - reference for boolean variables (only for control of
+%     MLD systems). Can be used together with probStruct.Qd
+%
+%   probStruct.zref     - reference on auxiliary variables (only for control of
+%     MLD systems). Can be used together with probStruct.Qz
+%
 %   probStruct.P_N      - weight on the terminal state. If not specified, it is
 %     assumed to be solution of the Ricatti equation, or P_N = Q for linear cost
 %
@@ -170,15 +191,6 @@
 %   probStruct.FBgain   - if the former option is activated, a specific
 %     state-feedback gain matric K can be provided (otherwise a LQR controller
 %     will be computed automatically)
-%
-%   probStruct.xref     - by default the toolbox designs a controller which
-%     forces the state vector to convert to the origin. If you want to track
-%     some a-priori given reference point, provide the reference state in this
-%     variable. probStruct.tracking has to be 0 (zero) to use this option!
-%
-%   probStruct.uref     - Similarly a reference point for the manipulated
-%     variable (i.e. the equilibrium $u$ for state probStruct.xref can be
-%     specified here. If it is not given, it is assumed to be zero. 
 %
 % ---------------------------------------------------------------------------
 % SOFT CONSTRAINTS
