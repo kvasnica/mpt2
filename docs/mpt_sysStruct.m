@@ -1,6 +1,5 @@
 %MPT_SYSSTRUCT System structure description
 %
-%
 % System structure (sysStruct) is a structure which describes the system to be
 % controlled. MPT can deal with two types of systems:
 % 1. Discrete-time linear time-invariant (LTI) systems
@@ -21,51 +20,12 @@
 %    x(k+1) = A x(k) + B u(k)
 %     y(k)  = C x(k) + D u(k)
 %
-%  subject to
-%
-%    xmin <= x(k) <= xmax
-%    ymin <= y(k) <= ymax
-%    umin <= u(k) <= umax
-%    dumin <= u(k) - u(k+1) <= dumax
-%    dymin <= y(k) - y(k+1) <= dymax
-%
-% Such an LTI system is defined by the following mandatory fields:
+% Such an LTI system is defined by the following MANDATORY fields:
 %
 %    sysStruct.A = A;
 %    sysStruct.B = B;
 %    sysStruct.C = C;
 %    sysStruct.D = D;
-%    sysStruct.ymax = ymax;
-%    sysStruct.ymin = ymin;
-%    sysStruct.umax = umax;
-%    sysStruct.umin = umin;
-%
-% State constraints are optional:
-%
-%    sysStruct,xmax = xmax;
-%    sysStruct.xmin = xmin;
-%
-% Constraints on slew rate of the control input u(k) can also be imposed by:
-%
-%    sysStruct.dumax = dumax;
-%    sysStruct.dumin = dumin;
-%
-% which enforces   dumin <= u(k)-u(k+1) <= dumax
-%
-% Similarly, constraints on slew rate of the output variable can be defined by:
-%
-%    sysStruct.dymax = dymax;
-%    sysStruct.dymin = dymin;
-%
-% which adds constraint  dymin <= y(k) - y(k+1) <= dymax
-%
-% NOTE: If no constraints are present on certain inputs/states, set the associated values to Inf.
-%
-% It is also possible to specify bounds on reference signals (for tracking
-% problems) in:
-% 
-%    sysStruct.yrefmax, sysStruct.yrefmin
-%    sysStruct.xrefmax, sysStruct.xrefmin
 %
 % An uncertain LTI system is driven by the following set of relations:
 %
@@ -84,6 +44,9 @@
 %    sysStruct.Aunc = {A1, ..., An};
 %    sysStruct.Bunc = {B1, ..., Bn}; 
 %
+% NOTE! sysStruct.A and sysStruct.B are still required even if you want to
+% define a system with parametric uncertainties.
+%
 % ---------------------------------------------------------------------------
 % PWA SYSTEMS
 % ---------------------------------------------------------------------------
@@ -94,12 +57,6 @@
 %    x(k+1) = A_i x(k) + B_i u(k) + f_i
 %     y(k)  = C_i x(k) + D_i u(k) + g_i
 %
-% subject to
-%
-%    ymin  <=     y(k)    <= ymax
-%    umin  <=     u(k)    <= umax
-%    dumin <= u(k)-u(k-1) <= dumax
-%
 % Each dynamics "i" is defined in a polyhedral partition bounded by the
 % so-called guardlines:
 %
@@ -109,38 +66,19 @@
 %
 % Fields of sysStruct describing a PWA system are listed below:
 %
-%   sysStruct.A = {A1, ..., An}
+%   sysStruct.A = {A1, ..., An}                      
 %   sysStruct.B = {B1, ..., Bn}
 %   sysStruct.C = {C1, ..., Cn}
 %   sysStruct.D = {D1, ..., Dn}
-%   sysStruct.f = {f1, ..., fn}
-%   sysStruct.g = {g1, ..., gn}
+%   sysStruct.f = {f1, ..., fn}                       [optional]
+%   sysStruct.g = {g1, ..., gn}                       [optional]
 %   sysStruct.guardX = {guardX1, ..., guardXn}
-%   sysStruct.guardU = {guardU1, ..., guardUn}
+%   sysStruct.guardU = {guardU1, ..., guardUn}        [optional]
 %   sysStruct.guardC = {guardC1, ..., guardCn}
 %
 % Note that all fields have to be cell arrays of matrices of compatible
 % dimensions, "n" stands for total number of different dynamics. If
 % sysStruct.guardU is not provided, it is assumed to be zero.
-%
-% System constraints are given by:
-%
-%   sysStruct.ymax  = ymax;
-%   sysStruct.ymin  = ymin;
-%   sysStruct.xmax  = xmax;
-%   sysStruct.xmin  = xmin;
-%   sysStruct.umax  = umax;
-%   sysStruct.umin  = umin;
-%   sysStruct.dumax = dumax;
-%   sysStruct.dumin = dumin;
-%
-% Constraints on slew rate are optional and can be omitted.
-%
-% It is also possible to specify bounds on reference signals (for tracking
-% problems) in:
-% 
-%    sysStruct.yrefmax, sysStruct.yrefmin
-%    sysStruct.xrefmax, sysStruct.xrefmin
 %
 % MPT is able to deal also with PWA systems which are affected by bounded
 % additive disturbances:
@@ -155,6 +93,53 @@
 %
 % where W is a polytope object of appropriate dimension.
 %
+% ---------------------------------------------------------------------------
+% CONSTRAINTS
+% ---------------------------------------------------------------------------
+%
+% MPT supports various types of system constraints, such as:
+%
+% 1. input constraints (MANDATORY!):
+%      sysStruct.umin <= u(k) <= sysStruct.umax
+%
+% 2. output constraints (optional for most cases, sometimes mandatory):
+%      sysStruct.ymin <= y(k) <= sysStruct.ymax   - output constraints
+%
+% 3. state constraints (optional, but recommended to achieve good scaling):
+%      sysStruct.xmin <= x(k) <= sysStruct.xmax   - state constraints
+%
+% 4. constraints on slew rate of inputs (optional):
+%      sysStruct.dumin <= u(k) - u(k-1) <= sysStruct.dumax
+%
+% For tracking problems (probStruct.tracking=1), it is possible to specify
+% bounds on reference signals by setting following fields:
+% 
+%    sysStruct.yrefmax, sysStruct.yrefmin
+%    sysStruct.xrefmax, sysStruct.xrefmin
+%
+% MPT also supports one additional constraint, the so-called Pbnd constraint. If
+% you define "sysStruct.Pbnd" as a polytope object of the dimension of your
+% state vector, this entry will be used as a polytopic constraint on the initial
+% condition, i.e.
+% 
+%    x0 \in sysStruct.Pbnd
+%
+% This is especially important for explicit controllers, since "sysStruct.Pbnd"
+% there limits the state-space which will be explored.
+%
+% If "sysStruct.Pbnd" is not specified, it will be set as a "large" box of size
+% defined by mptOptions.infbox (see 'help mpt_init' for details).
+%
+% NOTE! "sysStruct.Pbnd" does NOT impose any constraints on predicted states!
+%
+% It is also possible to use polytopic constraints on states, inputs and
+% outputs, though not directly in the system structure. If you want to use this
+% kind of constraints, you need to add them manually using the "Design your own
+% MPC" function (see 'help mpt_ownmpc' for an example and more details).
+%
+% ---------------------------------------------------------------------------
+% OTHERS
+% ---------------------------------------------------------------------------
 %
 % Text labels can be attached to state, input and output variables:
 %
@@ -165,11 +150,25 @@
 % These labels will be used as axis labels when plotting polyhedral partition
 % of the explicit controller, or when visualizing trajectories.
 %
+% ---------------------------------------------------------------------------
+% IMPORTING SYSTEM STRUCTURES FROM OTHER SOURCES
+% ---------------------------------------------------------------------------
+%
+% The function mpt_sys() is able to create a system structure based on
+% information provided in certain foreign formats. Supported formats include:
+%   * HYSDEL source code
+%   * MLD structure
+%   * State-Space objects of the Control Toolbox (ss)
+%   * Transfer-Function objects of the Control Toolbox (tf)
+%   * State-Space objects of the Identification Toolbox (idss)
+%   * Objects of the MPC Toolbox (mpc)
+%
+% For more information about conversions, see 'help mpt_sys'.
 
 % Copyright is with the following author(s):
 %
-%(C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%         kvasnica@control.ee.ethz.ch
+%(C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%              kvasnica@control.ee.ethz.ch
 %
 
 % ---------------------------------------------------------------------------
