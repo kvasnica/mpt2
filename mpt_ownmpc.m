@@ -211,7 +211,7 @@ else
     % display information about a given model
     if Options.verbose > 0,
         % expand the model to see how many binary variables we have
-        Matrices = mpt_yalmip2mpt(F, obj, vars.x{1}, [vars.u{1:end-1}]);
+        Matrices = mpt_yalmip2mpt(F, obj, vars.x{1}, [vars.u{:}]);
         nbinary = length(mpt_defaultField(Matrices, 'binary_var_index', []));
         nparam = length(mpt_defaultField(Matrices, 'param_var', []));
         noptim = length(mpt_defaultField(Matrices, 'requested_variables', []));
@@ -237,7 +237,7 @@ else
     yalmipOptions.debug = 1;
     yalmipOptions.verbose = 1;
     starttime = cputime;
-    [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, [vars.u{1:end-1}]);
+    [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, [vars.u{:}]);
     if diagnost.problem ~= 0,
         fprintf('%s\n', diagnost.info);
         error('mpt_ownmpc: an error has occurred, see message above.');

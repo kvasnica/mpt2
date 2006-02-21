@@ -439,15 +439,15 @@ N = probStruct.N + 1;
 % States x(k), ..., x(k+N)
 x = sdpvar(repmat(nx,1,N), repmat(1,1,N));
 
-% Inputs u(k), ..., u(k+N) (last one not used)
-u = sdpvar(repmat(nu,1,N), repmat(1,1,N));
+% Inputs u(k), ..., u(k+N-1)
+u = sdpvar(repmat(nu,1,N-1), repmat(1,1,N-1));
 
-% Outputs y(k), ..., y(k+N) (last one not used)
-y = sdpvar(repmat(ny,1,N), repmat(1,1,N));
+% Outputs y(k), ..., y(k+N-1)
+y = sdpvar(repmat(ny,1,N-1), repmat(1,1,N-1));
 
-d = cell(1, N);
-z = cell(1, N);
-for im = 1:length(SST),
+d = cell(1, N-1);
+z = cell(1, N-1);
+for im = 1:length(SST)-1,
     if isequal(dynamics_type{im}, 'mld'),
         % prepare "d" and "z" variables for MLD models
         nd = MLD{im}.nd; nz = MLD{im}.nz;
