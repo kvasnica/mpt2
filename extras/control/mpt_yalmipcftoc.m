@@ -461,21 +461,41 @@ for im = 1:length(SST),
     end
 end
 
+
 if Options.yalmip_online,
     uprev = sdpvar(nu, 1);
     uprev_used = 0;
+    % add bounds on this variable for better scaling
+    [umin, umax] = sub_getMaxBounds(SST, 'u', nu);
+    bounds(uprev, umin, umax);
     
     if probStruct.tracking > 0,
         % we have a varying reference in tracking problems
         if isfield(probStruct, 'Qy'),
             % reference has the dimension of outputs
             reference = sdpvar(ny, 1);
+            % add bounds on this variable for better scaling
+            [ymin, ymax] = sub_getMaxBounds(SST, 'y', ny);
+            bounds(reference, ymin, ymax);
             yref = reference;
         else
             % reference has the dimension of states
             reference = sdpvar(nx, 1);
+            % add bounds on this variable for better scaling
+            [xmin, xmax] = sub_getMaxBounds(SST, 'x', nx);
+            bounds(reference, xmin, xmax);
             xref = reference;
         end
+    end
+end
+
+
+if Options.yalmip_online,
+    if ~isfield(SST{1}, 'ymax'),
+        fprintf('WARNING: no output constraints defined, problem can be badly scaled...\n');
+    end
+    if ~isfield(SST{1}, 'xmax'),
+        fprintf('WARNING: no state constraints defined, problem can be badly scaled...\n');
     end
 end
 
@@ -1229,3 +1249,29 @@ else
 end
 
 smax.all = smax.all(:); smax.x = smax.x(:); smax.y = smax.y(:); smax.u = smax.u(:);
+
+
+%---------------------------------------------------------
+function [minb, maxb] = sub_getMaxBounds(SST, flag, rows)
+% from a cell array of sysStructs, extracts maximum bounds on a given variable
+%
+% "flag" can be either 'u', 'y', or 'x'
+% "rows" denotes the dimension of a respective variable
+
+global mptOptions
+
+minb = repmat(Inf, rows, 1);
+maxb = repmat(-Inf, rows, 1);
+for ii = 1:length(SST),
+    if isfield(SST{ii}, [flag 'max']),
+        maxv = getfield(SST{ii}, [flag 'max']);
+        maxb = max(maxv, maxb);
+    end
+    if isfield(SST{ii}, [flag 'min']),
+        minv = getfield(SST{ii}, [flag 'min']);
+        minb = min(minv, minb);
+    end
+end
+% replace infinite bounds by +/-1e4
+maxb(find(isinf(maxb))) = mptOptions.infbox;
+minb(find(isinf(minb))) = -mptOptions.infbox;
