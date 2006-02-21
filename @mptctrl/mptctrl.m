@@ -300,7 +300,7 @@ elseif nargin==2 | nargin==3
             reference_length = length(vars.ref);
         end
         % define which variables should be optimization variables
-        requested_vars = [vars.u{1:end-1}];
+        requested_vars = [vars.u{:}];
         
         % expand the YALMIP model into MPT format
         ctrl.details.yalmipMatrices = mpt_yalmip2mpt(F, obj, parametric_vars, requested_vars);
