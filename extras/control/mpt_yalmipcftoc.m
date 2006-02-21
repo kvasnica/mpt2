@@ -437,13 +437,13 @@ end
 N = probStruct.N + 1;
 
 % States x(k), ..., x(k+N)
-x = sdpvar(repmat(nx,1,N), repmat(1,1,N));
+x = sub_cellsdpvar(nx, N);
 
 % Inputs u(k), ..., u(k+N-1)
-u = sdpvar(repmat(nu,1,N-1), repmat(1,1,N-1));
+u = sub_cellsdpvar(nu, N-1);
 
 % Outputs y(k), ..., y(k+N-1)
-y = sdpvar(repmat(ny,1,N-1), repmat(1,1,N-1));
+y = sub_cellsdpvar(ny, N-1);
 
 d = cell(1, N-1);
 z = cell(1, N-1);
@@ -1203,7 +1203,7 @@ slacks.u = cell(1, N); [slacks.u{:}] = deal(zeros(dims.nu, 1));
 if isfield(probStruct, 'S') | isfield(probStruct, 'smax'),
     % only one slack which softens state, input and output constraints
     % simultaneously
-    slacks.all = sdpvar(repmat(1, 1, N), repmat(1, 1, N));
+    slacks.all = sub_cellsdpvar(1, N);
     soften.all = 1;
     % upper bound on this slack
     smax.all = mpt_defaultField(probStruct, 'smax', Inf);
@@ -1216,7 +1216,7 @@ else
         if ~haveXbounds,
             fprintf('WARNING: no state constraints given, cannot soften them.\n');
         else
-            slacks.x = sdpvar(repmat(dims.nx, 1, N), repmat(1, 1, N));
+            slacks.x = sub_cellsdpvar(dims.nx, N);
             soften.x = 1;
             % upper bound on this slack
             smax.x = mpt_defaultField(probStruct, 'sxmax', Inf);
@@ -1229,7 +1229,7 @@ else
         if ~haveYbounds,
             fprintf('WARNING: no output constraints given, cannot soften them.\n');
         else
-            slacks.y = sdpvar(repmat(dims.ny, 1, N), repmat(1, 1, N));
+            slacks.y = sub_cellsdpvar(dims.ny, N-1);
             soften.y = 1;
             % upper bound on this slack
             smax.y = mpt_defaultField(probStruct, 'symax', Inf);
@@ -1239,7 +1239,7 @@ else
     end
     if isfield(probStruct, 'Su')  | isfield(probStruct, 'sumax'),
         % softening of input constraints
-        slacks.u = sdpvar(repmat(dims.nu, 1, N), repmat(1, 1, N));
+        slacks.u = sub_cellsdpvar(dims.nu, N-1);
         soften.u = 1;
         % upper bound on this slack
         smax.u = mpt_defaultField(probStruct, 'sumax', Inf);
@@ -1275,3 +1275,13 @@ end
 % replace infinite bounds by +/-1e4
 maxb(find(isinf(maxb))) = mptOptions.infbox;
 minb(find(isinf(minb))) = -mptOptions.infbox;
+
+
+%---------------------------------------------------------
+function out = sub_cellsdpvar(dim, count)
+% creates a cell array of sdpvars of dimension "dim"
+
+out = cell(1, count);
+for i = 1:count,
+    out{i} = sdpvar(dim, 1);
+end
