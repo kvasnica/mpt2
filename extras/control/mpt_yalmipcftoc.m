@@ -437,13 +437,13 @@ end
 N = probStruct.N + 1;
 
 % States x(k), ..., x(k+N)
-x = sdpvar(repmat(nx,1,N), repmat(1,1,N));
+x = sub_cellsdpvar(nx, N);
 
 % Inputs u(k), ..., u(k+N-1)
-u = sdpvar(repmat(nu,1,N-1), repmat(1,1,N-1));
+u = sub_cellsdpvar(nu, N-1);
 
 % Outputs y(k), ..., y(k+N-1)
-y = sdpvar(repmat(ny,1,N-1), repmat(1,1,N-1));
+y = sub_cellsdpvar(ny, N-1);
 
 d = cell(1, N-1);
 z = cell(1, N-1);
@@ -581,6 +581,9 @@ for k = N-1:-1:1
         umin = SST{k}.umin - slacks.all{k} - slacks.u{k};
         umax = SST{k}.umax + slacks.all{k} + slacks.u{k};
         tag = sprintf('umin < u_%d < umax', iNu);
+        if soften.u,
+            tag = [tag ' (soft)'];
+        end
         F = F + set(umin < u{ku} < umax, tag);
     end
    
@@ -626,6 +629,9 @@ for k = N-1:-1:1
         xmin = SST{k}.xmin - slacks.all{k} - slacks.x{k};
         xmax = SST{k}.xmax + slacks.all{k} + slacks.x{k};
         tag = sprintf('xmin < x_%d < xmax', iN);
+        if soften.x,
+            tag = [tag ' (soft)'];
+        end        
         F = F + set(xmin < x{k} < xmax, tag);
     end
 
@@ -637,6 +643,9 @@ for k = N-1:-1:1
         ymin = SST{k}.ymin - slacks.all{k} - slacks.y{k};
         ymax = SST{k}.ymax + slacks.all{k} + slacks.y{k};
         tag = sprintf('ymin < y_%d < ymax', iN);
+        if soften.y,
+            tag = [tag ' (soft)'];
+        end
         if k > 1 | probStruct.y0bounds==1,
             % do not impose constraints on y0 if user does not want to
             F = F + set(ymin < y{k} < ymax, tag);
@@ -915,7 +924,7 @@ end
 % solve the one-shot problem as mpMIQP/mpMILP if necessary
 if Options.dp==0,
     % obtain the open-loop solution:
-    [sol{k}, diagnost{k}, Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, [u{1:end-1}]);
+    [sol{k}, diagnost{k}, Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, [u{:}]);
 end
 
 
@@ -1203,7 +1212,7 @@ slacks.u = cell(1, N); [slacks.u{:}] = deal(zeros(dims.nu, 1));
 if isfield(probStruct, 'S') | isfield(probStruct, 'smax'),
     % only one slack which softens state, input and output constraints
     % simultaneously
-    slacks.all = sdpvar(repmat(1, 1, N), repmat(1, 1, N));
+    slacks.all = sub_cellsdpvar(1, N);
     soften.all = 1;
     % upper bound on this slack
     smax.all = mpt_defaultField(probStruct, 'smax', Inf);
@@ -1216,7 +1225,7 @@ else
         if ~haveXbounds,
             fprintf('WARNING: no state constraints given, cannot soften them.\n');
         else
-            slacks.x = sdpvar(repmat(dims.nx, 1, N), repmat(1, 1, N));
+            slacks.x = sub_cellsdpvar(dims.nx, N);
             soften.x = 1;
             % upper bound on this slack
             smax.x = mpt_defaultField(probStruct, 'sxmax', Inf);
@@ -1229,7 +1238,7 @@ else
         if ~haveYbounds,
             fprintf('WARNING: no output constraints given, cannot soften them.\n');
         else
-            slacks.y = sdpvar(repmat(dims.ny, 1, N), repmat(1, 1, N));
+            slacks.y = sub_cellsdpvar(dims.ny, N-1);
             soften.y = 1;
             % upper bound on this slack
             smax.y = mpt_defaultField(probStruct, 'symax', Inf);
@@ -1239,7 +1248,7 @@ else
     end
     if isfield(probStruct, 'Su')  | isfield(probStruct, 'sumax'),
         % softening of input constraints
-        slacks.u = sdpvar(repmat(dims.nu, 1, N), repmat(1, 1, N));
+        slacks.u = sub_cellsdpvar(dims.nu, N-1);
         soften.u = 1;
         % upper bound on this slack
         smax.u = mpt_defaultField(probStruct, 'sumax', Inf);
@@ -1275,3 +1284,13 @@ end
 % replace infinite bounds by +/-1e4
 maxb(find(isinf(maxb))) = mptOptions.infbox;
 minb(find(isinf(minb))) = -mptOptions.infbox;
+
+
+%---------------------------------------------------------
+function out = sub_cellsdpvar(dim, count)
+% creates a cell array of sdpvars of dimension "dim"
+
+out = cell(1, count);
+for i = 1:count,
+    out{i} = sdpvar(dim, 1);
+end
