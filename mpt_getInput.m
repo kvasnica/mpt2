@@ -104,24 +104,16 @@ if nargin<3,
     Options=[];
 end
 
-if ~isfield(Options,'openloop')
-    % If set to 1, the full optimizer as obtained as a solution to the finite-time optimal control problem
-    % is returned, i.e. U = [u_0 u_1 ... u_N] where N is the prediction horizon for which the controller
-    % was computed
-    Options.openloop = 0;
-end
-if ~isfield(Options,'abs_tol') % absolute tolerance
-    Options.abs_tol=mptOptions.abs_tol;
-end
-if ~isfield(Options,'verbose') % level of verbosity
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options, 'recover')
-    Options.recover = 0;
-end
-if ~isfield(Options, 'useXU')
-    Options.useXU = 0;
-end
+Options = mpt_defaultOptions(Options, ...
+    'openloop', 0, ...
+    'abs_tol', mptOptions.abs_tol, ...
+    'verbose', mptOptions.verbose, ...
+    'recover', 0, ...
+    'useXU', 0, ...
+    'lpsolver', mptOptions.lpsolver, ...
+    'qpsolver', mptOptions.qpsolver, ...
+    'milpsolver', mptOptions.milpsolver, ...
+    'miqpsolver', mptOptions.miqpsolver);
 
 if Options.useXU
     if isfield(ctrl.details,'XU')
@@ -220,15 +212,19 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         %==================================================================
         % solve the problem
         starttime = cputime;
+        PARAM = [];
+        xinit = mpt_defaultField(Options, 'usex0', []);
         if qp_problem,
             % QP/MIQP problem
             if mi_problem,
                 [xopt, cost, how, exitflag] = mpt_solveMIQP(...
-                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq, lb, ub, vartype);
+                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq, lb, ub, vartype, ...
+                    PARAM, Options, Options.miqpsolver);
                 
             else
                 [xopt, lambda, how, exitflag, cost] = mpt_solveQP(...
-                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq);
+                    M.H, M.F'*x0+M.Cf', A, B, Aeq, Beq, xinit, ...
+                    Options.qpsolver);
                 
             end
             cost = cost + x0'*M.Y*x0 + M.Cx*x0 + M.Cc;
@@ -237,11 +233,12 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             % LP/MILP problem
             if mi_problem,
                 [xopt, cost, how, exitflag] = mpt_solveMILP(...
-                    M.H, A, B, Aeq, Beq, lb, ub, vartype);
+                    M.H, A, B, Aeq, Beq, lb, ub, vartype, PARAM, Options, ...
+                    Options.milpsolver);
                 
             else
                 [xopt, cost, lambda, exitflag, how] = mpt_solveLP(...
-                    M.H, A, B, Aeq, Beq);
+                    M.H, A, B, Aeq, Beq, xinit, Options.lpsolver);
                 
             end
             
