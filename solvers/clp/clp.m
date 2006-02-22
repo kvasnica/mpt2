@@ -22,7 +22,7 @@ function [x,lambda,status] = clp(Q,c,A,b,Aeq,beq,lb,ub,options)
 %  status : 0 - optimal, 1 - infeasible, 2- unbounded
 
 % Author Johan Löfberg ETH Zürich.
-% Copyright is with the following author(s):
+% $Id: clp.m,v 1.1 2006/02/01 14:14:31 joloef Exp $
 
 % **************************
 % Check input
@@ -98,7 +98,7 @@ if nnz(Q)==0
     cmatindQ = [];
     cmatvalQ = [];
 else    
-    Q = triu(Q);
+    Q = tril(Q);
     cmatcntQ = full(sum(Q ~= 0,1));
     cmatbegQ = full(cumsum([0 cmatcntQ]));
     cmatbegQ = cmatbegQ(:)';
