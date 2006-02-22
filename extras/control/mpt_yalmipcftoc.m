@@ -391,8 +391,8 @@ end
 % when deltaU formulation is introduced, input constraints are set to +/- Inf.
 % make them tighther.
 for im = 1:length(SST),
-    SST{im}.umax(isinf(SST{im}.umax)) = 1e6;
-    SST{im}.umin(isinf(SST{im}.umin)) = -1e6;
+    SST{im}.umax(isinf(SST{im}.umax)) = mptOptions.infbox;
+    SST{im}.umin(isinf(SST{im}.umin)) = -mptOptions.infbox;
 end
 
 
