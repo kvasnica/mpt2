@@ -1,12 +1,8 @@
 #include "mex.h"
+#include "Coin_C_defines.h"
+#include "CoinMessageHandler.hpp"
 #include "ClpSimplex.hpp"
-#include "ClpPrimalColumnSteepest.hpp"
-#include "ClpPrimalColumnDantzig.hpp"
-#include "ClpDualRowSteepest.hpp"
-#include "ClpDualRowDantzig.hpp"
-#include "ClpDualRowSteepest.hpp"
 #include "ClpInterior.hpp"
-#include "ClpCholeskyDense.hpp"
 #include "ClpCholeskyBase.hpp"
 
 /*
@@ -53,7 +49,7 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 	double maxnumseconds = 3600.0,primaltolerance = 1e-7,dualtolerance = 1e-7;
 		
     if(nrhs < 12) mexErrMsgTxt("12 inputs required in call to mexclp. Bug in clp.m?...");
-	
+		
     /* Get pointers to input */
     cmatbeg_in = mxGetPr(prhs[0]);
     cmatind_in = mxGetPr(prhs[1]);
@@ -134,12 +130,11 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 			loglevel = (int) *(mxGetPr(aField));
 		}
 		aField = mxGetField( prhs[11],0,"solver");
-		if (aField != NULL){		
+		if (aField != NULL){				
 			solverchoice = (int) *(mxGetPr(aField));
 		}		
 	}
 	
-
 	switch (solverchoice)
 	{
 	default:
@@ -190,14 +185,14 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 	// Enable printing in MATLAB
 	mexprinter = new DerivedHandler(); // assumed open	
 	mexprinter->setLogLevel(loglevel);		 
-	
+		
 	if (solverchoice == 3)
 	{		
 		modelPrimalDual->setMaximumIterations(maxnumiterations);
 		modelPrimalDual->setMaximumSeconds(maxnumseconds);
 		modelPrimalDual->setPrimalTolerance(primaltolerance);
 		modelPrimalDual->setDualTolerance(dualtolerance);	
-		modelPrimalDual->passInMessageHandler(mexprinter);	
+		modelPrimalDual->passInMessageHandler(mexprinter);		    
 	}
 	else
 	{
@@ -205,9 +200,7 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 		modelByColumn->setMaximumSeconds(maxnumseconds);
 		modelByColumn->setPrimalTolerance(primaltolerance);
 		modelByColumn->setDualTolerance(dualtolerance);				
-		modelByColumn->passInMessageHandler(mexprinter);
-		//ClpPrimalColumnDantzig steep; 
-		//modelByColumn->setPrimalColumnPivotAlgorithm(steep);
+		modelByColumn->passInMessageHandler(mexprinter);	
 	}
 				
 	//Allocate for return data
@@ -223,25 +216,27 @@ void mexFunction(int nlhs, mxArray *plhs[],int nrhs, const mxArray *prhs[])
 	default:
 	case 1:			
 		{				
-			modelByColumn->primal();
+			modelByColumn->primal();		
 			break;
 		}
 	case 2:			
-		{		
+		{					
 			modelByColumn->dual();
 			break;
 		}
 	case 3:
 		{			
+							
 			ClpCholeskyBase * cholesky = new ClpCholeskyBase();			
-			//ClpCholeskyDense * cholesky = new ClpCholeskyDense();			
+			cholesky->setKKT(true);		
 			modelPrimalDual->setCholesky(cholesky);	
-			cholesky->setKKT(true);
+					
 			if (modelPrimalDual->primalDual())
 			{
 				mexPrintf("Failed\n");
 			}
 			break;
+		
 		}
 	}
 	
