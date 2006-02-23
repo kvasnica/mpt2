@@ -12,6 +12,9 @@ function [W,fail,Q] = mpt_dlyap_infnorm(A,Options)
 %  .abs_tol        absolute tolerance (default mptOptions.abs_tol)
 %  .lpsolver       equivalent to the MPT settings (default mptOptions.lpsolver)
 %  .complexW       if 1, a complex W is allowed. (default 0)
+%  .minimal        if 1 (default), the minimal size real W is computed (iteration), 
+%                  otherwise a one-shot way to compute a real W is chosen (often
+%                  faster)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -82,7 +85,9 @@ end
 if ~isfield(Options,'complexW')
     Options.complexW = 0;
 end
-
+if ~isfield(Options,'minimal')
+    Options.minimal = 1;
+end
 
 
 W = [];
@@ -358,6 +363,11 @@ r = norm([A_ab(1,1) A_ab(1,2)]);
 m = 2;
 m_max = ceil(pi/(acos(r)*2));
 
+if ~Options.minimal % fastest way to compute W
+    m = m_max;
+end
+
+    
 if m_max<2
     error('numerical problems.')
 end
@@ -376,6 +386,7 @@ else
     
     ok_flag = 0;
     while m <= m_max
+        
         ww   = [0:m-1]*pi/m;
         W_ab = [cos(ww') sin(ww')];
         
