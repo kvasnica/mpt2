@@ -58,6 +58,9 @@ fprintf('\n');
 disp(sys);
 fprintf('\n');
 
+bytes_per_float = 8;   % each floating point number is represented by 8 bytes
+bytes_per_integer = 4; % each integer is represented by 4 bytes
+
 if isexplicit(ctrl),
     haveSearchTree = isfield(ctrl.details, 'searchTree');
     [nx, nu] = mpt_sysStructInfo(ctrl.sysStruct);
@@ -105,12 +108,15 @@ if isexplicit(ctrl),
     end
     % * control law
     nfloats = nfloats + length(ctrl.Pn)*(nu*nx + nu);
-    if nfloats+nint > 4096,
-        memsize = sprintf('%.2f kB', (nfloats+nint)/1024);
+    memfloats = nfloats * bytes_per_float;
+    memint = nint * bytes_per_integer;
+    if memfloats+memint > 4096,
+        memsize = sprintf('%.2f kB', (memfloats+memint)/1024);
     else
-        memsize = sprintf('%d B', ceil(nfloats+nint));
+        memsize = sprintf('%d B', ceil(memfloats+memint));
     end
-    fprintf('      Memory storage: %s %s\n', memsize, flag);
+    fprintf('      Memory storage: %s (%d floats, %d integers) %s\n', ...
+        memsize, nfloats, nint, flag);
     
     
     % =========================================================
