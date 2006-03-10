@@ -93,11 +93,25 @@ if isexplicit(ctrl),
     
     % =========================================================
     % compute memory requirements
+    
+    % * control law
+    nfloats = length(ctrl.Pn)*(nu*nx + nu);
+    memfloats = nfloats * bytes_per_float;
+    if memfloats > 4096,
+        memsize = sprintf('%.2f kB', memfloats/1024);
+    else
+        memsize = sprintf('%d B', ceil(memfloats));
+    end
+    fprintf('         Control law: %s (%d floats)\n', ...
+        memsize, nfloats);
+
+    % regions / search tree
     [H, K] = pelemfun(@double, ctrl.Pn);
     if haveSearchTree,
         % * region storage
-        nfloats = size(ctrl.details.searchTree, 1)*size(ctrl.details.searchTree, 2);
-        nint = 0;
+        nhyp = size(ctrl.details.searchTree, 1);
+        nfloats = nhyp*(size(ctrl.details.searchTree, 2)-2);
+        nint = nhyp*2;
         flag = '(if implemented using a search tree)';
     else
         % * region storage
@@ -107,7 +121,6 @@ if isexplicit(ctrl),
         flag = '(if implemented in a brute-force way)';
     end
     % * control law
-    nfloats = nfloats + length(ctrl.Pn)*(nu*nx + nu);
     memfloats = nfloats * bytes_per_float;
     memint = nint * bytes_per_integer;
     if memfloats+memint > 4096,
@@ -125,9 +138,10 @@ if isexplicit(ctrl),
         st_nhp = size(ctrl.details.searchTree, 1);
         % maximum number of hyperplanes that will be checked before an active
         % region is found
-        st_maxchecks = ceil(log2(st_nhp));
+        st_maxchecks = ceil(log2(max(max(abs(ctrl.details.searchTree(:, end-1:end))))))+1;
         
-        fprintf('         Search tree: %d separating hyperplanes (depth %d)\n', st_nhp, st_maxchecks);
+        fprintf('         Search tree: %d separating hyperplanes (depth %d)\n', ...
+            st_nhp, st_maxchecks);
         
         % compute maximum number of floating point operations needed to identify
         % and compute the control action
