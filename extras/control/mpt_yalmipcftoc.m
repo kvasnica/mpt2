@@ -215,6 +215,27 @@ sysStruct = SST{1};
 
 
 %===============================================================================
+% check system dimensions
+[nx,nu,ny,nPWA,nbool,ubool] = mpt_sysStructInfo(sysStruct);
+
+
+%===============================================================================
+% do we have an LTI, PWA or an MLD dynamics?
+[dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct, Options);
+
+% do we have at least one MLD/PWA/LTI system?
+haveMLD = ~isempty(findstr([dynamics_type{:}], 'mld'));
+havePWA = ~isempty(findstr([dynamics_type{:}], 'pwa'));
+haveLTI = ~isempty(findstr([dynamics_type{:}], 'lti'));
+haveNONLIN = ~isempty(findstr([dynamics_type{:}], 'nonlin'));
+
+% only on-line non-linear MPC is allowed
+if haveNONLIN & Options.yalmip_online==0,
+    error('Only on-line controllers can be designed for non-linear plants.');
+end
+
+
+%===============================================================================
 % check whether one can use the DP formulation
 if ~isfield(Options, 'dp'),
     % use the DP formulation for linear cost, otherwise use the one-shot
@@ -241,26 +262,6 @@ if Options.dp,
     end
 end
 
-
-%===============================================================================
-% check system dimensions
-[nx,nu,ny,nPWA,nbool,ubool] = mpt_sysStructInfo(sysStruct);
-
-
-%===============================================================================
-% do we have an LTI, PWA or an MLD dynamics?
-[dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct, Options);
-
-% do we have at least one MLD/PWA/LTI system?
-haveMLD = ~isempty(findstr([dynamics_type{:}], 'mld'));
-havePWA = ~isempty(findstr([dynamics_type{:}], 'pwa'));
-haveLTI = ~isempty(findstr([dynamics_type{:}], 'lti'));
-haveNONLIN = ~isempty(findstr([dynamics_type{:}], 'nonlin'));
-
-% only on-line non-linear MPC is allowed
-if haveNONLIN & Options.yalmip_online==0,
-    error('Only on-line controllers can be designed for non-linear plants.');
-end
 
 % set pwa_index
 if ~isempty(Options.pwa_index),
