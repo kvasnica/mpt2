@@ -58,8 +58,6 @@ function [xc,R,lambda] = chebyball_f(H,K,lpsolver)
 
 global mptOptions
 
-Options.rel_tol = mptOptions.rel_tol;
-Options.abs_tol = mptOptions.abs_tol;
 if nargin==3,
     Options.lpsolver = lpsolver;
 else

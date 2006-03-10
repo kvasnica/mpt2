@@ -28,6 +28,8 @@ function [X,U,Y,cost,trajectory]=mpt_plotTimeTrajectory(ctrl,x0,horizon,Options)
 % Options.newfigure - If set to 1, opens a new figure window
 % Options.lpsolver  - Solver for LPs (see help mpt_solveLP)
 % Options.abs_tol   - absolute tolerance
+% Options.legend    - if set to true (default), legend will be displayed on each
+%                     subplot. set this option to 0 to disable the legends.
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used

@@ -521,6 +521,8 @@ for ipart = 1:npart,
                         if ( ~any(keptPartsIdx == ipart) ),
                             keptPartsIdx(end+1) = ipart;
                         end
+                    else
+                        keptPartsIdx = ipart;
                     end
                 end
             end
@@ -540,6 +542,8 @@ for ipart = 1:npart,
                 if ( ~any(keptPartsIdx == ipart) ),
                     keptPartsIdx(end+1) = ipart;
                 end
+            else
+                keptPartsIdx = ipart;
             end
         end
     end % ireg

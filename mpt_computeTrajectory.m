@@ -844,9 +844,9 @@ if(~Options.openloop)
             region = regions(1);
         else
             if givedetails,
-                [U,feasible,region,cost,inwhich]=mpt_getInput(ctrlStruct,X_CL{i},locOpt);
+                [U,feasible,region,cost,gi_details]=mpt_getInput(ctrlStruct,X_CL{i},locOpt);
                 if givedetails,
-                    details{end+1} = inwhich;
+                    details{end+1} = gi_details.inwhich;
                 end
             else
                 [U,feasible,region,cost]=mpt_getInput(ctrlStruct,X_CL{i},locOpt);

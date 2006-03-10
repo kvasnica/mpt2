@@ -19,9 +19,6 @@
 % subject to:
 %    x(k+1) = fdyn( x(k), u(k), w(k) )
 %               
-%     umin <=        u(k)       <= umax
-%    dumin <=    u(k) - u(k-1)  <= dumax
-%     ymin <=  gdyn( x(k), u(k) <= ymax
 %     x(N) \in Tset
 %     
 %
@@ -33,9 +30,6 @@
 %   Q   - weighting matrix on the states
 %   R   - weighting matrix on the manipulated variables
 %   P_N - weight imposed on the terminal state
-%   umin, umax   - constraints on the manipulated variable(s)
-%   dumin, dumax - constraints on slew rate of the manipulated variable(s)
-%   ymin, ymax   - constraints on the system outputs
 %   Tset         - terminal set
 %
 %   the function fdyn( x(k), u(k), w(k) ) is the state-update function and
@@ -99,6 +93,7 @@
 % ---------------------------------------------------------------------------
 % NOTATION
 % ---------------------------------------------------------------------------
+%
 % In order to specify which problem the user wants to solve, the following
 % fields of the problem structure probStruct have to be provided: 
 %
@@ -116,7 +111,13 @@
 % In addition, several optional fields can be given:
 % 
 %   probStruct.Qy       - cost on outputs. Mandatory for output regulation and
-%     output tracking problems
+%     output tracking problems.
+%  
+%   probStruct.Qd       - penalty on boolean variables (only for control of MLD
+%                         systems) 
+%
+%   probStruct.Qz       - penalty on auxiliary variables (only for control of
+%                         MLD systems) 
 %
 %   probStruct.y0bounds - a true/false (1/0) flag denoting
 %     whether or not to impose constraints also on the initial system output
@@ -141,8 +142,24 @@
 %   probStruct.yref     - instead of driving a state to zero, it is
 %     possible to reformulate the control problem and rather force the output
 %     to zero. to ensure this task, define probStruct.Qy which penalizes
-%     difference of the actual output and the given reference
+%     difference of the actual output and the given reference. you will need to
+%     define "probStruct.Qy" in order to use this option.
 %   
+%   probStruct.xref     - by default the toolbox designs a controller which
+%     forces the state vector to convert to the origin. If you want to track
+%     some a-priori given reference point, provide the reference state in this
+%     variable. probStruct.tracking has to be 0 (zero) to use this option!
+%
+%   probStruct.uref     - Similarly a reference point for the manipulated
+%     variable (i.e. the equilibrium $u$ for state probStruct.xref can be
+%     specified here. If it is not given, it is assumed to be zero. 
+%
+%   probStruct.dref     - reference for boolean variables (only for control of
+%     MLD systems). Can be used together with probStruct.Qd
+%
+%   probStruct.zref     - reference on auxiliary variables (only for control of
+%     MLD systems). Can be used together with probStruct.Qz
+%
 %   probStruct.P_N      - weight on the terminal state. If not specified, it is
 %     assumed to be solution of the Ricatti equation, or P_N = Q for linear cost
 %
@@ -155,9 +172,15 @@
 %     2 - use user-provided terminal set constraint). Note that if
 %     probStruct.Tset is given, Tconstraint will be set to 2 automatically.
 %
+%   probStruct.xN       - terminal state constraint. if given, a hard constraint
+%     on the last predicted state in the form "x(N)==probStruct.xN" will be
+%     imposed. NOTE! only available for probStruct.subopt_lev = 0.
+%
 %   probStruct.Nc       - control horizon. Specifies number of free control
-%     moves in the optimization problem (only available for LTI systems with
-%     quadratic performance index)
+%     moves in the optimization problem. If "probStruct.Nc" < "probStruct.N",
+%     all control moves between Nc and N will be constrained to be identical.
+%     E.g. if Nc=2 and N=5, then u_0 and u_1 will be considered as free control
+%     moves, and u_2==u_3==u_4 will be enforced.
 %
 %   probStruct.feedback - boolean variable, if set to 1, the problem is
 %     augmented such that U = K x + c   where K is a state-feedback gain
@@ -169,19 +192,56 @@
 %     state-feedback gain matric K can be provided (otherwise a LQR controller
 %     will be computed automatically)
 %
-%   probStruct.xref     - by default the toolbox designs a controller which
-%     forces the state vector to convert to the origin. If you want to track
-%     some a-priori given reference point, provide the reference state in this
-%     variable. probStruct.tracking has to be 0 (zero) to use this option!
+% ---------------------------------------------------------------------------
+% SOFT CONSTRAINTS
+% ---------------------------------------------------------------------------
 %
-%   probStruct.uref     - Similarly a reference point for the manipulated
-%     variable (i.e. the equilibrium $u$ for state probStruct.xref can be
-%     specified here. If it is not given, it is assumed to be zero. 
+% Since MPT 2.6 it is possible to denote certain constraints as soft. This means
+% that the respective constraint can be violated, but such a violation is
+% penalized. To soften certain constraints, it is necessary to define the
+% penalty on violation of such constraints:
 %
+%   probStruct.Sx   - if given as a "nx" x "nx" matrix, all state constraints
+%                     will be treated as soft constraints, and violation will be
+%                     penalized by the value of this field.
+%   probStruct.Su   - if given as a "nu" x "nu" matrix, all input constraints
+%                     will be treated as soft constraints, and violation will be
+%                     penalized by the value of this field.
+%   probStruct.Sy   - if given as a "ny" x "ny" matrix, all output constraints
+%                     will be treated as soft constraints, and violation will be
+%                     penalized by the value of this field.
+% 
+% In addition, one can also specify the maximum value by which a given
+% constraint can be exceeded:
+%
+%   probStruct.sxmax - must be given as a "nx" x 1 vector, where each element
+%                      defines the maximum admissible violation of each state
+%                      constraints
+%   probStruct.sumax - must be given as a "nu" x 1 vector, where each element
+%                      defines the maximum admissible violation of each input
+%                      constraints
+%   probStruct.symax - must be given as a "ny" x 1 vector, where each element
+%                      defines the maximum admissible violation of each output
+%                      constraints
+%
+% The afforementioned fields also allow to tell that only a subset of state,
+% input, or output constraint should be treated as soft constraints, while the
+% rest of them remain hard. Say, for instance, that we have a system with 2
+% states and we want to soften only the second state constraint. Then we would
+% write:
+%
+%   probStruct.Sx = diag([1 1000])
+%   probStruct.sxmax = [0; 10]
+%
+% Here probStruct.sxmax(1)=0, which tells MPT that the first constraint should
+% be treated as a hard constraint, while we are allowed to exceed the second
+% constraints at most by the value of 10, while every such violation will be
+% penalized by the value of 1000.
+
 
 % Copyright is with the following author(s):
 %
-%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%(C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
 %
 

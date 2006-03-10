@@ -1,5 +1,5 @@
 % Multi-Parametric Toolbox
-% Version 2.5 (R14SP3) 23-Nov-2005
+% Version 2.6 (R14SP3) ??-Mar-2006
 %
 %
 % Information
@@ -104,6 +104,6 @@
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
-% Copyright (C) 2003-2005 Michal Kvasnica, Pascal Grieder, Mato Baotic
+% Copyright (C) 2003-2006 Michal Kvasnica, Pascal Grieder, Mato Baotic
 %
 % For support, write to: mpt@control.ee.ethz.ch
