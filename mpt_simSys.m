@@ -32,7 +32,7 @@ function [X,U,Y,mode]=mpt_simSys(sysStruct,x0,inU,Options)
 
 % Copyright is with the following author(s):
 %
-%(C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%(C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %              kvasnica@control.ee.ethz.ch
 
 % ---------------------------------------------------------------------------
@@ -83,6 +83,7 @@ end
 Options.manualU = inU;
 Options.noCScheck = 1;
 
+isnonlinear = isfield(sysStruct, 'nonlinhandle');
 ispwa = iscell(sysStruct.A);
 ismld = 0;
 if isfield(sysStruct, 'data'),
@@ -111,7 +112,38 @@ Y = [];
 mode = [];
 for ii=1:size(inU,1),
     U = inU(ii,:)';
-    if ismld,
+    if isnonlinear,
+        if ispwa,
+            % we have a piecewise non-linear system, find out in which segment
+            % we are
+            dyn = 0;
+            for idyn = 1:nPWA,
+                guard = feval(sysStruct.nonlinhandle, 'guards', x0, U, idyn);
+                if guard,
+                    % we are inside of this dynamics
+                    xnext = feval(sysStruct.nonlinhandle, 'state', x0, U, idyn);
+                    y = feval(sysStruct.nonlinhandle, 'output', x0, U, idyn);
+                    dyn = guard;
+                    break
+                end
+            end
+            if dyn==0,
+                error(['mpt_simSys: no dynamics associated to state ' ...
+                        mat2str(x0') ' and input ' mat2str(U') ' !']);
+            end
+            
+        else
+            % the whole non-linear dynamics is defined in a single segment of
+            % the state-space, obtain state update and output
+            xnext = feval(sysStruct.nonlinhandle, 'state', x0, U);
+            y = feval(sysStruct.nonlinhandle, 'output', x0, U);
+            dyn = 1;
+            
+        end
+        xnext = xnext(:);
+        y = y(:);
+            
+    elseif ismld,
         % run the simulator obtained by HYSDEL and stored in sysStruct for
         % systems for which no equivalent PWA representation was created
         simcode = sysStruct.data.SIM.code;

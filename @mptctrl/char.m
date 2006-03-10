@@ -133,7 +133,15 @@ sysStruct = ctrl.details.origSysStruct;
 % determine type of controlled system
 [nx,nu,ny,ndyn] = mpt_sysStructInfo(ctrl.details.origSysStruct);
 if iscell(sysStruct.A),
-    systype = sprintf('PWA system with %d dynamics', ndyn);
+    if isfield(sysStruct, 'nonlinhandle'),
+        % piecewise nonlinear system
+        systype = sprintf('Piecewise nonlinear system with %d dynamics', ndyn);
+    else
+        % PWA system
+        systype = sprintf('PWA system with %d dynamics', ndyn);
+    end
+elseif isfield(sysStruct, 'nonlinhandle'),
+    systype = 'Nonlinear system';
 else
     systype = 'LTI system';
 end

@@ -31,6 +31,11 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 % Options.verbose   - Level of verbosity
 % Options.useXU     - if 1, use a control input based on an XUset istead of the 
 %                     usual (optimization) based control action. (default 0)
+% Options.nlsolver  - which solver to use for nonlinear optimization.
+%                       'local' (default) - faster than global, but does not
+%                                           guarantee global optimality
+%                       'global' - can be VERY slow, but gives results which are
+%                                  close to global optimum
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -53,6 +58,8 @@ function [U,feasible,region,cost,inwhich,fullopt,runtime]=mpt_getInput(ctrl,x0,O
 
 % Copyright is with the following author(s):
 %
+% (c) 2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%          kvasnica@control.ee.ethz.ch
 % (c) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
 % (c) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
@@ -110,6 +117,7 @@ Options = mpt_defaultOptions(Options, ...
     'verbose', mptOptions.verbose, ...
     'recover', 0, ...
     'useXU', 0, ...
+    'nlsolver', 'local', ...
     'lpsolver', mptOptions.lpsolver, ...
     'qpsolver', mptOptions.qpsolver, ...
     'milpsolver', mptOptions.milpsolver, ...
@@ -137,7 +145,69 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     sysStruct = ctrl.sysStruct;
     probStruct = ctrl.probStruct;
     
-    if isfield(ctrl.details, 'yalmipMatrices'),
+    if isfield(ctrl.details, 'yalmipData'),
+        % MPC problem for non-linear systems; use solvesdp()
+        F = ctrl.details.yalmipData.F;
+        obj = ctrl.details.yalmipData.obj;
+        vars = ctrl.details.yalmipData.vars;
+        if isfield(vars, 'uprev'),
+            % assign value to previous control input
+            if ~isfield(Options, 'Uprev'),
+                fprintf('WARNING: deltaU constraints can only be satisfied if Options.Uprev is given.\n');
+            end
+            uprev = mpt_defaultField(Options, 'Uprev', zeros(ctrl.details.dims.nu, 1));
+            uprev = uprev(:);
+            if length(uprev) ~= ctrl.details.yalmipData.uprev_length,
+                error(sprintf('Wrong size of "Options.uprev". Expecting %d elements, got %d.', ...
+                    ctrl.details.yalmipData.uprev_length, length(uprev)));
+            end
+            F = F + set(vars.uprev == uprev);
+        end
+        if isfield(vars, 'ref')
+            % assign value to reference
+            if ~isfield(Options, 'reference'),
+                fprintf('WARNING: Options.reference not specified, assuming zero.');
+            end
+            ref = mpt_defaultField(Options, 'reference');
+            if isempty(ref),
+                if isfield(ctrl.probStruct, 'Qy'),
+                    % reference has the dimension of output
+                    ref = zeros(ctrl.details.dims.ny, 1);
+                else
+                    % reference has the dimension of state
+                    ref = zeros(ctrl.details.dims.nx, 1);
+                end
+            end
+            ref = ref(:);
+            if length(ref) ~= ctrl.details.yalmipData.reference_length,
+                error(sprintf('Wrong size of "Options.reference". Expecting %d elements, got %d.', ...
+                    ctrl.details.yalmipData.reference_length, length(ref)));
+            end
+            F = F + set(vars.ref == ref);
+        end
+
+        % assign value to x0
+        F = F + set(vars.x{1} == x0);
+        
+        % now solve the non-linear problem
+        yalmipOptions = mptOptions.sdpsettings;
+        if isequal(Options.nlsolver, 'global'),
+            % switch to a global solver. WARNING! global solvers are extremely
+            % slow!
+            yalmipOptions = sdpsettings(yalmipOptions, 'solver', 'bmibnb');
+        end
+        
+        starttime = cputime;
+        diagnost = solvesdp(F, obj, yalmipOptions);
+        runtime = cputime - starttime;
+        
+        feasible = (diagnost.problem==0);
+        fullopt = [];
+        U = double([vars.u{:}]);
+        U = U(:);
+        cost = double(obj);
+        
+    elseif isfield(ctrl.details, 'yalmipMatrices'),
         % we do have an optimization problem constructed by mpt_yalmipcftoc(),
         % solve the corresponding LP/QP/MILP/MIQP problem
         M = ctrl.details.yalmipMatrices;
@@ -245,7 +315,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         end
         runtime = cputime - starttime;
         feasible = strcmp(how, 'ok');
-        %U = reshape(xopt(M.requested_variables), ctrl.details.dims.nu, ctrl.probStruct.N)';
+        xopt = xopt(:);
         U = xopt(M.requested_variables);
         fullopt = xopt;
         

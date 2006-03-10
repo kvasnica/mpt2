@@ -198,6 +198,13 @@ else
     end
     
     
+    % ============================================================================
+    % no explicit solution for non-linear system
+    if isfield(sysStruct, 'nonlinhandle'),
+        error('No explicit solution available for non-linear systems.');
+    end
+
+    
     % =================================================================
     % augment system to deal with tracking (on-line controllers use Uprev
     % and the reference directly as additional variables, hence we must not do

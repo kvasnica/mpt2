@@ -301,11 +301,22 @@ elseif nargin==2 | nargin==3
         end
         % define which variables should be optimization variables
         requested_vars = [vars.u{:}];
-        
-        % expand the YALMIP model into MPT format
-        ctrl.details.yalmipMatrices = mpt_yalmip2mpt(F, obj, parametric_vars, requested_vars);
-        ctrl.details.yalmipMatrices.uprev_length = uprev_length;
-        ctrl.details.yalmipMatrices.reference_length = reference_length;
+
+        if isfield(sysStruct, 'nonlinhandle'),
+            % we have a non-linear model, we must not convert constraints into
+            % MPT matrices, because it wouldn't work. instead, we keep the
+            % constraints, objective and variables as they are and later solve
+            % the problem using solvesdp() in mpt_getInput().
+            ctrl.details.yalmipData = struct('F', F, 'obj', obj, 'vars', vars, ...
+                'uprev_length', uprev_length, 'reference_length', reference_length);
+            
+        else
+            % expand the YALMIP model into MPT format
+            ctrl.details.yalmipMatrices = mpt_yalmip2mpt(F, obj, parametric_vars, requested_vars);
+            ctrl.details.yalmipMatrices.uprev_length = uprev_length;
+            ctrl.details.yalmipMatrices.reference_length = reference_length;
+            
+        end
         
         if probStruct.tracking>0,
             % we need to set ctrl.sysStruct.dims because we didn't run

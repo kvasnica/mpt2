@@ -169,7 +169,9 @@ elseif isfield(probStruct, 'xN'),
 elseif isfield(probStruct, 'Qdyn') | isfield(probStruct, 'Qswitch'),
     nompt_because = 'penalized switching';
 elseif iscell(userSysStruct),
-    nompt_because = 'multi-model dynamics';
+    nompt_because = 'time-varying model';
+elseif isfield(sysStruct, 'nonlinhandle'),
+    nompt_because = 'non-linear dynamics';
 end
 
 
@@ -222,6 +224,13 @@ if isfield(sysStruct, 'data'),
             error('Cannot compute explicit solution if PWA representation is not available in sysStruct.');
         end
     end
+end
+
+
+% ============================================================================
+% no explicit solution for non-linear system
+if isfield(sysStruct, 'nonlinhandle'),
+    error('No explicit solution available for non-linear systems.');
 end
 
 

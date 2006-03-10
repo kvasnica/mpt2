@@ -38,6 +38,11 @@ function [sysStruct, msg] = mpt_sys(obj, varargin)
 %   sysStruct = mpt_sys(di_ss, 2)   - discretize the system with sampling time 2
 %                                     secs
 % 
+% To convert a non-linear system given a function handle 
+% (see "help mpt_nonlinfcn" for details):
+%
+%   sysStruct = mpt_sys(@handle_to_function)
+%
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
@@ -60,6 +65,7 @@ function [sysStruct, msg] = mpt_sys(obj, varargin)
 %   transfer function (tf) objects
 %   MPC toolbox objects (mpc)
 %   string - name of hysdel source code
+%   function handle - handle to a "mpt_nonlinfcn"-type of function
 
 global mptOptions
 if ~isstruct(mptOptions)
@@ -480,6 +486,57 @@ elseif isa(obj, 'char')
     sysStruct.data.SIM.params = parameters;
     sysStruct.data.hysdel.fromfile = obj;
     itype = 'hysdel';
+ 
+    
+elseif isa(obj, 'function_handle'),
+    % we assume it is a handle to an "mpt_nonlinfcn"-type of function, which is
+    % used to define non-linear systems
+    try
+        info = feval(obj, 'info');
+    catch
+        error('Cannot import this function, see "help mpt_nonlinfcn" for details.');
+    end
+    if ~isstruct(info),
+        error('Cannot import this function, see "help mpt_nonlinfcn" for details.');
+    end
+    
+    % dummy linear dynamics, will not be used for computation, but we do require
+    % it on many, many places
+    A = eye(info.nx);
+    B = zeros(info.nx, info.nu);
+    C = eye(info.ny, info.nx);
+    D = zeros(info.ny, info.nu);
+
+    if info.piecewise==0,
+        % create A, B, C and D matrices as if it were an LTI system
+        sysStruct = struct('A', A, 'B', B, 'C', C, 'D', D);
+        
+    else
+        % create A, B, C, and D matrices as in PWA case, because we have an
+        % piecewise non-linear system
+        for i = 1:info.piecewise
+            sysStruct.A{i} = A;
+            sysStruct.B{i} = B;
+            sysStruct.C{i} = C;
+            sysStruct.D{i} = D;
+            sysStruct.guardX{i} = eye(1, info.nx);
+            sysStruct.guardC{i} = 0;
+        end
+    end
+    
+    % copy fields which are defined
+    F = {'xmax', 'xmin', 'ymax', 'ymin', 'umax', 'umin', 'dumax', 'dumin', 'Uset'};
+    for i = 1:length(F),
+        if isfield(info, F{i}),
+            value = getfield(info, F{i});
+            if ~isempty(value),
+                sysStruct = setfield(sysStruct, F{i}, value);
+            end
+        end
+    end
+    
+    sysStruct.nonlinhandle = obj;
+    itype = 'sysStruct';
     
 else
     error(sprintf('MPT_SYS: cannot convert inputs of type "%s".', class(obj)));

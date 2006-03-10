@@ -235,6 +235,9 @@ if Options.dp,
     elseif Options.details == 1,
         fprintf('WARNING: switching to one-shot formulation because Options.details=1\n');
         Options.dp = 0;
+    elseif haveNONLIN,
+        fprintf('WARNING: switching to one-shot formulation because we have non-linear dynamics\n');
+        Options.dp = 0;
     end
 end
 
@@ -252,11 +255,17 @@ end
 haveMLD = ~isempty(findstr([dynamics_type{:}], 'mld'));
 havePWA = ~isempty(findstr([dynamics_type{:}], 'pwa'));
 haveLTI = ~isempty(findstr([dynamics_type{:}], 'lti'));
+haveNONLIN = ~isempty(findstr([dynamics_type{:}], 'nonlin'));
+
+% only on-line non-linear MPC is allowed
+if haveNONLIN & Options.yalmip_online==0,
+    error('Only on-line controllers can be designed for non-linear plants.');
+end
 
 % set pwa_index
 if ~isempty(Options.pwa_index),
-    if haveMLD,
-        error('Cannot use Options.pwa_index for MLD systems.');
+    if ~(havePWA | haveLTI),
+        error('Options.pwa_index can only be used for PWA systems.');
         
     else
         pwa_index = cell(1, length(SST));
@@ -313,7 +322,7 @@ timevar_penalties = iscell(probStruct.Q) | iscell(probStruct.R);
 % already specified
 if probStruct.norm==2 & probStruct.Tconstraint==1 & ...
         probStruct.tracking==0 & nbool == 0 & ~isfield(probStruct, 'Qy') & ...
-        ~isfulldim(probStruct.Tset) & ~haveMLD & multi_model==0,
+        ~isfulldim(probStruct.Tset) & (havePWA | haveLTI) & multi_model==0,
 
     if timevar_penalties,
         fprintf('WARNING: No stabilizing target can be computed with time-varying penalties.\n');
@@ -365,7 +374,7 @@ end
 
 %===============================================================================
 % reject certain objectives if we have MLD/LTI systems
-if haveMLD | haveLTI,
+if ~havePWA,
     if isfield(probStruct, 'Qswitch'),
         error('probStruct.Qswitch can only be used for PWA systems.');
     elseif isfield(probStruct, 'Qdyn'),
@@ -420,13 +429,15 @@ end
 if Options.yalmip_online,
     if Options.verbose > 0,
         if multi_model,
-            fprintf('Using mixed model...\n');
+            fprintf('Using a time-varying model...\n');
         elseif haveMLD,
-            fprintf('Using MLD model...\n');
+            fprintf('Using an MLD model...\n');
         elseif havePWA,
-            fprintf('Using PWA model...\n');
+            fprintf('Using a PWA model...\n');
+        elseif haveNONLIN,
+            fprintf('Using a nonlinear model...\n');
         else
-            fprintf('Using LTI model...\n');
+            fprintf('Using an LTI model...\n');
         end
     end
 end
@@ -569,7 +580,8 @@ for k = N-1:-1:1
     
     %===============================================================================
     % impose bounds on x_0 if necessary
-    if isfulldim(SST{k}.Pbnd) & k==1,
+    if isfulldim(SST{k}.Pbnd) & k==1 & Options.yalmip_online==0,
+        % only include Pbnd constraint for explicit solutions
         tag = sprintf('x_%d in Pbnd', iN);        
         F = F + set(ismember(x{k}, SST{k}.Pbnd), tag);
     end
@@ -684,6 +696,45 @@ for k = N-1:-1:1
             
             tag = sprintf('y_%d == C*x_%d + D*u_%d', iN+1, iN, iNu);
             F = F + set(y{k} == SST{k}.C{1}*x{k} + SST{k}.D{1}*u{ku}, tag);
+
+        case 'nonlin',
+            % non-linear time-invariant dynamics
+            tag = sprintf('x_%d == %s(''state'', x_%d, u_%d)', ...
+                iN+1, func2str(SST{k}.nonlinhandle), iN, iNu);
+            xeq = feval(SST{k}.nonlinhandle, 'state', x{k}, u{ku});
+            error(sub_check_nonlinearity(xeq));
+            F = F + set(x{k+1} == xeq, tag);
+            
+            tag = sprintf('y_%d == %s(''output'', x_%d, u_%d)', ...
+                iN, func2str(SST{k}.nonlinhandle), iN, iNu);
+            yeq = feval(SST{k}.nonlinhandle, 'output', x{k}, u{ku});
+            error(sub_check_nonlinearity(yeq));
+            F = F + set(y{k} == yeq, tag);
+            
+        case 'pnonlin',
+            % piecewise non-linear time-invariant dynamics
+            for i = pwa_index{k}
+                tag = sprintf('d_%d(%d) => x_%d == %s(''state'', x_%d, u_%d, %d)', ...
+                    iN, i, iN+1, func2str(SST{k}.nonlinhandle), iN, iNu, i);
+                xeq = feval(SST{k}.nonlinhandle, 'state', x{k}, u{ku}, i);
+                error(sub_check_nonlinearity(xeq));
+                F = F + set(implies(d{k}(i), x{k+1} == xeq), tag);
+                
+                tag = sprintf('d_%d(%d) => y_%d == %s(''output'', x_%d, u_%d, %d)', ...
+                    iN, i, iN, func2str(SST{k}.nonlinhandle), iN, iNu, i);
+                yeq = feval(SST{k}.nonlinhandle, 'output', x{k}, u{ku}, i);
+                error(sub_check_nonlinearity(yeq));
+                F = F + set(implies(d{k}(i), y{k} == yeq), tag);
+                
+                tag = sprintf('d_%d(%d) => %s(''guards'', x_%d, u_%d, %d)', ...
+                    iN, i, func2str(SST{k}.nonlinhandle), iN, iNu, i);
+                guardeq = feval(SST{k}.nonlinhandle, 'guards', x{k}, u{ku}, i);
+                error(sub_check_nonlinearity(guardeq));
+                F = F + set(implies(d{k}(i), guardeq), tag);
+            end
+            
+            tag = sprintf('sum d_%d = 1', iN);
+            F = F + set(sum(d{k}(pwa_index{k})) == 1, tag);
             
         case 'pwa',
             % PWA dynamics
@@ -894,7 +945,7 @@ end
 variables.x = x;
 variables.u = u;
 variables.y = y;
-if havePWA | haveMLD,
+if havePWA | haveMLD | haveNONLIN,
     variables.d = d;
 end
 if haveMLD,
@@ -1135,6 +1186,7 @@ for im = 1:length(SST),
     canuse_mld = isfield(SST{im}, 'data');
     canuse_pwa = iscell(SST{im}.A);
     canuse_lti = ~iscell(SST{im}.A);
+    canuse_nonlin = isfield(SST{im}, 'nonlinhandle');
     
     if canuse_mld,
         if isfield(SST{im}.data, 'onlymld'),
@@ -1172,6 +1224,9 @@ for im = 1:length(SST),
     else
         error('Unknown type of dynamical model.');
     end
+    if canuse_nonlin,
+        dynamics_type{im} = 'nonlin';
+    end
     
     switch dynamics_type{im},
         case 'mld',
@@ -1192,6 +1247,25 @@ for im = 1:length(SST),
             SST{im} = mpt_lti2pwa(SST{im});
             sysStruct = mpt_lti2pwa(sysStruct);
             nPWA(im) = 1;
+            
+        case 'nonlin',
+            % find out whether we have a piecewise non-linear system or just
+            % a pure non-linear plant
+            if iscell(SST{im}.A),
+                % piecewise non-linear system
+                nPWA(im) = length(SST{im}.A);
+                dynamics_type{im} = 'pnonlin';
+                
+            else
+                % pure non-linear system
+                nPWA(im) = 1;                
+                % convert it to a dummy PWA system with one dynamics
+                SST{im} = mpt_lti2pwa(SST{im});
+                sysStruct = mpt_lti2pwa(sysStruct);
+                dynamics_type{im} = 'nonlin';
+                
+            end
+            
     end
     
 end
@@ -1293,4 +1367,15 @@ function out = sub_cellsdpvar(dim, count)
 out = cell(1, count);
 for i = 1:count,
     out{i} = sdpvar(dim, 1);
+end
+
+
+%---------------------------------------------------------
+function out = sub_check_nonlinearity(expression)
+% checks whether a given non-linear function can be solved via YALMIP
+% we currently reject sigmonial expressions, such as x/u
+
+out = '';
+if any(is(expression, 'sigmonial')),
+    out = 'Only polynomial nonlinearities are allowed.';
 end
