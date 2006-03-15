@@ -551,8 +551,10 @@ end
 HYS = strvcat(HYS, '}'); % end IMPLEMENTATION
 HYS = strvcat(HYS, '}'); % end SYSTEM
 
-
-fid = fopen([fname '.hys'], 'w');
+if isempty(findstr(fname, '.hys')),
+    fname = [fname '.hys'];
+end
+fid = fopen(fname, 'w');
 if fid<0
     error(['cannot open file "' fname '" for writing!']);
 end
