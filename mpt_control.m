@@ -141,6 +141,13 @@ end
 % there are certain system/problem formulations which mpt_yalmipcftoc() cannot
 % handle
 noyalmip_because = [];
+havedymax = 0; havedymin = 0;
+if isfield(sysStruct, 'dymax'),
+    havedymax = any(~isinf(sysStruct.dymax));
+end
+if isfield(sysStruct, 'dymin'),
+    havedymin = any(~isinf(sysStruct.dymin));
+end
 if isinf(probStruct.N),
     noyalmip_because = 'prediction horizon is infinity';
 elseif probStruct.subopt_lev > 0,
@@ -151,7 +158,7 @@ elseif mpt_isnoise(sysStruct.noise),
     noyalmip_because = 'system with additive noise';
 elseif isfield(sysStruct, 'Aunc') | isfield(sysStruct, 'Bunc'),
     noyalmip_because = 'system with parametric uncertainties';
-elseif isfield(sysStruct, 'dymax') | isfield(sysStruct, 'dymin'),
+elseif havedymax | havedymin,
     noyalmip_because = 'dymax/dymin constraints';
 end
 
