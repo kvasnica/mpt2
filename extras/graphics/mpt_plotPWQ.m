@@ -212,7 +212,7 @@ else
     if isfield(Options,'min_x2')
         min_x2 = Options.min_x2;
     else
-        min_x2 = L(1);
+        min_x2 = L(2);
     end
     if isfield(Options,'max_x2')
         max_x2 = Options.max_x2;
