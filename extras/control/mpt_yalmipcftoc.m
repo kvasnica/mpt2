@@ -228,6 +228,7 @@ haveMLD = ~isempty(findstr([dynamics_type{:}], 'mld'));
 havePWA = ~isempty(findstr([dynamics_type{:}], 'pwa'));
 haveLTI = ~isempty(findstr([dynamics_type{:}], 'lti'));
 haveNONLIN = ~isempty(findstr([dynamics_type{:}], 'nonlin'));
+havePNONLIN = ~isempty(findstr([dynamics_type{:}], 'pnonlin'));
 
 % only on-line non-linear MPC is allowed
 if haveNONLIN & Options.yalmip_online==0,
@@ -385,13 +386,18 @@ end
 
 
 %===============================================================================
-% check constraints
+% check whether constraints are present
+%
+% haveXbounds(i) = 0    - no constraints
+% haveXbounds(i) = 1    - constraints present (can be +/-Inf)
 haveXbounds = zeros(1, length(SST));
 haveYbounds = zeros(1, length(SST));
+haveUbounds = zeros(1, length(SST));
 dUconstraints = zeros(1, length(SST));
 for im = 1:length(SST),
     haveXbounds(im) = isfield(SST{im}, 'xmax') & isfield(SST{im}, 'xmin');
     haveYbounds(im) = isfield(SST{im}, 'ymax') & isfield(SST{im}, 'ymin');
+    haveUbounds(im) = isfield(SST{im}, 'umax') & isfield(SST{im}, 'umin');
     dUconstraints(im) = any(~isinf(SST{im}.dumin)) | any(~isinf(SST{im}.dumax)) | ...
         isfield(probStruct, 'Rdu');
 end
@@ -524,6 +530,11 @@ F = set([]);
 J{N} = 0;  % initial cost
 obj = 0;
 starttime = cputime;
+% when formulating the MPC problem for PWA and piecewise nonlinear systems, we
+% use the implies() operator, which requires all variables to be bounded. this
+% flag therefore indicates later that we should introduce non-infty bounds on
+% x,u and y variables to prevent warnings from YALMIP.
+bigM_used = havePWA | havePNONLIN;
 
 
 %===============================================================================
@@ -548,24 +559,15 @@ for k = N-1:-1:1
     
     %===============================================================================
     % set bounds on states, inputs and outputs.
-    if haveXbounds(k) & ~(soften.all | soften.x),
-        % we can't set hard bounds if we have soft constraints
-        bounds(x{k}, SST{k}.xmin, SST{k}.xmax);
-        bounds(x{k+1}, SST{k+1}.xmin, SST{k+1}.xmax);
-    end
-    if ~(soften.all | soften.u),
-        % we can't set hard bounds if we have soft constraints
-        bounds(u{k}, SST{k}.umin, SST{k}.umax);
-    end
+    sub_setbounds('x', x{k}, SST{k}, haveXbounds(k), soften, smax, bigM_used);
+    sub_setbounds('x', x{k+1}, SST{k+1}, haveXbounds(k+1), soften, smax, bigM_used);
+    sub_setbounds('u', u{k}, SST{k}, haveUbounds(k), soften, smax, bigM_used);
     if ~(k==1 & probStruct.y0bounds==0)
         % do not impose constraints on y0 if user does not want to
-        if ~(soften.all | soften.y),
-            % we can't set hard bounds if we have soft constraints
-            bounds(y{k}, SST{k}.ymin, SST{k}.ymax);
-        end
+        sub_setbounds('y', y{k}, SST{k}, haveYbounds(k), soften, smax, bigM_used);
     end
     
-    
+
     %===============================================================================
     if Options.dp,
         % in the DP formulation we formulate constraints for each step
@@ -1297,7 +1299,7 @@ if isfield(probStruct, 'S') | isfield(probStruct, 'smax'),
 else
     if isfield(probStruct, 'Sx') | isfield(probStruct, 'sxmax'),
         % softening of state constraints
-        if ~haveXbounds,
+        if any(haveXbounds==0),
             fprintf('WARNING: no state constraints given, cannot soften them.\n');
         else
             slacks.x = sub_cellsdpvar(dims.nx, N);
@@ -1310,7 +1312,7 @@ else
     end
     if isfield(probStruct, 'Sy') | isfield(probStruct, 'symax'),
         % softening of output constraints
-        if ~haveYbounds,
+        if any(haveYbounds==0),
             fprintf('WARNING: no output constraints given, cannot soften them.\n');
         else
             slacks.y = sub_cellsdpvar(dims.ny, N-1);
@@ -1379,4 +1381,44 @@ function out = sub_check_nonlinearity(expression)
 out = '';
 if any(is(expression, 'sigmonial')),
     out = 'Only polynomial nonlinearities are allowed.';
+end
+
+
+%---------------------------------------------------------
+function sub_setbounds(flag, z, sysStruct, havebounds, soften, smax, bigM_used)
+% sets bounds on a given variable "z" if they are needed/present
+
+global mptOptions
+
+slack_bound = getfield(smax, flag);
+if isinf(slack_bound),
+    slack_bound = mptOptions.infbox;
+end
+
+if havebounds,
+    minb = getfield(sysStruct, [flag 'min']);
+    maxb = getfield(sysStruct, [flag 'max']);
+
+    if bigM_used,
+        % if implies() of iff() functions must be used (bigM_used will be true in
+        % that case), we replace any Inf-terms by +/- mptOptions.infbox (havebounds
+        % will be 1 iff there are any Inf terms in minb/maxb)
+        minb(find(isinf(minb))) = -mptOptions.infbox;
+        maxb(find(isinf(maxb))) = mptOptions.infbox;
+    end
+    
+    % increase bounds by limits on slacks (if no soft constraints are defined,
+    % respective slack bounds will be zero)
+    minb = minb - slack_bound;
+    maxb = maxb + slack_bound;
+end
+    
+if havebounds,
+    % bounds known, set them
+    bounds(z, minb, maxb);
+
+elseif bigM_used,
+    % no bounds present, but required, use +/- mptOptions.infbox
+    bounds(z, -mptOptions.infbox, mptOptions.infbox);
+    
 end
