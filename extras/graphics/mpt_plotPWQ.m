@@ -28,6 +28,8 @@ function h_all=mpt_plotPWQ(Pn,lyapunovQ,lyapunovL,lyapunovC,meshgridpoints,Optio
 % Q,L,C             - Cells containing parameters of the PWQ function x'Qx+x'L+C
 % meshgridpoints    - number of grid points in one axis,
 %                     (default: 30)
+% Options.drawnow   - Whether or not to use the drawnow command to refresh the
+%                     current plot (default is true)
 % Options.shade     - Level of transparency (0 = fully transparent, 1 = solid)
 % Options.edgecolor - specifies the color of edges. Default: 'k'.
 % Options.edgewidth - specifies the width of edges. Default: 0.5.
@@ -115,18 +117,13 @@ elseif nargin<6
     Options=[];
 end
 
-if ~isfield(Options,'lpsolver'),
-    Options.lpsolver=mptOptions.lpsolver;
-end
-if ~isfield(Options,'newfigure')
-    Options.newfigure=mptOptions.newfigure;
-end
-if ~isfield(Options,'showPn')
-    Options.showPn=1;
-end
-if ~isfield(Options,'samecolors')
-    Options.samecolors = 0;
-end
+Options = mpt_defaultOptions(Options, ...
+    'lpsolver', mptOptions.lpsolver, ...
+    'newfigure', mptOptions.newfigure, ...
+    'showPn', 1, ...
+    'samecolors', 0, ...
+    'verbose', mptOptions.verbose, ...
+    'drawnow', 1 );
 
 if dimension(Pn)>2,
     error('mpt_plotPWQ: only 2D partitions supported!');
@@ -165,7 +162,9 @@ elseif ~ishold,
     newplot;
 end
 
-disp('Creating PWQ plot...');
+if Options.verbose > 0,
+    disp('Creating PWQ plot...');
+end
 
 if Options.samecolors,
     maxlen = length(Pn);
@@ -212,7 +211,7 @@ else
     if isfield(Options,'min_x2')
         min_x2 = Options.min_x2;
     else
-        min_x2 = L(1);
+        min_x2 = L(2);
     end
     if isfield(Options,'max_x2')
         max_x2 = Options.max_x2;
@@ -295,7 +294,7 @@ else
         set(h, 'EdgeColor', Options.edgecolor);
     end    
     if isfield(Options, 'edgewidth')
-	set(h, 'LineWidth', Options.edgewidth);
+        set(h, 'LineWidth', Options.edgewidth);
     end
 end
 handle = [];
@@ -304,10 +303,13 @@ if Options.showPn
         % only hold the plot if user didn't do it manually
         hold on
     end
+    plotOpt = Options;
+    plotOpt.drawnow = 0;
     if Options.samecolors,
-        handle=plot(Pn,struct('color',hsv(length(Pn))));
+        plotOpt.color = hsv(length(Pn));
+        handle=plot(Pn, plotOpt);
     else
-        handle=plot(Pn);
+        handle=plot(Pn, plotOpt);
     end
 end
 
@@ -322,7 +324,9 @@ if ~plot_holded,
     hold off;
 end
 grid on
-drawnow;
+if Options.drawnow,
+    drawnow;
+end
 
 h_all.PWQ = h;
 h_all.Pn  = handle;

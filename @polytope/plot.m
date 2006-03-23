@@ -54,6 +54,8 @@ function [handle,titlehandle]=plot(varargin)
 %                       '-', ':', ';' or 'none') (default is '-')
 % Options.persp_sect  - If set to 1 and Options.xsection is given (i.e. cut is
 %                       made, uses perspective plotting (off by default)
+% Options.drawnow     - If true (default), the "drawnow" command is used to
+%                       refresh current figure after all polytopes are drawn
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -117,40 +119,24 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
-if ~isfield(Options,'abs_tol')
-    Options.abs_tol=mptOptions.abs_tol;  % absolute tolerance
-end
-if ~isfield(Options,'verbose')      % verbose warnings
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options, 'axis')        % axis for plot
-    Options.axis='auto';
-end
-if ~isfield(Options, 'lpsolver')        % axis for plot
-    Options.lpsolver=mptOptions.lpsolver;
-end
-if ~isfield(Options, 'extreme_solver')        % axis for plot
-    Options.extreme_solver=mptOptions.extreme_solver;
-end
-if ~isfield(Options,'newfigure')
-    Options.newfigure=mptOptions.newfigure;
-end
-if ~isfield(Options,'verbose')
-    Options.verbose=mptOptions.verbose;
-end
-if ~isfield(Options,'marker')
-    Options.marker='';
-end
-if ~isfield(Options,'gradcolor')
-    Options.gradcolor = 0;
-end
-if ~isfield(Options,'linestyle')
-    % could also be 'none' or ':'
-    Options.linestyle = '-';
-end
-if ~isfield(Options, 'elevate'),
-    Options.elevate = 0;
-end
+Options = mpt_defaultOptions(Options, ...
+    'abs_tol', mptOptions.abs_tol, ...
+    'verbose', mptOptions.verbose, ...
+    'axis', 'auto', ...
+    'lpsolver', mptOptions.lpsolver, ...
+    'extreme_solver', mptOptions.extreme_solver, ...
+    'newfigure', mptOptions.newfigure, ...
+    'marker', '', ...
+    'gradcolor', 0, ...
+    'linestyle', '-', ...
+    'elevate', 0, ...
+    'drawnow', 1, ...
+    'wire', 0, ...
+    'wirestyle', '-', ...
+    'linewidth', 1, ...
+    'fontsize', 10, ...
+    'edgecolor', 'k', ...
+    'persp_sect', 0 );
 
 lenQ=0; dimP=0;
 for ii=1:nargin,
@@ -217,29 +203,11 @@ if ~isfield(Options, 'shade')       % transparency of plots
         Options.shade=0.5;
     end
 end
-if ~isfield(Options, 'wire')        % plot wireframe
-    Options.wire=0;
-end
-if ~isfield(Options, 'wirestyle')   % style of the wireframe    '-' for a solid line, '--' for a dashed line
-    Options.wirestyle='-';
-end
 if ~isfield(Options,'wirecolor'),
     Options.wirecolor='k';
     iswirecolor=0;
 else
     iswirecolor=1;
-end
-if ~isfield(Options,'linewidth'),
-    Options.linewidth=1;
-end
-if ~isfield(Options,'fontsize'),
-    Options.fontsize=10;
-end
-if ~isfield(Options,'edgecolor'),
-    Options.edgecolor='k';
-end
-if ~isfield(Options,'persp_sect'),
-    Options.persp_sect = 0;
 end
 
 Indices=[];
@@ -620,7 +588,9 @@ if extctr > 0,
     fprintf('PLOT: Problem detected. Most probably extreme point enumeration failed for %d polytopes...\n',extctr);
     disp('Try to change value for extreme_solver.');
 end
-drawnow
+if Options.drawnow, 
+    drawnow
+end
 % If no outputs is asked, clear the variable.
 if nargout == 0;
     clear('handle');

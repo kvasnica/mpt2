@@ -132,7 +132,6 @@ if nargin >= 8,
         end
         
         % include "lb" and "ub" into constraints
-        nx = size(A, 2);
         A = [A; eye(nx); -eye(nx)];
         B = [B; ub; -lb];
     end

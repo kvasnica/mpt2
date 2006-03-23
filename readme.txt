@@ -1,5 +1,5 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.0.5 16-Sep-2004
+% Version 2.6 ??-Mar-2006
 %
 % http://control.ee.ethz.ch/~mpt/
 %
@@ -33,6 +33,15 @@ subdirectories. If you are using Matlab for Windows, go to the
 up the MPT directory. Click on the "Save" button to store the updated 
 path setting. Under Unix, you can either manually edit the file 
 "startup.m", or to use the same procedure described above.
+
+You can also add the path manually by running following command on the Matlab
+prompt:
+
+  addpath(genpath('/path/to/mpt/'));
+  
+For more information regarding installation consult following page:
+
+  http://control.ee.ethz.ch/~mpt/downloads/install.php
 
 Note: don't put mpt/@polytope folder to your path manually, it is not necessary
       and may lead to wrong behavior of the toolbox.
@@ -159,7 +168,7 @@ toolbox. Two such methods - ESP and Fourier-Motzkin Elimination
 are coded in C and need to be accessible as a mex library. These
 libraries are already provided in compiled form for Linux and
 Windows. For other architectures you will need to compile the
-corresponding library on your own. To do so follow instructions in
+corresponding library on your own. To do so, follow instructions in
   mpt/solvers/esp
 and 
   mpt/solvers/fourier

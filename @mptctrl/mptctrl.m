@@ -196,6 +196,38 @@ if isfield(varargin{1}, 'Pn') & isfield(varargin{1}, 'Fi')
         ctrl.type = 'explicit';
     end
     
+elseif nargin==1 & mpt_issysstruct(varargin{1}),
+    
+    % =========================================================================
+    % input is a system structure
+
+    sysStruct = mpt_verifySysStruct(varargin{1});
+    
+    if ~isstruct(sysStruct.A),
+        sysStruct = mpt_lti2pwa(sysStruct);
+    end
+    if nnz([sysStruct.B{:}])>0,
+        error('MPTCTRL: only autonomous systems can be converted.');
+    end
+    [nx, nu, ny, ndyn, nbool, ubool, intInfo] = mpt_sysStructInfo(sysStruct);
+    
+    ctrl.sysStruct = sysStruct;
+    probStruct = struct('Q', eye(nx), 'R', eye(nu), 'N', 1, 'norm', 1, 'subopt_lev', 0);
+    ctrl.probStruct = mpt_verifyProbStruct(probStruct);
+    ctrl.details.origSysStruct = sysStruct;
+    ctrl.details.origProbStruct = probStruct;
+    
+    ctrl.Pn = polytope(intInfo.PdynX);
+    ctrl.Pfinal = ctrl.Pn;
+    ctrl.Fi = cell(1, ndyn); [ctrl.Fi{:}] = deal(zeros(nu, nx));
+    ctrl.Gi = cell(1, ndyn); [ctrl.Gi{:}] = deal(zeros(nu, 1));
+    ctrl.Ai = cell(1, ndyn); [ctrl.Ai{:}] = deal(zeros(nx, nx));
+    ctrl.Bi = cell(1, ndyn); [ctrl.Bi{:}] = deal(zeros(nx, 1));
+    ctrl.Ci = cell(1, ndyn); [ctrl.Ci{:}] = deal(0);
+    ctrl.dynamics = zeros(1, ndyn);
+    ctrl.details.runTime = 0;
+    ctrl.type = 'explicit';
+    
 elseif nargin==2 | nargin==3
     
     % =========================================================================

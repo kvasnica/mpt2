@@ -126,8 +126,12 @@ if (iscell(sysStruct.A))
     if Options.verbose>0,
         disp('Linking dynamics to regions...');
     end
+    nu = size(sysStruct.B{1}, 2);
+    FBgain = FBgain(1:nu, :);    
     for ii=1:nR
         [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
+        Fi{ii} = Fi{ii}(1:nu, :);
+        Gi{ii} = Gi{ii}(1:nu);
         for jj=1:length(sysStruct.A)          % go through all dynamics description
             if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ii}+FBgain)*x+Gi{ii})-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
                 Acell{ii}=sysStruct.A{jj}+sysStruct.B{jj}*(Fi{ii} + FBgain);
@@ -158,7 +162,7 @@ if ~isfulldim(Pninv) | isempty(dynamics)
     if Options.verbose > 0,
         fprintf('Invariant set is empty\n');
     end
-    ctrl = mptctrl;
+    invCtrl = mptctrl;
 else
     ctrl = struct(ctrl);
     invCtrl = ctrl;

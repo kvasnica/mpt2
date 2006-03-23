@@ -26,7 +26,9 @@ function ctrl=mpt_control(sysStruct,probStruct,ctrltype,Options)
 % INPUT
 % ---------------------------------------------------------------------------
 % sysStruct    - System structure in the sysStruct format
+%                (see 'help mpt_sysStruct' for more details)
 % probStruct   - Problem structure in the probStruct format
+%                (see 'help mpt_probStruct' for more details)
 % Options      - Optional: User options to be passed to individual control functions
 % Options.autoTracking
 %           If set to 0, system and problem matrices are assumed to be
