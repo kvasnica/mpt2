@@ -173,7 +173,7 @@ else
     if any(is(F, 'sigmonial')),
         error('Sigmonial constraints (e.g. 1/x <= a) not supported.');
     end
-    if is(O, 'sigmonial'),
+    if is(obj, 'sigmonial'),
         error('Sigmonial objectives not supported.');
     end
     
