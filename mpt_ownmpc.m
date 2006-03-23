@@ -170,7 +170,14 @@ else
     if ~isfield(vars, 'x') | ~isfield(vars, 'u') | ~isfield(vars, 'y'),
         error('Wrong type of fifth input argument.');
     end
-
+    if any(is(F, 'sigmonial')),
+        error('Sigmonial constraints (e.g. 1/x <= a) not supported.');
+    end
+    if is(O, 'sigmonial'),
+        error('Sigmonial objectives not supported.');
+    end
+    
+    
     % =================================================================
     % verify sysStruct and probStruct
     verOpt.ybounds_optional = 1;
