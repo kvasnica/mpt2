@@ -22,6 +22,8 @@ function handle=mpt_plotPWA(PA,Fi,Gi,Options)
 % L,C                     - cell arrays containing a PWA function
 % Options.shade           - Level of transparency (0 = fully transparent, 
 %                           1 = solid). Default: 1.
+% Options.drawnow         - Whether or not to use the drawnow command to refresh
+%                           the current plot (default is true)
 % Options.edgecolor       - specifies the color of edges. Default: 'k'.
 % Options.edgewidth       - specifies the width of edges. Default: 0.5.
 % Options.extreme_solver  - Which method to use for vertex enumeration 
@@ -101,35 +103,17 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
-if ~isfield(Options,'abs_tol')
-    Options.abs_tol=mptOptions.abs_tol;  % absolute tolerance
-end
-if ~isfield(Options, 'axis')        % axis for plot
-    Options.axis='auto';
-end
-if ~isfield(Options, 'lpsolver')        % axis for plot
-    Options.lpsolver=mptOptions.lpsolver;
-end
-if ~isfield(Options, 'extreme_solver')        % axis for plot
-    Options.extreme_solver=mptOptions.extreme_solver;
-end
-if ~isfield(Options, 'showPn')
-    Options.showPn=0;
-end
-if ~isfield(Options,'newfigure')
-    Options.newfigure=mptOptions.newfigure;
-end
-if ~isfield(Options,'samecolors')
-    Options.samecolors = 0;
-end
-    
+Options = mpt_defaultOptions(Options, ...
+    'abs_tol', mptOptions.abs_tol, ...
+    'axis', 'auto', ...
+    'lpsolver', mptOptions.lpsolver, ...
+    'extreme_solver', mptOptions.extreme_solver, ...
+    'showPn', 0, ...
+    'newfigure', mptOptions.newfigure, ...
+    'samecolors', 0, ...
+    'drawnow', 1 );
     
 index=0;
-
-% if size(Fi{1},2)~=2,
-%     disp('mpt_plotPWA: Only two-dimensional functions can be plotted!');
-%     return
-% end
 
 if Options.newfigure,
    figure;  % open new figure window
@@ -140,7 +124,6 @@ elseif ~ishold,
 end
 
 handle=[];
-
 
 maxlen=length(PA);
 
@@ -157,10 +140,11 @@ if Options.samecolors,
 end
 
 minu=Inf;
-
+plotOpt = Options;
+plotOpt.drawnow = 0;
 if dimension(PA)==1,
     if Options.showPn,
-        handle=plot(PA);
+        handle=plot(PA, plotOpt);
     end
     for ii=1:maxlen,
         [xc,rc]=chebyball(PA(ii));  % get chebyshev's radius
@@ -298,6 +282,9 @@ elseif dimension(PA)==2,
     axis tight
 end
 
+if Options.drawnow,
+    drawnow;
+end
 % If no outputs is asked, clear the variable.
 if nargout == 0;
     clear('handle');
