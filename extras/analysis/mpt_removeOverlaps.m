@@ -195,10 +195,20 @@ else
 end
 
 
+%====================================================================
+% check whether we have quadratic cost terms
+npart = length(Partition);
+Ai = {};
+for i = 1:npart,
+    Ai = cat(2, Ai, Partition{i}.Ai);
+end
+if nnz([Ai{:}])>0,
+    error('Quadratic cost terms are not allowed.');
+end
+
 
 %====================================================================
 % store length of each partition to avoid calling length(Pn) later on
-npart = length(Partition);
 nx = dimension(Partition{1}.Pn);
 PartLength = zeros(1, npart);
 for ii = 1:npart,
