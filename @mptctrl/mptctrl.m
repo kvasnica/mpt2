@@ -334,11 +334,15 @@ elseif nargin==2 | nargin==3
         % define which variables should be optimization variables
         requested_vars = [vars.u{:}];
 
-        if isfield(sysStruct, 'nonlinhandle'),
+        Fnonlin = any(~is(F, 'linear'));  % constraints are not linear
+        if isfield(sysStruct, 'nonlinhandle') | Fnonlin,
             % we have a non-linear model, we must not convert constraints into
             % MPT matrices, because it wouldn't work. instead, we keep the
             % constraints, objective and variables as they are and later solve
             % the problem using solvesdp() in mpt_getInput().
+            if ~isfield(sysStruct, 'nonlinhandle'),
+                fprintf('WARNING: Setup contains nonlinear constraints.\n');
+            end
             ctrl.details.yalmipData = struct('F', F, 'obj', obj, 'vars', vars, ...
                 'uprev_length', uprev_length, 'reference_length', reference_length);
             
