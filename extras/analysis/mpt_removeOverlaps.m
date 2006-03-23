@@ -121,6 +121,7 @@ if ~iscell(Partition)
             error('This function supports only explicit controllers!');
         end
         Partition = struct(Partition);
+        ctrlStruct = Partition;
         mptctrl_input = 1;
     end
     if ~mpt_isValidCS(Partition),
@@ -162,6 +163,11 @@ if ~iscell(Partition)
         Partition{ii}.Bi{1} = (Bi(:))';
         Partition{ii}.Ci{1} = ctrlStruct.Ci{ii};
         Partition{ii}.dynamics = ctrlStruct.dynamics(ii);
+    end
+    if mptctrl_input,
+        Partition{1}.sysStruct = ctrlStruct.sysStruct;
+        Partition{1}.probStruct = ctrlStruct.probStruct;
+        Partition{1}.details = ctrlStruct.details;
     end
 else
     Options.noSectionCheck = 0;
