@@ -117,6 +117,9 @@ end
 if ~isexplicit(ctrl)
     error('MPT_LYAPUNOV: Cannot compute a Lyapunov function for on-line controllers!');
 end
+if ctrl.overlaps,
+    error('MPT_LYAPUNOV: Controller regions overlap, use mpt_removeOverlaps first!');
+end
 
 if isstruct(ndeg),
     Options = ndeg;
