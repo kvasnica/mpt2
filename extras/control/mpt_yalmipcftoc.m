@@ -1379,7 +1379,7 @@ function out = sub_check_nonlinearity(expression)
 % we currently reject sigmonial expressions, such as x/u
 
 out = '';
-if any(is(expression, 'sigmonial')),
+if any(is(set(expression), 'sigmonial')),
     out = 'Only polynomial nonlinearities are allowed.';
 end
 
