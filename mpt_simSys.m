@@ -123,7 +123,7 @@ for ii=1:size(inU,1),
                     % we are inside of this dynamics
                     xnext = feval(sysStruct.nonlinhandle, 'state', x0, U, idyn);
                     y = feval(sysStruct.nonlinhandle, 'output', x0, U, idyn);
-                    dyn = guard;
+                    dyn = idyn;
                     break
                 end
             end
