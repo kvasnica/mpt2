@@ -733,6 +733,18 @@ for k = N-1:-1:1
                     iN, i, func2str(SST{k}.nonlinhandle), iN, iNu, i);
                 guardeq = feval(SST{k}.nonlinhandle, 'guards', x{k}, u{ku}, i);
                 error(sub_check_nonlinearity(guardeq));
+                
+                % we must bound the guards, otherwise YALMIP would give a nasty
+                % warning, because bounds are not auto-propagated to
+                % "constraint" objects.
+                %
+                % It would be possible to derive tighter bounds, but we
+                % don't do it, becauase it's plain pain in the ass. One would
+                % basically need to recover the nonlinear function from the
+                % "guardeq" object and then do an exhaustive enumeration by
+                % plugging in bounds on individual variables which appear in a
+                % given (possibly nonlinear) constraint.
+                bounds(sdpvar(guardeq), -mptOptions.infbox, mptOptions.infbox);
                 F = F + set(implies(d{k}(i), guardeq), tag);
             end
             
