@@ -535,7 +535,7 @@ elseif isa(obj, 'function_handle'),
     end
     
     % copy fields which are defined
-    F = {'xmax', 'xmin', 'ymax', 'ymin', 'umax', 'umin', 'dumax', 'dumin', 'Uset'};
+    F = {'xmax', 'xmin', 'ymax', 'ymin', 'umax', 'umin', 'dumax', 'dumin', 'Uset', 'Ts'};
     for i = 1:length(F),
         if isfield(info, F{i}),
             value = getfield(info, F{i});
