@@ -973,6 +973,10 @@ if Options.yalmip_online,
     if uprev_used,
         variables.uprev = uprev;
     end
+    % remember that this setup corresponds to an on-line controller    
+    variables.type = 'online';
+else
+    variables.type = 'explicit';
 end
 
 if Options.dont_solve,

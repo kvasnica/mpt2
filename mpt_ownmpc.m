@@ -77,7 +77,7 @@ Options = mpt_defaultOptions(Options, ...
     'dp', 0);
 
 % by default we compute an explicit controller
-ctrltype = 'explicit';
+ctrltype = '';
 designphase = 1;
 sysStruct = varargin{1};
 probStruct = varargin{2};
@@ -193,7 +193,12 @@ else
 
     
     % =================================================================
-    % generate an on-line controller
+    % look whether we have to generate an on-line controller
+    if isempty(ctrltype),
+        ctrltype = mpt_defaultField(vars, 'type', 'explicit');
+    else
+        ctrltype = lower(ctrltype);
+    end
     if isequal(lower(ctrltype), 'online') | isequal(lower(ctrltype), 'on-line'),
         % we need the following special setting for on-line controllers
         Options.yalmip_data.constraints = F;
