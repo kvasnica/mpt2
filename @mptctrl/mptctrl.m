@@ -209,6 +209,9 @@ elseif nargin==1 & mpt_issysstruct(varargin{1}),
     if nnz([sysStruct.B{:}])>0,
         error('MPTCTRL: only autonomous systems can be converted.');
     end
+    if isfield(sysStruct, 'nonlinhandle'),
+        error('MPTCTRL: nonlinear systems cannot be converted.');
+    end
     [nx, nu, ny, ndyn, nbool, ubool, intInfo] = mpt_sysStructInfo(sysStruct);
     
     ctrl.sysStruct = sysStruct;
