@@ -267,6 +267,9 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
 
         %==================================================================
         % prepare constraints, plug in the parametric variables
+        if length(x0(:)) ~= size(M.E, 2),
+            error(sprintf('Wrong dimension of x0 (expecting %d elements)', size(M.E, 2)));
+        end
         nvars = size(M.G, 2);
         nparams = length(M.param_var);
         A = M.G;
