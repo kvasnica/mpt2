@@ -552,6 +552,7 @@ for k = N-1:-1:1
     if k > Nc,
         % block u_k, k=Nc+1..N to be equal to u_Nc
         ku = Nc;
+        sub_setbounds('u', u{k}, SST{k}, haveUbounds(k), soften, smax, bigM_used);        
     else
         % otherwise u_k is a free variable
         ku = k;
