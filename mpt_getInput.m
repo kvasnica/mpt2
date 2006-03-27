@@ -494,8 +494,15 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     end
     
     nu = ctrl.details.dims.nu;
-    
-    if ~Options.openloop & feasible,
+    % if control horizon was used, make sure that we have the full open-loop
+    % optimizer at disposal (if mpt_yalmipcftoc() was used to do move blocking,
+    % the optimizer would just consist of free control moves, therefore we add
+    % the remaining manipulated variables at the end)
+    if isfield(probStruct, 'Nc') & (length(U(:)) < probStruct.N*nu),
+        ulast = U(end-nu+1:end);
+        U = [U; repmat(ulast, probStruct.N-probStruct.Nc, 1)];
+    end
+    if Options.openloop==0,
         U = U(1:nu);
     end
 
@@ -727,6 +734,15 @@ if isfield(ctrlStruct.probStruct,'deltablocking'),
         
         U=u;
     end
+end
+
+% if control horizon was used, make sure that we have the full open-loop
+% optimizer at disposal (if mpt_yalmipcftoc() was used to do move blocking,
+% the optimizer would just consist of free control moves, therefore we add
+% the remaining manipulated variables at the end)
+if isfield(ctrl.probStruct, 'Nc') & (length(U(:)) < ctrl.probStruct.N*nu),
+    ulast = U(end-nu+1:end);
+    U = [U; repmat(ulast, ctrl.probStruct.N-ctrl.probStruct.Nc, 1)];
 end
 
 if ~Options.openloop
