@@ -132,6 +132,8 @@ end
 
 % ============================================================================
 % verify system/problem structures
+origSysStruct_notverified = sysStruct;
+origProbStruct_notverified = probStruct;
 if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt = Options;
     verOpt.verbose=1;
@@ -500,6 +502,16 @@ if canuse_yalmip & canuse_mpt,
 end
 
 if isequal(method_used, 'mpt')
+    % previously we have verified user input with Options.useyalmip=1 which may
+    % disable some important checks which have to be performed if MPT-based
+    % function are to be used. therefore we verify the structures once again
+    % with Options.useyalmip disabled.
+    verOpt = Options;
+    verOpt.verbose = -1;
+    verOpt.useyalmip = 0;
+    [sysStruct,probStruct]=mpt_verifySysProb(origSysStruct_notverified, ...
+        origProbStruct_notverified, verOpt);
+    
     % we need to deal with tracking or feedback pre-stabilization if we call
     % MPTs native functions
     % (note that tracking is handled directly in mpt_yalmipcftoc())
