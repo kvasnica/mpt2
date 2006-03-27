@@ -135,6 +135,7 @@ end
 if ~isfield(sysStruct,'verified') | ~isfield(probStruct,'verified'),
     verOpt = Options;
     verOpt.verbose=1;
+    verOpt.useyalmip = 1;
     [sysStruct,probStruct]=mpt_verifySysProb(sysStruct,probStruct,verOpt);
 end
 
@@ -181,6 +182,10 @@ elseif iscell(userSysStruct),
     nompt_because = 'time-varying model';
 elseif isfield(sysStruct, 'nonlinhandle'),
     nompt_because = 'non-linear dynamics';
+elseif iscell(sysStruct.A) & isfield(probStruct, 'Nc'),
+    nompt_because = 'control horizon for PWA systems';
+elseif probStruct.norm~=2 & isfield(probStruct, 'Nc'),
+    nompt_because = 'control horizon with linear cost';
 end
 
 

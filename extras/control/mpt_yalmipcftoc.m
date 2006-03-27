@@ -185,7 +185,9 @@ verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move block
 verOpt.verbose = 1;
 verOpt.ybounds_optional = 1;
 verOpt.useyalmip = 1;  % to tell mpt_verifyProbStruct we can deal with move blocking
-pst = probStruct; orig_pst = mpt_verifyProbStruct(probStruct, struct('verbose', -1));
+pst = probStruct; 
+verOpt2 = verOpt; verOpt2.verbose = -1;
+orig_pst = mpt_verifyProbStruct(probStruct, verOpt2);
 for ii = 1:length(SST),
     if ~isfield(SST{ii}, 'verified') | ~isfield(probStruct, 'verified'),
         [SST{ii}, pst] = mpt_verifySysProb(SST{ii}, probStruct, verOpt);
