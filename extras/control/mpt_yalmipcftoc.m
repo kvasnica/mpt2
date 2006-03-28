@@ -969,6 +969,15 @@ end
 if haveMLD,
     variables.z = z;
 end
+if soften.x,
+    variables.sx = slacks.x;
+end
+if soften.y,
+    variables.sy = slacks.y;
+end
+if soften.u,
+    variables.su = slacks.u(1:Nc);
+end
 if Options.yalmip_online,
     if probStruct.tracking > 0,
         variables.ref = reference;
