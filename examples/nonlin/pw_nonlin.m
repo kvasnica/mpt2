@@ -1,18 +1,9 @@
 function sys = pw_nonlin(flag, x, u, mode)
-% Duffing Oscilator example (nonlinear system)
+% Example of an piecewise nonlinear model:
 %
-% Example taken from:
-% @InProceedings { FotEtal:2006:IFA_2224,
-%     author={I.A. Fotiou and Ph. Rostalski and B. Sturmfels and M. Morari},
-%     title={{An algebraic geometry approach to nonlinear parametric
-% 	  optimization in control}},
-%     booktitle={American Control Conference},
-%     pages={},
-%     year={2006},
-%     address={},
-%     month=jun,
-%     url={http://control.ee.ethz.ch/index.cgi?page=publications;action=details;id=2224}
-% }
+% x(k+1) = A1*x + B1*u    if x'*x <= 1
+% x(k+1) = A2*x + B2*u    if x'*x >= 1
+%   y(k) = C*x
 
 ispiecewise = (nargin > 3);
 Ts = 1;
