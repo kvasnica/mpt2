@@ -14,11 +14,8 @@ sysStruct.A = sysStruct.A - sysStruct.B*K;
 % Then we set the B matrices to zero to indicate that this system is autonumous
 sysStruct.B = zeros(2, 1);
 
-% Then we convert the system structure into a dummy controller
-ctrl = mptctrl(sysStruct);
-
-% Now we can analyze the stability
-lyap = mpt_lyapunov(ctrl, 'pwq');
+% Try to calculate a Piecewise Quadratic Lyapunov function
+lyap = mpt_lyapunov(sysStruct, 'pwq');
 
 % PWQ Lyapunov function was found, the system is stable
 lyap.details.lyapunov.feasible
