@@ -643,7 +643,7 @@ for k = N-1:-1:1
     
     %===============================================================================
     % state constraints
-    if haveXbounds(k),
+    if haveXbounds(k) & k < N-1,
         xmin = SST{k}.xmin - slacks.all{k} - slacks.x{k};
         xmax = SST{k}.xmax + slacks.all{k} + slacks.x{k};
         tag = sprintf('xmin < x_%d < xmax', iN);
@@ -652,11 +652,21 @@ for k = N-1:-1:1
         end        
         F = F + set(xmin < x{k} < xmax, tag);
     end
-
+    if k==N-1 & haveXbounds(k+1),
+        % add state constraints on x_N
+        xmin = SST{k+1}.xmin - slacks.all{k+1} - slacks.x{k+1};
+        xmax = SST{k+1}.xmax + slacks.all{k+1} + slacks.x{k+1};
+        tag = sprintf('xmin < x_%d < xmax', iN+1);
+        if soften.x,
+            tag = [tag ' (soft)'];
+        end        
+        F = F + set(xmin < x{k+1} < xmax, tag);
+    end
+        
     
     %===============================================================================
     % output constraints
-    if haveYbounds(k),
+    if haveYbounds(k) & (k > 1 | probStruct.y0bounds==1),
         % soften constraints if necessary
         ymin = SST{k}.ymin - slacks.all{k} - slacks.y{k};
         ymax = SST{k}.ymax + slacks.all{k} + slacks.y{k};
@@ -664,10 +674,7 @@ for k = N-1:-1:1
         if soften.y,
             tag = [tag ' (soft)'];
         end
-        if k > 1 | probStruct.y0bounds==1,
-            % do not impose constraints on y0 if user does not want to
-            F = F + set(ymin < y{k} < ymax, tag);
-        end        
+        F = F + set(ymin < y{k} < ymax, tag);
     end
     
     
