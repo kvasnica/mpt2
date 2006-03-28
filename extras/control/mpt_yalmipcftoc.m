@@ -961,7 +961,7 @@ for k = N-1:-1:1
 end
 
 variables.x = x;
-variables.u = u;
+variables.u = u(1:Nc);
 variables.y = y;
 if havePWA | haveMLD | haveNONLIN,
     variables.d = d;
