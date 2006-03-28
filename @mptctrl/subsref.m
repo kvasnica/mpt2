@@ -15,6 +15,9 @@ function fval = subsref(ctrl, X)
 %    e.g. "ctrl.Pn" returns the polyhedral partition of the controller. Type
 %    'struct(ctrl)' to see all accessible fields.
 %
+% If a vector of NaNs is returned, the problem is infeasible for a given value
+% of the initial state x0.
+%
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
@@ -71,7 +74,10 @@ if evalindex,
         Options = [];
     end
     try
-        fval = mpt_getInput(ctrl, x0, Options);
+        [fval, feasible] = mpt_getInput(ctrl, x0, Options);
+        if ~feasible,
+            fval = NaN*fval;
+        end
     catch
         rethrow(lasterror);
     end
