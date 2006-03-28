@@ -21,10 +21,23 @@ x0 = [2.5; 1];
 Tfinal = 3;
 simsteps = Tfinal / sysStruct.Ts;
 
+% For safety, monitor what is happening in YALMIP
+Options.verbose = 2;
+
 % use a local nonlinear solver
 Options.nlsolver = 'local';
 
 % simulate and plot the closed-loop trajectory
+simplot(ctrl, x0, simsteps, Options);
+
+figure
+
+% use YALMIPs global nonlinear solver
+Options.nlsolver = 'global';
+Options.lowersolver = 'cdd';
+Options.nliter = 5;
+
+% This takes longer time but aims at a globally optimal solution
 simplot(ctrl, x0, simsteps, Options);
 
 echo off
