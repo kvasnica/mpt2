@@ -107,6 +107,9 @@ end
 if probStruct.subopt_lev > 0,
     error('mpt_optControl: This is an OPTIMAL control function, probStruct.subopt_lev must be 0 !');
 end
+if isinf(probStruct.N),
+    error('Prediction horizon must be finite for this function.');
+end
 
 horizon=probStruct.N;
 
