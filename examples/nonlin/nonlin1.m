@@ -1,3 +1,4 @@
+clear sysStruct probStruct Options
 close all
 echo on
 
@@ -16,14 +17,12 @@ probStruct.N = 3;
 ctrl = mpt_control(sysStruct, probStruct, 'online');
 
 % simulate the closed-loop system for a period of 10 seconds
-Options.nlsolver = 'local';
-
-% you can also use a "global" solver which is slower, but gives higher chance of
-% finding global optima
-%   Options.nlsolver = 'global';
 x0 = [2.5; 1];
 Tfinal = 3;
 simsteps = Tfinal / sysStruct.Ts;
+
+% use a local nonlinear solver
+Options.nlsolver = 'local';
 
 % simulate and plot the closed-loop trajectory
 simplot(ctrl, x0, simsteps, Options);
