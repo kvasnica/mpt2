@@ -81,7 +81,6 @@ error(nargchk(3,4,nargin));
 if ~isa(PA,'polytope')
     error('mpt_plotPWA: First input argument MUST be a polytope');
 end
-
 if nargin<4,
     Options=[];
 end
@@ -89,8 +88,7 @@ end
 if ~iscell(Fi),
     error('mpt_plotPWA: Second argument must be a cell array!');
 end
-
-if ~iscell(Fi),
+if ~iscell(Gi),
     error('mpt_plotPWA: Third argument must be a cell array!');
 end
 
@@ -111,8 +109,15 @@ Options = mpt_defaultOptions(Options, ...
     'showPn', 0, ...
     'newfigure', mptOptions.newfigure, ...
     'samecolors', 0, ...
+    'rowindex', 1, ...
     'drawnow', 1 );
-    
+
+% users can decide which line of Fi,Gi they want to consider
+for i = 1:length(Fi),
+    Fi{i} = Fi{i}(Options.rowindex, :);
+    Gi{i} = Gi{i}(Options.rowindex, :);
+end
+
 index=0;
 
 if Options.newfigure,
