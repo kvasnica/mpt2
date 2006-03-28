@@ -1316,6 +1316,8 @@ end
 function [soften, slacks, smax, sweights] = sub_prepareslacks(probStruct, N, haveXbounds, haveYbounds, dims)
 % introduce slack variables for soft constraints if necessary
 
+global mptOptions
+
 soften = struct('all', 0, 'x', 0, 'u', 0, 'y', 0);
 smax = struct('all', 0, 'x', 0, 'u', 0, 'y', 0);
 sweights = struct('all', 0, 'x', 0, 'u', 0, 'y', 0);
@@ -1330,7 +1332,7 @@ if isfield(probStruct, 'S') | isfield(probStruct, 'smax'),
     slacks.all = sub_cellsdpvar(1, N);
     soften.all = 1;
     % upper bound on this slack
-    smax.all = mpt_defaultField(probStruct, 'smax', Inf);
+    smax.all = mpt_defaultField(probStruct, 'smax', mptOptions.infbox);
     % penalty on slacks
     sweights.all = mpt_defaultField(probStruct, 'S', 1e3);
     
@@ -1343,7 +1345,8 @@ else
             slacks.x = sub_cellsdpvar(dims.nx, N);
             soften.x = 1;
             % upper bound on this slack
-            smax.x = mpt_defaultField(probStruct, 'sxmax', Inf);
+            smax.x = mpt_defaultField(probStruct, 'sxmax', mptOptions.infbox);
+            for i = 1:length(slacks.x), bounds(slacks.x{i}, 0, smax.x); end
             % penalty on slacks
             sweights.x = mpt_defaultField(probStruct, 'Sx', 1e3);
         end
@@ -1356,7 +1359,8 @@ else
             slacks.y = sub_cellsdpvar(dims.ny, N-1);
             soften.y = 1;
             % upper bound on this slack
-            smax.y = mpt_defaultField(probStruct, 'symax', Inf);
+            smax.y = mpt_defaultField(probStruct, 'symax', mptOptions.infbox);
+            for i = 1:length(slacks.y), bounds(slacks.y{i}, 0, smax.y); end
             % penalty on slacks
             sweights.y = mpt_defaultField(probStruct, 'Sy', 1e3);
         end
@@ -1366,7 +1370,8 @@ else
         slacks.u = sub_cellsdpvar(dims.nu, N-1);
         soften.u = 1;
         % upper bound on this slack
-        smax.u = mpt_defaultField(probStruct, 'sumax', Inf);
+        smax.u = mpt_defaultField(probStruct, 'sumax', mptOptions.infbox);
+        for i = 1:length(slacks.u), bounds(slacks.u{i}, 0, smax.u); end
         % penalty on slacks
         sweights.u = mpt_defaultField(probStruct, 'Su', 1e3);
     end
