@@ -214,6 +214,9 @@ for ii = 1:length(SST),
 end
 probStruct = pst;
 sysStruct = SST{1};
+if probStruct.subopt_lev > 0,
+    error('Suboptimal strategies not supported by this function.');
+end
 
 
 %===============================================================================
