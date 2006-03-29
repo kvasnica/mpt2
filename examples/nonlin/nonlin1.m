@@ -34,8 +34,18 @@ figure
 
 % use YALMIPs global nonlinear solver
 Options.nlsolver = 'global';
+
+% use fmincon as the upper bound solver (set this option to 'none' if you don't
+% have fmincon installed)
+Options.uppersolver = 'fmincon';
+
+% with a quadratic objective, a QP lower bound solver is recommended
+% (testing indicates that CLP is prefered). However, since CLP only is
+% available in the Windows distribution, we use the LP solver CDD instead
 Options.lowersolver = 'cdd';
-Options.nliter = 5;
+
+% Stop the branch-and-bound tree early
+Options.nliter = 15;
 
 % This takes longer time but aims at a globally optimal solution
 simplot(ctrl, x0, simsteps, Options);
