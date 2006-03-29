@@ -1,15 +1,18 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.6 ??-Mar-2006
+% Version 2.6 30-Mar-2006
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
 
-Version 2.6 (??-Mar-2006)
+Version 2.6 (30-Mar-2006)
 -------------------------
 
 [NEW] "Design your own MPC" function. see 'help mpt_ownmpc' for details
+
+[NEW] on-line MPC for nonlinear and piecewise nonlinear systems
+(see 'help mpt_nonlinfcn')
 
 [NEW] support for soft constraints
 (see 'help mpt_yalmipcftoc' for details)
