@@ -646,7 +646,7 @@ for k = N-1:-1:1
     
     %===============================================================================
     % state constraints
-    if haveXbounds(k) & k < N-1,
+    if haveXbounds(k),
         xmin = SST{k}.xmin - slacks.all{k} - slacks.x{k};
         xmax = SST{k}.xmax + slacks.all{k} + slacks.x{k};
         tag = sprintf('xmin < x_%d < xmax', iN);
