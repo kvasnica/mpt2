@@ -710,7 +710,7 @@ for k = N-1:-1:1
             tag = sprintf('x_%d == A*x_%d + B*u_%d', iN+1, iN, iNu);
             F = F + set(x{k+1} == SST{k}.A{1}*x{k} + SST{k}.B{1}*u{ku}, tag);
             
-            tag = sprintf('y_%d == C*x_%d + D*u_%d', iN+1, iN, iNu);
+            tag = sprintf('y_%d == C*x_%d + D*u_%d', iN, iN, iNu);
             F = F + set(y{k} == SST{k}.C{1}*x{k} + SST{k}.D{1}*u{ku}, tag);
 
         case 'nonlin',
