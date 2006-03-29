@@ -41,6 +41,9 @@ function [U,feasible,region,cost,details]=mpt_getInput(ctrl,x0,Options)
 % Options.MaxSQPIter - Maximum number of iterations for fmincon. If your
 %                      nonlinear optimization seems to be stuck, try to set this
 %                      number to something like 1e3.
+% Options.lowersolver - Lower bound solver for YALMIP (e.g. 'cdd', 'glpk', 'clp')
+% Options.uppersolver - Upper bound solver for YALMIP (e.g. 'fmincon', 'none')
+%                       Set Options.uppersolver='none' if you don't have fmincon
 %
 % Note: If Options is missing or some of the fields are not defined, the default
 %       values from mptOptions will be used
@@ -132,6 +135,7 @@ Options = mpt_defaultOptions(Options, ...
     'useXU', 0, ...
     'nlsolver', 'global', ...
     'lowersolver', '', ...
+    'uppersolver', '', ...
     'nliter', 10, ...
     'MaxSQPIter', 'auto', ...
     'lpsolver', mptOptions.lpsolver, ...
@@ -215,7 +219,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         if isequal(Options.nlsolver, 'global'),
             % switch to a global solver. WARNING! global solvers are extremely
             % slow!
-            yalmipOptions = sdpsettings(yalmipOptions, 'solver', 'bmibnb');
+            yalmipOptions.solver = 'bmibnb';
         end
         if isequal(Options.MaxSQPIter, 'auto'),
             % automatically set this option based on the precise number of
@@ -225,12 +229,12 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             nineqs = length(unique([depends(F) depends(obj)]));
             Options.MaxSQPIter = 5*max(nvars, nineqs);
         end
-        yalmipOptions = sdpsettings(yalmipOptions, ...
-            'convertconvex', Options.convertconvex, ...
-            'verbose', Options.verbose, ...
-            'fmincon.MaxSQPIter', Options.MaxSQPIter, ...
-            'bmibnb.lowersolver', Options.lowersolver, ...
-            'bmibnb.maxiter', Options.nliter );
+        yalmipOptions.convertconvexquad = Options.convertconvex;
+        yalmipOptions.verbose = Options.verbose;
+        yalmipOptions.fmincon.MaxSQPIter = Options.MaxSQPIter;
+        yalmipOptions.bmibnb.lowersolver = Options.lowersolver;
+        yalmipOptions.bmibnb.uppersolver = Options.uppersolver;
+        yalmipOptions.bmibnb.maxiter = Options.nliter;
         
         starttime = cputime;
         diagnost = solvesdp(F, obj, yalmipOptions);
