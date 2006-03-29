@@ -3,7 +3,7 @@ close all
 echo on
 
 % import a nonlinear system
-sysStruct = mpt_sys(@duffing_oscilator);
+sysStruct = mpt_sys(@duffing_oscillator);
 
 % penalize quadratic cost objective
 probStruct.norm = 2;

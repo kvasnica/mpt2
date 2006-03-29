@@ -1,5 +1,5 @@
-function sys = duffin_oscilator(flag, x, u, mode)
-% Duffing Oscilator example (nonlinear system)
+function sys = duffing_oscillator(flag, x, u, mode)
+% Duffing Oscillator example (nonlinear system)
 %
 % Example taken from:
 % @InProceedings { FotEtal:2006:IFA_2224,
