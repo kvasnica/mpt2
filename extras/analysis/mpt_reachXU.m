@@ -106,7 +106,7 @@ if Options.userange,
     if det(Acl) < mptOptions.abs_tol,
         Options.userange = 0;
         disp('Mapping is lower-dimensional, switching to vertex based method...');
-        [Xn, V] = mpt_reachXU(X0, U0, A, B, f, Options)
+        [Xn, V] = mpt_reachXU(X0, U0, A, B, f, Options);
         return
     end
     R = range(XU, Acl, fcl);

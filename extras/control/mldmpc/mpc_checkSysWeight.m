@@ -63,7 +63,7 @@
 %
 %===============================================================================
 
-function [S, W] = mcp_checkSysWeight(S, W, verbose)
+function [S, W] = mpc_checkSysWeight(S, W, verbose)
 
 if ~iscell(S), 
     % define it as a cell structure

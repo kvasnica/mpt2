@@ -368,7 +368,7 @@ elseif isa(obj, 'char')
                         parameters{ip}));
                 end
                 if ~isa(param_value, 'double')
-                    error(sprintf('MPT_SYS: parameter ''%s'' must be a double!', paramater{ip}));
+                    error(sprintf('MPT_SYS: parameter ''%s'' must be a double!', paramaters{ip}));
                 end
                 params = setfield(params, parameters{ip}, param_value);
             end
@@ -607,11 +607,6 @@ if ~strcmpi(itype, 'sysStruct') & nargin==1,
 end
 
 return
-
-
-if rem(nargs, 2)~=0,
-    error('MPT_SYS: object properties must form a pair ''PropertyName'', PropertyValue !');
-end
 
 
 %====================================================================

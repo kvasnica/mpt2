@@ -1,4 +1,4 @@
-function mpt_exportc(ctrl, fname)
+function mpt_exportST(ctrl, fname)
 %MPT_EXPORTST Exports a search tree to C code
 %
 % mpt_exportST(ctrl, fname)

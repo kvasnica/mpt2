@@ -269,7 +269,8 @@ else
     else
         if isempty(sol),
             ctrl = mptctrl;
-            fprintf('The problem is infeasible.\n', diagnost.info);
+            fprintf('The problem is infeasible:\n');
+            diagnost.info
         end
         
         if probStruct.norm==2,

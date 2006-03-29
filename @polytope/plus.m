@@ -267,10 +267,3 @@ else
     R=hull(V,Options);
     return;
 end
-return
-
-% Example:
-p1=polytope([eye(2);-eye(2)],[0;0;1;1]);
-p2=polytope([eye(2);-eye(2)],[1;1;0;0]);
-q=polytope([eye(2);-eye(2);],[.1;.1;.1;.1]);
-plot([[p1 p2]+q p1 p2 q]);

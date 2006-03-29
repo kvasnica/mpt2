@@ -421,6 +421,7 @@ if Options.openloop & ~isfield(ctrlStruct.details,'Horizon')
             % LTI system,
             dyn = 1;
         else
+            nPWA = length(sysStruct.A);
             for dd=1:nPWA,
                 if max(sysStruct.guardX{dd}*x0+sysStruct.guardU{dd}*U_OL-sysStruct.guardC{dd})<Options.abs_tol,    
                     % check which dynamics is active in the region
