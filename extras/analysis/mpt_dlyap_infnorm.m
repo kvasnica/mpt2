@@ -1,7 +1,7 @@
-function [W,fail,Q] = mpt_dlyap_infnorm(A,Options)
+function [W,fail,Q,CPU] = mpt_dlyap_infnorm(A,Options)
 % Lyapunov equation with inf-norm for discrete-time LTI systems
 %
-%  [W,fail,Q] = mpt_dlyap_infnorm(A,Options)
+%  [W,fail,Q,cpu] = mpt_dlyap_infnorm(A,Options)
 %
 %
 % ---------------------------------------------------------------------------
@@ -12,16 +12,14 @@ function [W,fail,Q] = mpt_dlyap_infnorm(A,Options)
 %  .abs_tol        absolute tolerance (default mptOptions.abs_tol)
 %  .lpsolver       equivalent to the MPT settings (default mptOptions.lpsolver)
 %  .complexW       if 1, a complex W is allowed. (default 0)
-%  .minimal        if 1 (default), the minimal size real W is computed (iteration), 
-%                  otherwise a one-shot way to compute a real W is chosen (often
-%                  faster)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
 % --------------------------------------------------------------------------- 
-% O:   W      final penalty marix of J(x)= ||W x||_inf
-%      fail   if 0, found a solution
-%      Q      find W and Q such that, W*A - Q*W = 0 and ||Q||_inf <1
+% O:   W       final penalty marix of J(x)= ||W x||_inf
+%      fail    if 0, found a solution
+%      Q       find W and Q such that, W*A - Q*W = 0 and ||Q||_inf <1
+%      cpu     CPU time
 %
 %
 % see also  MPT_NORM2PWA   MPT_LYAPUNOV
@@ -57,7 +55,7 @@ function [W,fail,Q] = mpt_dlyap_infnorm(A,Options)
 %
 % ---------------------------------------------------------------------------
 
-% 2006-01-30, fjc
+% 2006-03-14, fjc
 
 global mptOptions
 if ~isstruct(mptOptions)
@@ -78,14 +76,15 @@ if ~isfield(Options,'lpsolver')
     Options.lpsolver = mptOptions.lpsolver;
 end
 if ~isfield(Options,'method_complexpair')
-    Options.method_complexpair = 'fjc';
-    % alternative: yalmip 
-    %              (bad for eigenvalues close to stabolity boundary!!)
+    Options.method_complexpair = 'algebraic';
+    % alternative: fjc     (simple/effective LP based iteration)
+    %              yalmip  (bad for eigenvalues close to stabolity boundary!!)
 end
 if ~isfield(Options,'complexW')
     Options.complexW = 0;
 end
 if ~isfield(Options,'minimal')
+    %  .minimal        if 1 (default), the minimal size real W is computed (iteration),
     Options.minimal = 1;
 end
 
@@ -98,6 +97,8 @@ fail  = 1;
 n     = size(A,1);
 [V,lamA] = eig(A);
 eigA  = diag(lamA).';
+
+t0 = cputime;
 
 if any(abs(eigA) >= 1 )
     disp('Discrete-time system is unstable, i.e. V(x) does not exist.')
@@ -242,6 +243,9 @@ if n>200
     Q = full(Q);
 end
 
+
+CPU = cputime -t0;
+
 return
 
 
@@ -357,8 +361,13 @@ function [W_ab, Q_ab] = complexpair(A_ab,Options)
 %find m_ab
 % to solve: W_ab*A_ab = Q_ab*W_ab, ||Q_ab||_inf < 1
 
-alpha = atan(A_ab(1,2)/A_ab(1,1));
 r = norm([A_ab(1,1) A_ab(1,2)]);
+if A_ab(1,1) ~= 0
+    alpha = atan(abs(A_ab(1,2)/A_ab(1,1)));
+else
+    alpha = pi/2;
+end
+
 
 m = 2;
 m_max = ceil(pi/(acos(r)*2));
@@ -377,78 +386,120 @@ if m_max==2
     W_ab = eye(2);
     Q_ab = A_ab;
     
-else
+else % iteration over m
     
-    if strcmp(Options.method_complexpair, 'yalmip')
-        sdp_opt = sdpsettings('verbose',0,'solver','nag');
-       % sdp_opt = sdpsettings('verbose',1);
-    end
-    
-    ok_flag = 0;
-    while m <= m_max
+    if strcmp(Options.method_complexpair, 'algebraic')    % method by FJC
+        
+        ok_flag = 0;
+        while m <= m_max
+                        
+            k_low = floor(alpha*m/pi);
+            % k_up  = k_low +1;
+            
+            % phi_low = k_low*pi/m;
+            % phi_up  = k_up*pi/m;
+            
+            % rt = [cos(alpha) -cos(phi_low)+cos(phi_up); ...
+            %      sin(alpha) -sin(phi_low)+sin(phi_up)]\[cos(phi_up);sin(phi_up)];
+            
+            rr = cos(pi/(2*m)) / cos(alpha - pi/(2*m)*(2*k_low+1));
+            
+            % if rt(1)<r | rt(2)<0 | rt(2)>1
+            
+            if rr < r
+                m = m+1;
+            else
+                ok_flag = 1;
+                break
+            end
+        end
         
         ww   = [0:m-1]*pi/m;
         W_ab = [cos(ww') sin(ww')];
         
+        Aeq = [[W_ab' -W_ab']; ones(1,2*m)];
+        Beq = [A_ab(1,1) A_ab(1,2) 1]';
+                
+        AA = [-eye(2*m)];
+        BB = [zeros(2*m,1)-Options.abs_tol/(2*m)];
+                
+        [t,fval,lambda,exitflag,how]=mpt_solveLP(zeros(2*m,1),AA,BB,...
+            Aeq,Beq,[],Options.lpsolver);
+        
+    else % solving via LP/optimization
+        
         if strcmp(Options.method_complexpair, 'yalmip')
-            % bad for eigenvalues close to stabolity boundary!!
+            sdp_opt = sdpsettings('verbose',0,'solver','nag');
+            % sdp_opt = sdpsettings('verbose',1);
+        end
+        
+        ok_flag = 0;
+        while m <= m_max
             
-            x = sdpvar(m,1);
-
-            % construct the structure of Q_ab explicitly
-            Q_ab = zeros(m);
-            for kk = 1:m
-                Q_ab = Q_ab + diag(x(kk)*ones(1,m-kk+1),kk-1);
-            end%kk
-
-            for kk = 2:m
-                Q_ab = Q_ab - diag(x(kk)*ones(1,kk-1),-m+kk-1);
-            end%kk
-
-            % alternative
-            %  Q_ab = sdpvar(m,m,'full');
+            ww   = [0:m-1]*pi/m;
+            W_ab = [cos(ww') sin(ww')];
             
-            %            F = set(W_ab*A_ab==Q_ab*W_ab) + set(norm(Q_ab,inf)<1 - Options.abs_tol);
-            F = set(W_ab*A_ab==Q_ab*W_ab) + set(norm(x,1)<1 - Options.abs_tol);
-            sdp_info = solvesdp(F,[],sdp_opt);
-            
-            if sdp_info.problem==0
-                ok_flag = 1;
-                break
-            else
-                m = m +1;
-            end
-            
-        else
-            % method by FJC
-            
-            Aeq = [[W_ab' -W_ab']; ones(1,2*m)];
-            Beq = [A_ab(1,1) A_ab(1,2) 1]';
-            
-            AA = [-eye(2*m)];
-            BB = [zeros(2*m,1)-Options.abs_tol/(2*m)];
-            
-            [t,fval,lambda,exitflag,how]=mpt_solveLP(zeros(2*m,1),AA,BB,...
-                Aeq,Beq,[],Options.lpsolver);
-                            
-                if strcmp(how,'ok')
+            if strcmp(Options.method_complexpair, 'yalmip')
+                % bad for eigenvalues close to stabolity boundary!!
+                
+                x = sdpvar(m,1);
+                
+                % construct the structure of Q_ab explicitly
+                Q_ab = zeros(m);
+                for kk = 1:m
+                    Q_ab = Q_ab + diag(x(kk)*ones(1,m-kk+1),kk-1);
+                end%kk
+                
+                for kk = 2:m
+                    Q_ab = Q_ab - diag(x(kk)*ones(1,kk-1),-m+kk-1);
+                end%kk
+                
+                % alternative
+                %  Q_ab = sdpvar(m,m,'full');
+                
+                %            F = set(W_ab*A_ab==Q_ab*W_ab) + set(norm(Q_ab,inf)<1 - Options.abs_tol);
+                F = set(W_ab*A_ab==Q_ab*W_ab) + set(norm(x,1)<1 - Options.abs_tol);
+                sdp_info = solvesdp(F,[],sdp_opt);
+                
+                if sdp_info.problem==0
                     ok_flag = 1;
                     break
                 else
-                    m = m+1;
+                    m = m +1;
                 end
-        end%IF: method
-    end% WHILE: m_ab
+                
+            else
+                % method by FJC
+                
+                Aeq = [[W_ab' -W_ab']; ones(1,2*m)];
+                Beq = [A_ab(1,1) A_ab(1,2) 1]';
+                
+                AA = [-eye(2*m)];
+                BB = [zeros(2*m,1)-Options.abs_tol/(2*m)];
+                
+                [t,fval,lambda,exitflag,how]=mpt_solveLP(zeros(2*m,1),AA,BB,...
+                    Aeq,Beq,[],Options.lpsolver);
+                
+                    if strcmp(how,'ok')
+                        ok_flag = 1;
+                        break
+                    else
+                        m = m+1;
+                    end
+            end%IF: method
+        end% WHILE: m_ab
+    end%IF: method
     
     if m == m_max & ~ok_flag
         warning(['maximum nubmer of possible iterations reached without' ...
             ' getting a proper solution'])
     end
     
+    
     if strcmp(Options.method_complexpair, 'yalmip')
         Q_ab = double(Q_ab);
         
-    else
+    else % LP based iteration or algebraic
         x = [eye(m) -eye(m)]*t;
         
         Q_ab = zeros(m);
@@ -461,6 +512,7 @@ else
         end%kk
         
     end%IF: method
+    
 
 end% IF m_max==2
 
