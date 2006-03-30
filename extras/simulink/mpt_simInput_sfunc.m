@@ -185,7 +185,7 @@ ref = u(nx+1:nx+dimref);
 
 isMLD = ~isexplicit(ctrl) & iscell(ctrl.sysStruct.A);
 
-if isMLD | isfield(ctrl.details, 'yalmipMatrices'),
+if isMLD | isfield(ctrl.details, 'yalmipMatrices') | isfield(ctrl.details, 'yalmipData'),
     % MPC for MLD systems does NOT work with extended state vector. we just need
     % to provide previous input in Options.Uprev, in order to satisfy deltaU
     % constraints in closed-loop.
