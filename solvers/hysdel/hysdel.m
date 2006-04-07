@@ -73,7 +73,7 @@ if ~isempty(simname),
 end
 
 % compile
-eval(['!' hysdel_cmd cmd_line]);
+eval(['!' hysdel_cmd cmd_line ' ' options]);
     
 % execute HYSDEL output to load the system S 
 % eval(filename); % this will not work if your system has symbolic parameters
