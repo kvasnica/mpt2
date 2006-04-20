@@ -206,7 +206,7 @@ elseif nargin==1 & mpt_issysstruct(varargin{1}),
     if ~isstruct(sysStruct.A),
         sysStruct = mpt_lti2pwa(sysStruct);
     end
-    if nnz([sysStruct.B{:}])>0,
+    if nnz([sysStruct.B{:}]) > 0 | nnz(cat(1, sysStruct.guardU{:})) > 0,
         error('MPTCTRL: only autonomous systems can be converted.');
     end
     if isfield(sysStruct, 'nonlinhandle'),
