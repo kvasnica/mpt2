@@ -215,10 +215,8 @@ if isfield(MLD, 'nxb')
 end
 
 if isfield(MLD, 'uu') & isfield(MLD, 'ul'),
-    if all(~isinf(MLD.uu)) & all(~isinf(MLD.ul)) & MLD.nu>0,
-        sysStruct.umax = MLD.uu;
-        sysStruct.umin = MLD.ul;
-    end
+    sysStruct.umax = MLD.uu;
+    sysStruct.umin = MLD.ul;
 end
 
 if isfield(MLD, 'xu') & isfield(MLD, 'xl'),

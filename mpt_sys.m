@@ -455,10 +455,8 @@ elseif isa(obj, 'char')
                 end
             end
             if isfield(S, 'uu') & isfield(S, 'ul'),
-                if all(~isinf(S.uu)) & all(~isinf(S.ul)) & S.nu>0,
-                    sysStruct.umax = S.uu;
-                    sysStruct.umin = S.ul;
-                end
+                sysStruct.umax = S.uu;
+                sysStruct.umin = S.ul;
             end
             if isfield(S, 'xu') & isfield(S, 'xl'),
                 if all(~isinf(S.xu)) & all(~isinf(S.xl)) & nx>0,
