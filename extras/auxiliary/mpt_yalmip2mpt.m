@@ -13,16 +13,16 @@ global mptOptions
 if ~isstruct(mptOptions),
     mpt_error;
 end
+yalmipOptions = mptOptions.sdpsettings;
 
 % first expand the model
-[Fexp, failure, cause] = expandmodel(F, obj);
+[Fexp, failure, cause] = expandmodel(F, obj, yalmipOptions);
 if failure,
     fprintf('\n%s\n\n', cause);
     error('Cannot deal with given setup, see message above.');
 end
 
 % now export the expanded model into MPT format
-yalmipOptions = mptOptions.sdpsettings;
 yalmipOptions.expand = 0;
 [a, b, c, model] = export(Fexp, obj, yalmipOptions);
 
