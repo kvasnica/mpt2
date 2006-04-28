@@ -544,7 +544,9 @@ end
     
 
 % list of solvers interfaced by YALMIP
-yalmip_solver_strings = {'xpress', 'mosek', 'bintprog', 'cplex-milp-cplexint', 'bnb', 'sedumi', 'ooqp'};
+yalmip_solver_strings = {'xpress', 'mosek', 'bintprog', ...
+        'cplex-milp-cplexint', 'cplex-miqp-cplexint', ...
+        'bnb', 'sedumi', 'ooqp'};
 
 for ii = 1:length(mptpath),
     if isempty(findstr(p, mptpath{ii})),
