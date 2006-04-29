@@ -473,31 +473,36 @@ for im = 1:length(SST)-1,
 end
 
 
-if Options.yalmip_online,
+reference_used = 0;
+uprev_used = 0;
+if Options.yalmip_online & tracking_data.need_uprev
+    % we have either tracking or deltaU constraints/penalties. therefore we need
+    % to introduce a new variable to denote the previous control input
     uprev = sdpvar(nu, 1);
-    uprev_used = 0;
     % add bounds on this variable for better scaling
     [umin, umax] = sub_getMaxBounds(SST, 'u', nu);
     bounds(uprev, umin, umax);
-    
-    if probStruct.tracking > 0,
-        % we have a varying reference in tracking problems
-        if isfield(probStruct, 'Qy'),
-            % reference has the dimension of outputs
-            reference = sdpvar(ny, 1);
-            % add bounds on this variable for better scaling
-            [ymin, ymax] = sub_getMaxBounds(SST, 'y', ny);
-            bounds(reference, ymin, ymax);
-            yref = reference;
-        else
-            % reference has the dimension of states
-            reference = sdpvar(nx, 1);
-            % add bounds on this variable for better scaling
-            [xmin, xmax] = sub_getMaxBounds(SST, 'x', nx);
-            bounds(reference, xmin, xmax);
-            xref = reference;
-        end
+end
+if Options.yalmip_online & tracking_data.need_reference,
+    % we have a varying reference in tracking problems, introduce a new
+    % variable to denote the reference
+    if isfield(probStruct, 'Qy'),
+        % reference has the dimension of outputs
+        reference = sdpvar(ny, 1);
+        % add bounds on this variable for better scaling
+        [ymin, ymax] = sub_getMaxBounds(SST, 'y', ny);
+        bounds(reference, ymin, ymax);
+        yref = reference;
+        
+    else
+        % reference has the dimension of states
+        reference = sdpvar(nx, 1);
+        % add bounds on this variable for better scaling
+        [xmin, xmax] = sub_getMaxBounds(SST, 'x', nx);
+        bounds(reference, xmin, xmax);
+        xref = reference;
     end
+    reference_used = 1;
 end
 
 
@@ -977,7 +982,7 @@ if soften.u,
     variables.su = slacks.u(1:Nc);
 end
 if Options.yalmip_online,
-    if probStruct.tracking > 0,
+    if reference_used,
         variables.ref = reference;
     end
     if uprev_used,
@@ -992,6 +997,17 @@ end
 if Options.dont_solve,
     % just return constraints, objectives and variables
     ctrl = [];
+    ctrl.sysStruct = sysStruct;
+    ctrl.probStruct = pst;
+    if tracking_data.uprev_in_x0,
+        % we did augment the state vector by the previous input
+        ctrl.uprev_in_x0 = nu;
+    end
+    if tracking_data.reference_in_x0,
+        % we did augment the state vector by the reference
+        ctrl.reference_in_x0 = tracking_data.nref;
+    end
+    ctrl.dynamics_type = dynamics_type;
     return
 end
 
