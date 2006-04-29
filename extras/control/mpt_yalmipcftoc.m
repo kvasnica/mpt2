@@ -173,47 +173,35 @@ else
     origSysStruct = sysStruct;
     SST = sub_sysStruct2cell(sysStruct, probStruct.N+1);
 end
-verOpt.verbose = -1;
-verOpt.ybounds_optional = 1;
-verOpt.useyalmip = 1; % to tell mpt_verifyProbStruct we can deal with move blocking
-[origSysStruct, origProbStruct] = mpt_verifySysProb(origSysStruct, ...
-    probStruct, verOpt);
 
 
 %===============================================================================
 % verify sysStruct and probStruct structures
-verOpt.verbose = 1;
+
+% to keep mpt_verify*() silent
+verOpt.verbose = -1;
+% to tell mpt_verifySysStruct() that output constraints are optional
 verOpt.ybounds_optional = 1;
-verOpt.useyalmip = 1;  % to tell mpt_verifyProbStruct we can deal with move blocking
-pst = probStruct; 
-verOpt2 = verOpt; verOpt2.verbose = -1;
-orig_pst = mpt_verifyProbStruct(probStruct, verOpt2);
+% to tell mpt_verifyProbStruct() we can deal with move blocking
+verOpt.useyalmip = 1; 
+
+[origSysStruct, origProbStruct] = mpt_verifySysProb(origSysStruct, ...
+    probStruct, verOpt);
+
 for ii = 1:length(SST),
-    if ~isfield(SST{ii}, 'verified') | ~isfield(probStruct, 'verified'),
-        [SST{ii}, pst] = mpt_verifySysProb(SST{ii}, probStruct, verOpt);
-        if ii==1,
-            orig_pst = pst;
-        end
+    if ~isfield(SST{ii}, 'verified'),
+        [SST{ii}, pst] = mpt_verifySysProb(SST{ii}, origProbStruct, verOpt);
     end
-    if Options.yalmip_online==0,
-        % augment system/problem to cope with tracking/deltaU constraints. but
-        % we only do so when computing an explicit solution. in case of on-line
-        % controllers we will provide the previous input (uprev) and the
-        % reference trajectory from outside, therefore it is not needed to
-        % augment the setup.
-        if orig_pst.tracking > 0 & ~isfield(orig_pst, 'tracking_augmented'),
-            % augment the system to deal with tracking
-            [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, orig_pst, verOpt);
-        end
-        if isfield(pst, 'Rdu') | ~(all(isinf(SST{ii}.dumax)) & all(isinf(SST{ii}.dumin))),
-            % augment the system to deal with deltaU constraints
-            [SST{ii}, pst] = mpt_yalmipDU(SST{ii}, orig_pst, verOpt);
-        end
-    end
-    verOpt.verbose = -1;
 end
-probStruct = pst;
+
 sysStruct = SST{1};
+
+
+%===============================================================================
+% augment the state vector to cope with tracking/deltaU formulation
+[SST, probStruct, tracking_data] = sub_augmentx0(SST, probStruct, Options.yalmip_online);
+sysStruct = SST{1};
+pst = probStruct;
 
 
 %===============================================================================
@@ -1463,5 +1451,140 @@ if havebounds,
 elseif bigM_used,
     % no bounds present, but required, use +/- mptOptions.infbox
     bounds(z, -mptOptions.infbox, mptOptions.infbox);
+    
+end
+
+
+%-------------------------------------------------------------------------
+function [SST, pst, data] = sub_augmentx0(SST, probStruct, yalmip_online)
+% augment system/problem to cope with tracking/deltaU constraints. 
+
+% some parameters
+do_tracking   = zeros(1, length(SST));
+do_deltaU     = zeros(1, length(SST));
+need_tracking = zeros(1, length(SST));
+need_deltaU   = zeros(1, length(SST));
+nref = 0;
+
+% keep the first call verbose
+verOpt.verbose = 1;
+pst = probStruct;
+
+for ii = 1:length(SST),
+    [do_tracking(ii), do_deltaU(ii), need_tracking(ii), need_deltaU(ii)] = ...
+        sub_can_do_tracking(SST{ii}, probStruct);
+    % do_tracking=1    - we are able to deal with tracking by
+    %                    directly augmenting the state vector
+    % do_deltaU=1      - we are able to deal with deltaU formulation by directly
+    %                    augmenting the state vector
+    % need_tracking=1  - tracking is implied by sysStruct/probStruct
+    % need_deltaU=1    - deltaU formulation is implied by sysStruct/probStruct
+    
+    if do_tracking(ii),
+        % augment the system to deal with tracking
+        [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, probStruct, verOpt);
+        nref = SST{ii}.dims.nref;
+        
+    elseif do_deltaU(ii),
+        % augment the system to deal with deltaU constraints
+        [SST{ii}, pst] = mpt_yalmipDU(SST{ii}, probStruct, verOpt);
+        
+    end
+    
+    % keep all other calls silent
+    verOpt.verbose = -1;
+end
+
+% check that we either do tracking/deltaU formulation for all systems or for
+% none of them
+if (any(need_tracking) & ~all(need_tracking)) | ...
+        (any(do_tracking) & ~all(do_tracking)),
+    error('Tracking not enabled or possible for some specified systems.');
+end
+if (any(need_deltaU) & ~all(need_deltaU)) | ...
+        (any(do_deltaU) & ~all(do_deltaU)), 
+    error('deltaU constraints/penalties not enabled or possible for some specified systems.');
+end
+if any(do_tracking==1) & ~all(do_tracking==1),
+    error('probStruct.tracking=1 not possible for some specified systems.');
+end
+if any(do_tracking==2) & ~all(do_tracking==2),
+    error('probStruct.tracking=2 not possible for some specified systems.');
+end
+if any(need_tracking) & ~all(do_tracking) & yalmip_online==0,
+    % we are able to handle tracking for on-line controllers by introducing a
+    % variable for the reference. for explicit controllers we can't do it
+    error('Tracking not possible for some specified systems.');
+end
+if any(need_deltaU) & ~(all(do_deltaU) | all(do_tracking==1)) & yalmip_online==0,
+    % we are able to handle deltaU formulation for on-line controllers by
+    % introducing a variable for the previous input. for explicit controllers we
+    % can't do it 
+    error('deltaU constraints/penalties not possible for this setup.');
+end
+if any(need_deltaU) & any(do_tracking==2) & yalmip_online==0,
+    error('tracking=2 cannot be used with deltaU constraints/penalties. Use tracking=1 instead.');
+end
+
+data.uprev_in_x0 = (any(need_deltaU) & all(do_deltaU)) | any(do_tracking==1);
+data.need_uprev = any(need_deltaU) & ~(all(do_deltaU) | all(do_tracking==1));
+
+data.reference_in_x0 = any(need_tracking) & all(do_tracking);
+data.need_reference = any(need_tracking) & ~all(do_tracking);
+
+data.nref = nref;
+
+
+%-------------------------------------------------------------------------
+function [do_tracking, do_deltaU, need_tracking, need_dU] = ...
+    sub_can_do_tracking(sysStruct, probStruct)
+
+haveMLD = 0;
+if isfield(sysStruct, 'data'),
+    if isfield(sysStruct.data, 'onlymld'),
+        haveMLD = sysStruct.data.onlymld;
+    end
+end
+haveNONLIN = isfield(sysStruct, 'nonlinhandle');
+
+[nx,nu,ny,ndyn,nbool] = mpt_sysStructInfo(sysStruct);
+
+need_tracking = (probStruct.tracking > 0) & ...
+    ~isfield(probStruct, 'tracking_augmented');
+need_dU = isfield(probStruct, 'Rdu') | ~(all(isinf(sysStruct.dumax)) & ...
+    all(isinf(sysStruct.dumin)));
+
+if need_tracking & probStruct.tracking==1 & need_dU,
+    % deltaU formulation is a subset of tracking=1
+    need_dU = 0;
+end
+
+if haveMLD | haveNONLIN,
+    % no augmentation possible for MLD and nonlinear systems
+    cantr = 0; candU = 0;
+
+elseif nbool > 0 & (probStruct.tracking > 0 | use_deltaU),
+    % cannot go for deltaU formulation and tracking=1 if we have boolean inputs
+    cantr = 2;  % we can only handle tracking=2 
+    candU = 0;  % cannot go for deltaU formulation
+
+else
+    % we can augment the state vector for LTI and PWA systems
+    cantr = probStruct.tracking; 
+    candU = 1;
+    
+end
+
+if need_tracking & cantr > 0,
+    do_tracking = cantr;
+    do_deltaU = 0;    % deltaU formulation is implied by tracking=1
+    
+elseif need_dU & candU,
+    do_tracking = 0;
+    do_deltaU = 1;
+
+else 
+    do_tracking = 0;
+    do_deltaU = 0;
     
 end
