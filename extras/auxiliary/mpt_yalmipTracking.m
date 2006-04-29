@@ -69,7 +69,8 @@ if ~isfield(probStruct,'verified'),
     probStruct=mpt_verifyProbStruct(probStruct,verOpt);
 end
 
-if isfield(probStruct,'yref') | isfield(probStruct,'xref') | isfield(probStruct,'uref'),
+if isfield(probStruct,'yref') | isfield(probStruct,'xref') | ...
+        isfield(probStruct,'uref') | probStruct.tracking==0,
     % nothing to do here, we handle references directly in mpt_yalmipcftoc()
     return
 end
@@ -92,26 +93,22 @@ end
 sysStruct.dims.nx = nx;
 sysStruct.dims.nu = nu;
 sysStruct.dims.ny = ny;
-if nbool > 0 & probStruct.tracking==1,
-    if verOpt.verbose > 0,
-        fprintf('"tracking=1" cannot be used with integer inputs, switching to "tracking=2"...\n');
-    end
-    probStruct.tracking = 2;
-   
-end
+use_deltaU = isfield(probStruct, 'Rdu') | ...
+    ~(all(isinf(sysStruct.dumax)) & all(isinf(sysStruct.dumin)));
 
-if probStruct.tracking==2 & verOpt.verbose > -1
-    fprintf('===============================================================================\n')
+if nbool > 0 & (probStruct.tracking==1 | use_deltaU),
+    fprintf('\ndeltaU constraints/penalties cannot be used for systems with boolean inputs.\n');
+    error('Please use "probStruct.tracking=2".');
+
+elseif probStruct.tracking==2 & verOpt.verbose > -1
+    fprintf('================================================================================\n')
     fprintf('WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !\n');
-    fprintf('===============================================================================\n\n')
-end
-
-if probStruct.tracking==2 & (isfield(probStruct, 'Rdu') | ...
-        ~(all(isinf(sysStruct.dumax)) & all(isinf(sysStruct.dumin))))
-    % tracking=2 with deltaU formulation => we have to switch to tracking=1
-    probStruct.tracking=1;
-end
+    if use_deltaU,
+        fprintf('WARNING: deltaU constraint/penalties only guaranteed in on-line control !\n');
+    end
+    fprintf('================================================================================\n\n')
     
+end
 
 if ~isfield(probStruct,'Rdu') & probStruct.tracking==1,
     probStruct.Rdu = probStruct.R;
