@@ -356,7 +356,18 @@ end
 %       [ Q  0  -Q]
 % Qn =  [ 0  0   0]
 %       [-Q  0   Q]
-probStruct.Q = sub_augmentpenalty(probStruct.Q, probStruct, nu);
+if ycost,
+    % if probStruct.Qy is defined, we minimize ||Qy*(y-yref)|| , i.e. there will
+    % be no penalty w.r.t. states. therefore we can set probStruct.Q to anything
+    if probStruct.tracking == 1,
+        probStruct.Q = eye(nx+nu+refdim);
+    else
+        probStruct.Q = eye(nx+refdim);
+    end
+else
+    probStruct.Q = sub_augmentpenalty(probStruct.Q, probStruct, nu);
+end
+
 if isfield(probStruct, 'Qy') & ycost,
     probStruct.Qy = sub_augmentpenalty(probStruct.Qy, probStruct, nu);
 end
