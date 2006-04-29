@@ -96,6 +96,10 @@ if all(isinf(sysStruct.dumax)) & any(isinf(sysStruct.dumin)) & ~isfield(probStru
     return
 end
 
+if nbool > 0,
+    error('deltaU constraints/penalties cannot be used for systems with boolean inputs.');
+end
+
 %+++++++++++++++++++++++++++++++++++++++++++++++++
 % augment matrices to deal with deltaU formulation
 %+++++++++++++++++++++++++++++++++++++++++++++++++
