@@ -214,9 +214,6 @@ for ii = 1:length(SST),
 end
 probStruct = pst;
 sysStruct = SST{1};
-if probStruct.subopt_lev > 0,
-    error('Suboptimal strategies not supported by this function.');
-end
 
 
 %===============================================================================
@@ -289,13 +286,16 @@ end
 
 %===============================================================================
 % reject certain problem descriptions
+if probStruct.subopt_lev > 0,
+    error('Suboptimal strategies not supported by this function.');
+end
 if isinf(probStruct.N),
     error('mpt_yalmipcftoc: Prediction horizon must be finite!');
 end
 if mpt_isnoise(sysStruct.noise),
     error('mpt_yalmipcftoc: additive noise not supported.');
 end
-if (nbool>0 & probStruct.tracking==1) & ~Options.yalmip_online,
+if (nbool>0 & probStruct.tracking==1),
     error('mpt_yalmipcftoc: tracking cannot be used for systems with integer inputs. Set probStruct.tracking=2.');
 end
 if isfield(probStruct, 'Aunc') | isfield(probStruct, 'Bunc'),
