@@ -589,7 +589,7 @@ if ispwa,
     sysStruct.guardU = guardU;
 end
     
-
+probStruct.tracking_augmented = probStruct.tracking;
 tmpopt.verbose = 0;
 evalc('sysStruct = mpt_verifySysStruct(sysStruct,tmpopt);');
 evalc('probStruct = mpt_verifyProbStruct(probStruct,tmpopt);');
