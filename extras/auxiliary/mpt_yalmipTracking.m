@@ -132,6 +132,7 @@ if ycost
 else
     refdim = nx;
 end
+sysStruct.dims.nref = refdim;
 
 
 %++++++++++++++++++++++++++++++++++++
