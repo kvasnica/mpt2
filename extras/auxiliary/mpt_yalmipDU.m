@@ -100,6 +100,14 @@ if nbool > 0,
     error('deltaU constraints/penalties cannot be used for systems with boolean inputs.');
 end
 
+% augment possible references
+if isfield(probStruct, 'xref'),
+    probStruct.xref = [probStruct.xref; zeros(nu, 1)];
+end
+if isfield(probStruct, 'yref'),
+    probStruct.yref = [probStruct.yref; zeros(nu, 1)];
+end
+
 %+++++++++++++++++++++++++++++++++++++++++++++++++
 % augment matrices to deal with deltaU formulation
 %+++++++++++++++++++++++++++++++++++++++++++++++++
