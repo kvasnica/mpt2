@@ -186,12 +186,10 @@ ref = u(nx+1:nx+dimref);
 isMLD = ~isexplicit(ctrl) & iscell(ctrl.sysStruct.A);
 
 if isMLD | isfield(ctrl.details, 'yalmipMatrices') | isfield(ctrl.details, 'yalmipData'),
-    % MPC for MLD systems does NOT work with extended state vector. we just need
-    % to provide previous input in Options.Uprev, in order to satisfy deltaU
-    % constraints in closed-loop.
-    %
-    % same holds if the on-line controller was designed by means of
-    % mpt_yalmipcftoc()
+    % some on-line controllers cannot go for tracking/deltaU formulation by
+    % directly augmenting the state vector (e.g. MLD or nonlinear systems),
+    % therefore for such cases we must provide the previous control action as
+    % well as the reference as separate arguments
     x0 = xm;
     opt.Uprev = Uprev;
     if tracking > 0,
@@ -229,12 +227,8 @@ U = U(:);
 
 % for tracking problems, U returned by the controller is deltaU, we need to
 % convert it back
-if dumode
-    if ~isPWA,
-        % however we only do it if the controller is not an on-line controller
-        % for PWA systems
-        U = U + Uprev;
-    end
+if tracking==1 | dumode,
+    U = U + Uprev;
 end
 Uprev = U;
 sys = [U; feasible];

@@ -198,11 +198,10 @@ if givedetails,
 end
 
 % do we have deltaU constraints without tracking?
-if probStruct.tracking==0 & isfield(sysStruct, 'dumode') & sysStruct.dumode==1,
-    isDUmode = 1;
-else
-    isDUmode = 0;
-end
+isDUmode = (probStruct.tracking==0 & isfield(sysStruct, 'dumode'));
+
+% was the state vector augmented either by tracking or by deltaU formulation?
+x0_augmented = isfield(probStruct, 'tracking_augmented') | isDUmode;
 
 nx = ctrl.details.dims.nx;
 nu = ctrl.details.dims.nu;
@@ -241,7 +240,7 @@ if Options.openloop,
         fprintf('WARNING: Custom simulation models not supported for open-loop trajectories.\n');
         fprintf('         Switching to default sysStruct\n');
     end
-    x0 = extend_x0(ctrl, x0, u_prev, Options.reference, isEXPctrl, isDUmode);
+    x0 = extend_x0(ctrl, x0, u_prev, Options.reference, x0_augmented, isDUmode);
     if isEXPctrl,
         if iscell(sysStruct.A) & size(ctrl.Fi{1}, 1)<=nu,
             % we have a PWA system, call mpt_computeTrajectory which calculates
@@ -264,9 +263,9 @@ if Options.openloop,
     deltaU = Uol;
     U = Uol;
     u_prev = u_prev(:)';
-    if ~(iscell(sysStruct.A) & ~isEXPctrl)
-        % only for explicit controllers and on-line controllers for LTI systems
-        % (on-line controllers for PWA systems don't use deltaU formulation yet)
+    if x0_augmented
+        % for instance on-line controllers for MLD and nonlinear systems do not
+        % go for deltaU formulation
         if isDUmode | probStruct.tracking==1,
             % only change U if deltaU constraints are present, or tracking with
             % deltaU formulation requested
@@ -424,17 +423,13 @@ else
         
         %-----------------------------------------------------------------------
         % exted state vector for tracking
-        x0 = extend_x0(ctrl, x0, u_prev, Options.reference, isEXPctrl, isDUmode);
-        
+        x0 = extend_x0(ctrl, x0, u_prev, Options.reference, x0_augmented, isDUmode);
+
 
         %-----------------------------------------------------------------------
         % record previous input (for MPC for MLD systems, such that deltaU
         % constraints are satisfied in closed-loop
-        if iN == 1,
-            Options.Uprev = u_prev;
-        else
-            Options.Uprev = Ucl;
-        end
+        Options.Uprev = u_prev;
         
         
         %-----------------------------------------------------------------------
@@ -474,19 +469,30 @@ else
         end
         dyn = 0;
         simSysOpt.dynamics = dyn;
+    
+        if (probStruct.tracking==1 | isDUmode) & x0_augmented
+            % deltaU formulation was used
+            u_true = Ucl(:) + u_prev;
+        else
+            u_true = Ucl(:);
+        end
         
         if sys_type==0,
-            [xn, un, yn, mode] = mpt_simSys(ctrl.details.origSysStruct, x0_orig, Ucl(:)+u_prev, simSysOpt);
+            [xn, un, yn, mode] = mpt_simSys(ctrl.details.origSysStruct, ...
+                x0_orig, u_true, simSysOpt);
+            
         elseif sys_type==1,
             % use auxiliary sysStruct
             % do not provide simSysOpt.dynamics, let mpt_simSys decide on it's
             % own
-            [xn, un, yn, mode] = mpt_simSys(Options.sysStruct, x0_orig, Ucl(:)+u_prev);
+            [xn, un, yn, mode] = mpt_simSys(Options.sysStruct, x0_orig, u_true);
+            
         else
             % use auxiliary function for simulations
-            [xn, yn] = feval(Options.sysHandle, x0_orig, Ucl(:)+u_prev);
+            [xn, yn] = feval(Options.sysHandle, x0_orig, u_true);
             mode = 0;
-            un = Ucl(:)+u_prev;
+            un = u_true;
+            
         end        
 
         
@@ -514,11 +520,7 @@ else
         x0 = xn(:);
         y0 = yn(:);
         x0_orig = x0;
-        if probStruct.tracking==1 | isDUmode,
-            if ~(~isEXPctrl & iscell(sysStruct.A))
-                u_prev = un(:);
-            end
-        end
+        u_prev = un(:);
         
         
         %---------------------------------------------------------------------------
@@ -590,34 +592,38 @@ return
 
 
 %==========================================================================
-function x0 = extend_x0(ctrl, x0, u_prev, reference, isEXPctrl, isDUmode)
+function x0 = extend_x0(ctrl, x0, u_prev, reference, x0_augmented, isDUmode)
 % tracking: extend state vector
 
 if length(x0)==ctrl.details.dims.nx,
     return;
 end
 
-if ~(iscell(ctrl.sysStruct.A) & ~isEXPctrl)
-    % however, we only do this for explicit controllers for PWA/LTI systems and
-    % for MPC controllers for LTI systems. MPC controllers for PWA systems don't
-    % augment system matrices, since tracking is handled explicitly in MLD
-    % optimization routine
+if x0_augmented,
+    % however, we only extend the state vector if we augmented it before (which
+    % we don't do e.g. if we control MLD or nonlinear systems)
     
     if ctrl.probStruct.tracking>0
         nyt=ctrl.sysStruct.dims.ny;
         nut=ctrl.sysStruct.dims.nu;
         nxt=ctrl.sysStruct.dims.nx;
+        
     elseif isDUmode, 
         % augment state vector to xn = [x; u(k-1)] if we have deltaU constraints
         x0 = [x0; u_prev(:)];
+        
     end
+    
     if ctrl.probStruct.tracking==1 & length(x0)<(nxt+nut+length(reference))
         x0 = [x0; u_prev(:); reference(:)];
+        
     elseif ctrl.probStruct.tracking==2 & length(x0)<(nxt+length(reference))
         % probStruct.tracking=2 -> no deltaU formulation
         x0 = [x0; reference(:)];
+        
     end
 end
+
 
 %==========================================================================
 function cost = sub_computeCost(X, U, Y, sysStruct, probStruct, Options)
