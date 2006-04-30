@@ -187,6 +187,7 @@ verOpt.useyalmip = 1;
 
 [origSysStruct, origProbStruct] = mpt_verifySysProb(origSysStruct, ...
     probStruct, verOpt);
+pst = origProbStruct;
 
 for ii = 1:length(SST),
     if ~isfield(SST{ii}, 'verified'),
