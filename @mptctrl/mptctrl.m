@@ -298,6 +298,8 @@ elseif nargin==2 | nargin==3
     Options = mpt_defaultOptions(Options, ...
         'verbose', mptOptions.verbose, ...
         'yalmip_data', [], ...
+        'remove_equalities_always', 0, ...
+        'remove_equalities_lti', 1, ...
         'force_mpt', 0 );
 
     if Options.force_mpt == 0 | ~isempty(Options.yalmip_data) | iscell(userSysStruct),
@@ -378,12 +380,26 @@ elseif nargin==2 | nargin==3
             
         else
             % expand the YALMIP model into MPT format
-            ctrl.details.yalmipMatrices = mpt_yalmip2mpt(F, obj, parametric_vars, requested_vars);
-            ctrl.details.yalmipMatrices.uprev_length = uprev_length;
-            ctrl.details.yalmipMatrices.reference_length = reference_length;
+            M = mpt_yalmip2mpt(F, obj, parametric_vars, requested_vars);
+            M.uprev_length = uprev_length;
+            M.reference_length = reference_length;
+
+            % remove equality constraints if needed (default for LTI systems to
+            % improve performance of LP/QP solvers)
+            sysidx = 1:length(dummy.dynamics_type);
+            justLTI = isequal(strmatch('lti', dummy.dynamics_type), sysidx(:));
+            if (justLTI & Options.remove_equalities_lti) | ...
+                    Options.remove_equalities_always,
+                % remove equalities
+                fprintf('Projecting on equalities....\n');
+                M = mpt_collect_equalities(M, []);
+                M = mpt_remove_equalities(M, []);
+                M = mpt_project_on_equality(M);
+            end
             
+            ctrl.details.yalmipMatrices = M;
         end
-        
+         
     end
     
     if iscell(sysStruct.A) & Options.force_mpt == 1,

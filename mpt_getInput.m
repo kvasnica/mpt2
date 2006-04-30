@@ -304,8 +304,14 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         nparams = length(M.param_var);
         A = M.G;
         B = M.W + M.E*x0;
-        Aeq = M.Aeq;
-        Beq = M.beq - M.Beq*x0;
+        if isempty(M.Aeq),
+            % happens if we used mpt_remove_equalities in mptctrl.m
+            Aeq = M.Aeq;
+            Beq = M.beq;
+        else
+            Aeq = M.Aeq;
+            Beq = M.beq - M.Beq*x0;
+        end
         lb = M.lb(1:end-nparams);  % bounds on parametric variables are always last!
         ub = M.ub(1:end-nparams);
 
@@ -363,7 +369,18 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         end
         runtime = cputime - starttime;
         feasible = strcmp(how, 'ok');
-        xopt = xopt(:);
+
+
+        if ~isempty(M.getback),
+            % if mpt_project_on_equality() was used (done in mptctrl.m),
+            % a different expressions must be used to obtain the extract
+            % the correct optimizer
+            xopt = M.getback.S1*xopt + M.getback.S2*x0 + M.getback.S3;
+        else
+            % otherwise we take the whole optimizer
+            xopt = xopt(:);
+        end
+        
         U = xopt(M.requested_variables);
         fullopt = xopt;
         
