@@ -319,21 +319,48 @@ elseif nargin==2 | nargin==3
             obj = Options.yalmip_data.objective;
             vars = Options.yalmip_data.variables;
         end
+
+        % mpt_yalmipcftoc() might have ran mpt_yalmipTracking() or
+        % mpt_yalmipDU() which changes sysStruct/probStruct
+        sysStruct = dummy.sysStruct;
+        probStruct = dummy.probStruct;
+
         
         % now convert the optimization problem into MPTs native form
         % vars.x{1} corresponds to x0
         % vars.uprev corresponds to previous input (for deltaU constraints)
         uprev_length = 0; reference_length = 0;
         parametric_vars = vars.x{1};
+        fprintf('\n');
         if isfield(vars, 'uprev'),
+            fprintf('For deltaU constraints to hold, you will need to provide\n');
+            fprintf('"Options.Uprev" when calling "u=ctrl(x0, Options)".\n');
             parametric_vars = [parametric_vars; vars.uprev];
             uprev_length = length(vars.uprev);
+   
+        elseif isfield(dummy, 'uprev_in_x0'),
+            % u(k-1) is already part of the state vector, hence parametric_vars
+            % don't need to be updated
+            fprintf(['The controller will return deltaU=u(k)-u(k-1) instead of '...
+                    'u(k) when evaluated!\n']);
+            uprev_length = dummy.uprev_in_x0;
+            
         end
+        
         if isfield(vars, 'ref'),
             % we have the reference as a parametric variable
+            fprintf('For tracking to work, you will need to provide\n');
+            fprintf('"Options.reference" when calling "u=ctrl(x0, Options)".\n');
             parametric_vars = [parametric_vars; vars.ref];
             reference_length = length(vars.ref);
+            
+        elseif isfield(dummy, 'reference_in_x0'),
+            % reference is already part of the state vector, hence parametric_vars
+            % don't need to be updated
+            reference_length = dummy.reference_in_x0;
+            
         end
+        
         % define which variables should be optimization variables
         requested_vars = [vars.u{:}];
 
@@ -355,23 +382,6 @@ elseif nargin==2 | nargin==3
             ctrl.details.yalmipMatrices.uprev_length = uprev_length;
             ctrl.details.yalmipMatrices.reference_length = reference_length;
             
-        end
-        
-        if probStruct.tracking>0,
-            % we need to set ctrl.sysStruct.dims because we didn't run
-            % mpt_yalmipTracking()
-            [nx, nu, ny] = mpt_sysStructInfo(sysStruct);
-            dims = struct('nx', nx, 'nu', nu, 'ny', ny);
-            sysStruct.dims = dims;
-            
-            % we must not set tracking=1 because that would confuse
-            % sim()/simplot() functions which would think that we have a deltaU
-            % formulation, which we don't
-            if probStruct.tracking==1 & isempty(Options.yalmip_data),
-                fprintf(['The on-line controller will not use deltaU formulation, ' ...
-                        'switching to probStruct.tracking=2']);
-            end
-            probStruct.tracking = 2;
         end
         
     end
