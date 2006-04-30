@@ -1005,7 +1005,12 @@ if Options.dont_solve,
     end
     if tracking_data.reference_in_x0,
         % we did augment the state vector by the reference
-        ctrl.reference_in_x0 = tracking_data.nref;
+        if isfield(probStruct, 'Qy'),
+            nref = ny;
+        else
+            nref = nx;
+        end
+        ctrl.reference_in_x0 = nref;
     end
     ctrl.dynamics_type = dynamics_type;
     return
@@ -1218,6 +1223,23 @@ SST = cell(1, N);
 [SST{:}] = deal(sysStruct);
 
 
+%-----------------------------------------------------------------
+function type = sub_sysStruct_type(sysStruct)
+% this subfunction should be moved into mpt_sysStructInfo()
+
+type = struct('lti', 0, 'pwa', 0, 'mld', 0, 'nonlin', 0);
+type.lti = ~iscell(sysStruct.A);
+type.pwa = iscell(sysStruct.A);
+type.mld = isfield(sysStruct, 'data');
+if type.mld,
+    if isfield(sysStruct.data, 'onlymld'),
+        % the {A,B,C,D} touple is just fake, we in fact do have only MLD
+        % representation available
+        type.pwa = 0;
+    end
+end
+type.nonlin = isfield(sysStruct, 'nonlinhandle');
+
 
 %-----------------------------------------------------------------
 function [dynamics_type, nPWA, MLD, SST, sysStruct] = sub_checkmodels(SST, sysStruct, Options)
@@ -1228,22 +1250,13 @@ nPWA = zeros(1, length(SST));
 MLD = cell(1, length(SST));
 
 for im = 1:length(SST),
-    canuse_mld = isfield(SST{im}, 'data');
-    canuse_pwa = iscell(SST{im}.A);
-    canuse_lti = ~iscell(SST{im}.A);
-    canuse_nonlin = isfield(SST{im}, 'nonlinhandle');
     
-    if canuse_mld,
-        if isfield(SST{im}.data, 'onlymld'),
-            % there is no equivalent PWA representation for this system available
-            canuse_pwa = 0;
-        end
-    end
+    sys_type = sub_sysStruct_type(SST{im});
     
-    if Options.force_mld & ~canuse_mld,
+    if Options.force_mld & ~sys_type.mld,
         error('Cannot force MLD model because it is not available.');
     end
-    if Options.force_pwa & ~canuse_pwa,
+    if Options.force_pwa & ~sys_type.pwa,
         error('Cannot force PWA model because it is not available.');
     end
     
@@ -1253,23 +1266,23 @@ for im = 1:length(SST),
     elseif Options.force_pwa,
         dynamics_type{im} = 'pwa';
 
-    elseif canuse_mld & Options.yalmip_online,
+    elseif sys_type.mld & Options.yalmip_online,
         % for on-line controllers we prefer MLD models
         dynamics_type{im} = 'mld';
         
-    elseif canuse_pwa,
+    elseif sys_type.pwa,
         dynamics_type{im} = 'pwa';
         
-    elseif canuse_mld,
+    elseif sys_type.mld,
         dynamics_type{im} = 'mld';
         
-    elseif canuse_lti,
+    elseif sys_type.lti,
         dynamics_type{im} = 'lti';
         
     else
         error('Unknown type of dynamical model.');
     end
-    if canuse_nonlin,
+    if sys_type.nonlin,
         dynamics_type{im} = 'nonlin';
     end
     
@@ -1481,16 +1494,48 @@ do_deltaU     = zeros(1, length(SST));
 need_tracking = zeros(1, length(SST));
 need_deltaU   = zeros(1, length(SST));
 nref = 0;
+[nx, nu, ny] = mpt_sysStructInfo(SST{1});
+dims = struct('nx', nx, 'nu', nu, 'ny', ny);
 
 % keep the first call verbose
 verOpt.verbose = 1;
+
+% tracking=1 cannot be used for MLD/nonlinear systems (because we cannot
+% augmente the description for deltaU formulation). therefore in such case we
+% switch to tracking=2
+%
+% notice that we don't have to care whether the controller to be computed is
+% explicit or on-line, since we do require PWA/LTI models for explicit control
+% anyhow (this is checked by mpt_control)
+if probStruct.tracking==1,
+    unsupported_type = '';
+    for ii = 1:length(SST),
+        sys_type = sub_sysStruct_type(SST{ii});
+        if sys_type.mld,
+            unsupported_type = 'MLD';
+            break
+        elseif sys_type.nonlin,
+            unsupported_type = 'nonlinear';
+            break
+        end
+    end
+    
+    if ~isempty(unsupported_type);,
+        fprintf('tracking=1 cannot be used for %s systems, switching to tracking=2\n', ...
+            unsupported_type);
+        probStruct.tracking = 2;
+    end
+end
 pst = probStruct;
 
 for ii = 1:length(SST),
     [do_tracking(ii), do_deltaU(ii), need_tracking(ii), need_deltaU(ii)] = ...
         sub_can_do_tracking(SST{ii}, probStruct);
-    % do_tracking=1    - we are able to deal with tracking by
+    % do_tracking=1    - we are able to deal with tracking=1 by
     %                    directly augmenting the state vector
+    % do_tracking=2    - we are able to deal with tracking=2 by
+    %                    directly augmenting the state vector and/or by
+    %                    introducing a new variable to denote the reference
     % do_deltaU=1      - we are able to deal with deltaU formulation by directly
     %                    augmenting the state vector
     % need_tracking=1  - tracking is implied by sysStruct/probStruct
@@ -1498,12 +1543,21 @@ for ii = 1:length(SST),
     
     if do_tracking(ii),
         % augment the system to deal with tracking
+        %
+        % we always go for augmentation if we are constructing data for an
+        % explicit controller
         [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, probStruct, verOpt);
         nref = SST{ii}.dims.nref;
-        
+
     elseif do_deltaU(ii),
         % augment the system to deal with deltaU constraints
         [SST{ii}, pst] = mpt_yalmipDU(SST{ii}, probStruct, verOpt);
+        
+    elseif probStruct.tracking > 0,
+        % it can be that tracking is enabled but an MLD system is used. in such
+        % case we must set sysStruct.dims manually (would otherwise be done by
+        % mpt_yalmipTracking)
+        SST{ii}.dims = dims;
         
     end
     
