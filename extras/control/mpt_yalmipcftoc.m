@@ -1608,15 +1608,12 @@ data.nref = nref;
 %-------------------------------------------------------------------------
 function [do_tracking, do_deltaU, need_tracking, need_dU] = ...
     sub_can_do_tracking(sysStruct, probStruct)
+% this function checks whether we can _augment_ the state vector to cope with
+% tracking (mpt_yalmipTracking) or deltaU formulation (mpt_yalmipDU). if we
+% can't we still can use on-line MPC and create new variables to denote the
+% previous control action and the reference.
 
-haveMLD = 0;
-if isfield(sysStruct, 'data'),
-    if isfield(sysStruct.data, 'onlymld'),
-        haveMLD = sysStruct.data.onlymld;
-    end
-end
-haveNONLIN = isfield(sysStruct, 'nonlinhandle');
-
+sys_type = sub_sysStruct_type(sysStruct);
 [nx,nu,ny,ndyn,nbool] = mpt_sysStructInfo(sysStruct);
 
 need_tracking = (probStruct.tracking > 0) & ...
@@ -1629,17 +1626,25 @@ if need_tracking & probStruct.tracking==1 & need_dU,
     need_dU = 0;
 end
 
-if haveMLD | haveNONLIN,
+if sys_type.mld | sys_type.nonlin,
     % no augmentation possible for MLD and nonlinear systems
-    cantr = 0; candU = 0;
+    cantr = 0; 
+    candU = 0;
 
-elseif nbool > 0 & (probStruct.tracking > 0 | need_dU),
-    % cannot go for deltaU formulation and tracking=1 if we have boolean inputs
-    cantr = 2;  % we can only handle tracking=2 
-    candU = 0;  % cannot go for deltaU formulation
+elseif nbool > 0 & need_dU,
+    % cannot augment the state by u(k-1) if we have boolean inputs
+    cantr = 0;
+    candU = 0;
+    
+elseif nbool > 0 & probStruct.tracking,
+    % we can only handle tracking=2, i.e. we can augment the state only by the
+    % reference, not by u(k-1)
+    cantr = 2;
+    candU = 0;
 
 else
-    % we can augment the state vector for LTI and PWA systems
+    % we can deal with tracking=1, tracking=2 and deltaU formulation for LTI and
+    % PWA systems
     cantr = probStruct.tracking; 
     candU = 1;
     
