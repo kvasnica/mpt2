@@ -1633,7 +1633,7 @@ if haveMLD | haveNONLIN,
     % no augmentation possible for MLD and nonlinear systems
     cantr = 0; candU = 0;
 
-elseif nbool > 0 & (probStruct.tracking > 0 | use_deltaU),
+elseif nbool > 0 & (probStruct.tracking > 0 | need_dU),
     % cannot go for deltaU formulation and tracking=1 if we have boolean inputs
     cantr = 2;  % we can only handle tracking=2 
     candU = 0;  % cannot go for deltaU formulation
