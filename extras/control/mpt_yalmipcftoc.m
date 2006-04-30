@@ -1076,7 +1076,7 @@ ctrl.overlaps = overlaps;
 % end
 
 ctrl.sysStruct = SST{1};
-ctrl.probStruct = probStruct;
+ctrl.probStruct = pst;
 ctrl.details.origSysStruct = origSysStruct;
 ctrl.details.origProbStruct = origProbStruct;
 ctrl.details.runTime = cputime - starttime;
