@@ -166,6 +166,10 @@ details = struct('inwhich', [], 'fullopt', [], 'runtime', [], 'nops', nops);
 
 if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     % solve an QP/LP/MIQP/MILP for on-line controllers
+
+    % NOTE! NOTE! NOTE! from now on, we convert the "ctrl" object into a
+    % structure to get faster access to internal fields
+    ctrl = struct(ctrl);
     
     sysStruct = ctrl.sysStruct;
     probStruct = ctrl.probStruct;
@@ -535,7 +539,10 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     
     
 else
-    ctrlStruct = ctrl;
+    % NOTE! NOTE! NOTE! from now on, we convert the "ctrl" object into a
+    % structure to get faster access to internal fields
+    ctrlStruct = struct(ctrl);
+    
 end
 
 
