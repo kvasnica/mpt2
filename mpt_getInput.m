@@ -259,7 +259,8 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         
         %==================================================================
         % set default values of Options.Uprev and/or Options.reference
-        if M.uprev_length > 0,
+        if M.uprev_length > 0 & (length(x0)~=size(M.E, 2)),
+            % include previous input u(k-1) into the state vector if needed
             if ~isfield(Options, 'Uprev'),
                 fprintf('WARNING: deltaU constraints can only be satisfied if Options.Uprev is given.\n');
             end
@@ -271,7 +272,8 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
             end
             x0 = [x0; uprev];
         end
-        if M.reference_length > 0,
+        if M.reference_length > 0 & (length(x0)~=size(M.E, 2)),
+            % include reference into the state vector if needed
             if ~isfield(Options, 'reference'),
                 fprintf('WARNING: Options.reference not specified, assuming zero.');
             end
