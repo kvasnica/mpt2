@@ -199,7 +199,7 @@ sysStruct = SST{1};
 
 %===============================================================================
 % augment the state vector to cope with tracking/deltaU formulation
-[SST, probStruct, tracking_data] = sub_augmentx0(SST, probStruct, Options.yalmip_online);
+[SST, probStruct, tracking_data] = sub_augmentx0(SST, pst, Options.yalmip_online);
 sysStruct = SST{1};
 pst = probStruct;
 
