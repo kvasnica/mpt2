@@ -315,19 +315,20 @@ elseif nargin==2 | nargin==3
             Options.dp = 0;
             [dummy, F, obj, vars] = mpt_yalmipcftoc(userSysStruct, probStruct, Options);
             
+            % mpt_yalmipcftoc() might have ran mpt_yalmipTracking() or
+            % mpt_yalmipDU() which changes sysStruct/probStruct
+            sysStruct = dummy.sysStruct;
+            probStruct = dummy.probStruct;
+            
         else
             % use data provided from mpt_owncost()
             F = Options.yalmip_data.constraints;
             obj = Options.yalmip_data.objective;
             vars = Options.yalmip_data.variables;
+            dummy = [];
+            
         end
 
-        % mpt_yalmipcftoc() might have ran mpt_yalmipTracking() or
-        % mpt_yalmipDU() which changes sysStruct/probStruct
-        sysStruct = dummy.sysStruct;
-        probStruct = dummy.probStruct;
-
-        
         % now convert the optimization problem into MPTs native form
         % vars.x{1} corresponds to x0
         % vars.uprev corresponds to previous input (for deltaU constraints)
