@@ -160,9 +160,13 @@ sysinfo_str = sprintf('%s, %d %s, %d %s, %d %s', systype, ...
 if probStruct.tracking>0,
     sysStruct = ctrl.sysStruct;
 
-    nx = sysStruct.dims.nx;
-    nu = sysStruct.dims.nu;
-    ny = sysStruct.dims.ny;
+    if isfield(sysStruct, 'dims'),
+        nx = sysStruct.dims.nx;
+        nu = sysStruct.dims.nu;
+        ny = sysStruct.dims.ny;
+    else
+        [nx, nu, ny] = mpt_sysStructInfo(sysStruct);
+    end
     
     % make plurals, i.e. if nx>1 -> 'states', otherwise 'state'
     plurx = ['state' repmat('s', 1, (nx>1))];
