@@ -308,6 +308,14 @@ else
     ctrl.sysStruct = sysStruct;
     ctrl.probStruct = probStruct;
     
+    % copy data if tracking was used
+    if isfield(vars, 'uprev_in_x0'),
+        ctrl.details.uprev_in_x0 = 1;
+    end
+    if isfield(vars, 'reference_in_x0'),
+        ctrl.details.reference_in_x0 = 1;
+    end
+
     try
         ctrl = mptctrl(ctrl);
     catch

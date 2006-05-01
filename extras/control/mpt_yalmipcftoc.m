@@ -1005,6 +1005,12 @@ if Options.yalmip_online,
 else
     variables.type = 'explicit';
 end
+if tracking_data.reference_in_x0,
+    variables.reference_in_x0 = 1;
+end
+if tracking_data.uprev_in_x0,
+    variables.uprev_in_x0 = 1;
+end
 
 if Options.dont_solve,
     % just return constraints, objectives and variables

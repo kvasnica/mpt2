@@ -347,6 +347,10 @@ elseif nargin==2 | nargin==3
             fprintf(['The controller will return deltaU=u(k)-u(k-1) instead of '...
                     'u(k) when evaluated!\n']);
             uprev_length = dummy.uprev_in_x0;
+            ctrl.details.uprev_in_x0 = 1;
+            
+        elseif isfield(vars, 'uprev_in_x0'),
+            ctrl.details.uprev_in_x0 = 1;
             
         end
         
@@ -361,6 +365,10 @@ elseif nargin==2 | nargin==3
             % reference is already part of the state vector, hence parametric_vars
             % don't need to be updated
             reference_length = dummy.reference_in_x0;
+            ctrl.details.reference_in_x0 = 1;
+            
+        elseif isfield(vars, 'reference_in_x0'),
+            ctrl.details.reference_in_x0 = 1;
             
         end
         
