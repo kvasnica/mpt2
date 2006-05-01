@@ -81,7 +81,7 @@ elseif isfield(ctrl.details, 'yalmipMatrices'),
     end
     
 elseif isfield(ctrl.details, 'yalmipData'),
-    x0_required = length(ctrl.details.yalmipData.vars.x{1})
+    x0_required = length(ctrl.details.yalmipData.vars.x{1});
     if isfield(ctrl.details.yalmipData, 'uprev_length'),
         x0_required = x0_required - ctrl.details.yalmipData.uprev_length;
     end
