@@ -401,7 +401,9 @@ elseif nargin==2 | nargin==3
             if (justLTI & Options.remove_equalities_lti) | ...
                     Options.remove_equalities_always,
                 % remove equalities
-                fprintf('Projecting on equalities....\n');
+                if Options.verbose > 1,
+                    fprintf('Projecting on equalities....\n');
+                end
                 M = mpt_collect_equalities(M, []);
                 M = mpt_remove_equalities(M, []);
                 M = mpt_project_on_equality(M);
