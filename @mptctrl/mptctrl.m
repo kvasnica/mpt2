@@ -385,14 +385,9 @@ elseif nargin==2 | nargin==3
             M.reference_length = reference_length;
 
             % remove equality constraints if needed (default for LTI systems to
-            % improve performance of LP/QP solvers)
-            sysidx = 1:length(dummy.dynamics_type);
-            justLTI = isequal(strmatch('lti', dummy.dynamics_type), sysidx(:));
-            
-            % it could be that we have binary variables even for linear systems
-            % (e.g. from boolean inputs). in such case, according to Johan, we
-            % should not remove equalities
-            justLTI = justLTI & isempty(M.binary_var_index);
+            % improve performance of LP/QP solvers). however, according to
+            % Johan, we should only do so if we have no binary variables
+            justLTI = isempty(M.binary_var_index);
             
             if (justLTI & Options.remove_equalities_lti) | ...
                     Options.remove_equalities_always,
