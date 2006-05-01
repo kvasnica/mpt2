@@ -195,7 +195,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         if isfield(vars, 'ref')
             % assign value to reference
             if ~isfield(Options, 'reference'),
-                fprintf('WARNING: Options.reference not specified, assuming zero.');
+                fprintf('WARNING: Options.reference not specified, assuming zero.\n');
             end
             ref = mpt_defaultField(Options, 'reference');
             if isempty(ref),
@@ -275,7 +275,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         if M.reference_length > 0 & (length(x0)~=size(M.E, 2)),
             % include reference into the state vector if needed
             if ~isfield(Options, 'reference'),
-                fprintf('WARNING: Options.reference not specified, assuming zero.');
+                fprintf('WARNING: Options.reference not specified, assuming zero.\n');
             end
             ref = mpt_defaultField(Options, 'reference');
             if isempty(ref),
