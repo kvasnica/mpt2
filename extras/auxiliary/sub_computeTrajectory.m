@@ -197,12 +197,13 @@ if givedetails,
     Options.fastbreak = 0;
 end
 
-% do we have deltaU constraints without tracking?
-isDUmode = (probStruct.tracking==0 & isfield(sysStruct, 'dumode'));
-
-% was the state vector augmented either by tracking or by deltaU formulation?
-x0_augmented = isfield(probStruct, 'tracking_augmented') | isDUmode;
-
+if probStruct.tracking>0 & ~isfield(sysStruct, 'dims'),
+    % controller was stored with an older version which didn't store dimensions
+    % properly
+    dims = struct('nx', nx, 'nu', nu, 'ny', ny);
+    sysStruct.dims = dims;
+    ctrl = set(ctrl, 'sysStruct', sysStruct);
+end
 nx = ctrl.details.dims.nx;
 nu = ctrl.details.dims.nu;
 
@@ -210,15 +211,6 @@ if length(x0)>nx,
     error('Wrong dimension of X0!');
 end
 u_prev = zeros(nu, 1); % default u(k-1)
-if isDUmode,
-    if length(x0) == nx,
-        % extract u(k-1) from x0
-        u_prev = x0(nx-nu+1:end); 
-        
-        % exclude u(k-1) from x0
-        x0 = x0(1:nx-nu);
-    end
-end
 
 if sys_type==1,
     % check that the provided sysStruct is compatible with this controller
@@ -240,7 +232,7 @@ if Options.openloop,
         fprintf('WARNING: Custom simulation models not supported for open-loop trajectories.\n');
         fprintf('         Switching to default sysStruct\n');
     end
-    x0 = extend_x0(ctrl, x0, u_prev, Options.reference, x0_augmented, isDUmode);
+    [x0, dumode] = extendx0(ctrl, x0, u_prev, Options.reference);
     if isEXPctrl,
         if iscell(sysStruct.A) & size(ctrl.Fi{1}, 1)<=nu,
             % we have a PWA system, call mpt_computeTrajectory which calculates
@@ -263,17 +255,13 @@ if Options.openloop,
     deltaU = Uol;
     U = Uol;
     u_prev = u_prev(:)';
-    if x0_augmented
-        % for instance on-line controllers for MLD and nonlinear systems do not
-        % go for deltaU formulation
-        if isDUmode | probStruct.tracking==1,
-            % only change U if deltaU constraints are present, or tracking with
-            % deltaU formulation requested
-            U = [];
-            for ii=1:size(Uol,1),
-                U = [U; Uol(ii,:)+u_prev];
-                u_prev = U(ii,:);
-            end
+    if dumode,
+        % only change U if deltaU constraints are present, or tracking with
+        % deltaU formulation requested
+        U = [];
+        for ii=1:size(Uol,1),
+            U = [U; Uol(ii,:)+u_prev];
+            u_prev = U(ii,:);
         end
     end
 
@@ -423,7 +411,7 @@ else
         
         %-----------------------------------------------------------------------
         % exted state vector for tracking
-        x0 = extend_x0(ctrl, x0, u_prev, Options.reference, x0_augmented, isDUmode);
+        [x0, dumode] = extendx0(ctrl, x0, u_prev, Options.reference);
 
 
         %-----------------------------------------------------------------------
@@ -470,7 +458,7 @@ else
         dyn = 0;
         simSysOpt.dynamics = dyn;
     
-        if (probStruct.tracking==1 | isDUmode) & x0_augmented
+        if dumode,
             % deltaU formulation was used
             u_true = Ucl(:) + u_prev;
         else
@@ -589,40 +577,6 @@ else
 end
 
 return
-
-
-%==========================================================================
-function x0 = extend_x0(ctrl, x0, u_prev, reference, x0_augmented, isDUmode)
-% tracking: extend state vector
-
-if length(x0)==ctrl.details.dims.nx,
-    return;
-end
-
-if x0_augmented,
-    % however, we only extend the state vector if we augmented it before (which
-    % we don't do e.g. if we control MLD or nonlinear systems)
-    
-    if ctrl.probStruct.tracking>0
-        nyt=ctrl.sysStruct.dims.ny;
-        nut=ctrl.sysStruct.dims.nu;
-        nxt=ctrl.sysStruct.dims.nx;
-        
-    elseif isDUmode, 
-        % augment state vector to xn = [x; u(k-1)] if we have deltaU constraints
-        x0 = [x0; u_prev(:)];
-        
-    end
-    
-    if ctrl.probStruct.tracking==1 & length(x0)<(nxt+nut+length(reference))
-        x0 = [x0; u_prev(:); reference(:)];
-        
-    elseif ctrl.probStruct.tracking==2 & length(x0)<(nxt+length(reference))
-        % probStruct.tracking=2 -> no deltaU formulation
-        x0 = [x0; reference(:)];
-        
-    end
-end
 
 
 %==========================================================================
