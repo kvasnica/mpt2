@@ -66,6 +66,10 @@ probStruct = ctrl.probStruct;
 include_uprev = 0;
 include_ref = 0;
 
+
+ref_in_x0 = isfield(ctrl.details, 'reference_in_x0');
+uprev_in_x0 = isfield(ctrl.details, 'uprev_in_x0');
+
 %=====================================================================
 % first determine what is the needed dimension of x0
 if isexplicit(ctrl),
@@ -73,19 +77,19 @@ if isexplicit(ctrl),
     
 elseif isfield(ctrl.details, 'yalmipMatrices'),
     x0_required = size(ctrl.details.yalmipMatrices.E, 2);
-    if isfield(ctrl.details.yalmipMatrices, 'uprev_length'),
+    if  ~uprev_in_x0 & isfield(ctrl.details.yalmipMatrices, 'uprev_length'),
         x0_required = x0_required - ctrl.details.yalmipMatrices.uprev_length;
     end
-    if isfield(ctrl.details.yalmipMatrices, 'reference_length'),
+    if ~ref_in_x0 & isfield(ctrl.details.yalmipMatrices, 'reference_length'),
         x0_required = x0_required - ctrl.details.yalmipMatrices.reference_length;
     end
     
 elseif isfield(ctrl.details, 'yalmipData'),
     x0_required = length(ctrl.details.yalmipData.vars.x{1});
-    if isfield(ctrl.details.yalmipData, 'uprev_length'),
+    if ~uprev_in_x0 & isfield(ctrl.details.yalmipData, 'uprev_length'),
         x0_required = x0_required - ctrl.details.yalmipData.uprev_length;
     end
-    if isfield(ctrl.details.yalmipData, 'reference_length'),
+    if ~ref_in_x0 & isfield(ctrl.details.yalmipData, 'reference_length'),
         x0_required = x0_required - ctrl.details.yalmipData.reference_length;
     end
     
@@ -105,12 +109,12 @@ end
 % do we need to include u(k-1) ?
 include_uprev = (probStruct.tracking==0 & isfield(sysStruct, 'dumode')) | ...
     (probStruct.tracking==1 & (isfield(probStruct, 'tracking_augmented') | ...
-    isexplicit(ctrl))) | isfield(ctrl.details, 'uprev_in_x0');
+    isexplicit(ctrl))) | uprev_in_x0;
 dumode = include_uprev;
 
 %---------------------------------------------------------------------
 % do we need to include the reference
-include_ref = isfield(ctrl.details, 'reference_in_x0') | ((probStruct.tracking > 0) & ...
+include_ref = ref_in_x0 | ((probStruct.tracking > 0) & ...
     (isfield(probStruct, 'tracking_augmented') | isexplicit(ctrl)));
 
 
