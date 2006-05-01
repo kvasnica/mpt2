@@ -119,7 +119,8 @@ if designphase,
         Options.dont_solve = 1;
         Options.dp = 0;
     end
-    
+
+    Options.ownmpc = 1;
     try
         [dummy, C, O, V] = mpt_yalmipcftoc(sysStruct, probStruct, Options);
     catch

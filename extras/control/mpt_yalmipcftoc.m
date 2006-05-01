@@ -135,6 +135,7 @@ Options = mpt_defaultOptions(Options, ...
     'details', 0, ...
     'force_pwa', 0, ...
     'force_mld', 0, ...
+    'ownmpc', 0, ...
     'yalmip_online', 0);
 
 
@@ -203,6 +204,16 @@ sysStruct = SST{1};
 [SST, probStruct, tracking_data] = sub_augmentx0(SST, pst, Options.yalmip_online);
 sysStruct = SST{1};
 pst = probStruct;
+x0_format = 'x0';
+if tracking_data.uprev_in_x0,
+    x0_format = [x0_format '; u(k-1)'];
+end
+if tracking_data.reference_in_x0,
+    x0_format = [x0_format '; reference'];
+end
+if Options.ownmpc & Options.verbose > 0 & ~isequal(x0_format, 'x0'),
+    fprintf('State vector will have the format x = [%s].\n', x0_format);
+end
 
 
 %===============================================================================
@@ -1006,12 +1017,7 @@ if Options.dont_solve,
     end
     if tracking_data.reference_in_x0,
         % we did augment the state vector by the reference
-        if isfield(probStruct, 'Qy'),
-            nref = ny;
-        else
-            nref = nx;
-        end
-        ctrl.reference_in_x0 = nref;
+        ctrl.reference_in_x0 = tracking_data.nref;
     end
     ctrl.dynamics_type = dynamics_type;
     return
@@ -1544,9 +1550,6 @@ for ii = 1:length(SST),
     
     if do_tracking(ii),
         % augment the system to deal with tracking
-        %
-        % we always go for augmentation if we are constructing data for an
-        % explicit controller
         [SST{ii}, pst] = mpt_yalmipTracking(SST{ii}, probStruct, verOpt);
         nref = SST{ii}.dims.nref;
 
@@ -1598,7 +1601,8 @@ if any(need_deltaU) & any(do_tracking==2) & yalmip_online==0,
 end
 
 data.uprev_in_x0 = (any(need_deltaU) & all(do_deltaU)) | any(do_tracking==1);
-data.need_uprev = any(need_deltaU) & ~(all(do_deltaU) | all(do_tracking==1));
+data.need_uprev = (any(need_deltaU) & ~(all(do_deltaU) | all(do_tracking==1))) | ...
+    (any(need_tracking==1) & ~all(do_tracking==1));
 
 data.reference_in_x0 = any(need_tracking) & all(do_tracking);
 data.need_reference = any(need_tracking) & ~all(do_tracking);
