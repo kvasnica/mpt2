@@ -364,10 +364,8 @@ switch probStruct.subopt_lev,
                     mpt_call = @mpt_optControl;
                     no_overlaps = 1;
                     
-                    % prefer mpt_optControl() for CFTOC for quadratic cost,
-                    % since it computes a stabilizing LQR set much faster than
-                    % mpt_yalmipcftoc() does.
-                    prefered = 'mpt';
+                    % mpt_yalmipcftoc() is more numerically robust for this case
+                    prefered = 'yalmip';
                     
                 elseif oneshot,
                     % solve the one-shot formulation
