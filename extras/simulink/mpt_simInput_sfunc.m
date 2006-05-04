@@ -183,31 +183,11 @@ end
 xm = u(1:nx);
 ref = u(nx+1:nx+dimref);
 
-isMLD = ~isexplicit(ctrl) & iscell(ctrl.sysStruct.A);
+% augment state vector to include previous input and/or reference
+[x0, dumode] = extendx0(ctrl, xm, Uprev, ref);
 
-if isMLD | isfield(ctrl.details, 'yalmipMatrices') | isfield(ctrl.details, 'yalmipData'),
-    % some on-line controllers cannot go for tracking/deltaU formulation by
-    % directly augmenting the state vector (e.g. MLD or nonlinear systems),
-    % therefore for such cases we must provide the previous control action as
-    % well as the reference as separate arguments
-    x0 = xm;
-    opt.Uprev = Uprev;
-    if tracking > 0,
-        opt.reference = ref;
-    end
-else
-    % augment state vector to include previous input and/or reference
-    if tracking==0 & dumode,
-        x0 = [xm; Uprev];
-    elseif tracking==2,
-        x0 = [xm; ref];
-    elseif tracking==1,
-        x0 = [xm; Uprev; ref];
-    else
-        x0 = xm;
-    end
-end
-
+opt.Uprev = Uprev;
+opt.reference = ref;
 opt.verbose = -1;
 [U,feasible,region,cost]=mpt_getInput(ctrl,x0, opt);
 if isempty(U) | ~feasible,
@@ -227,7 +207,7 @@ U = U(:);
 
 % for tracking problems, U returned by the controller is deltaU, we need to
 % convert it back
-if tracking==1 | dumode,
+if dumode,
     U = U + Uprev;
 end
 Uprev = U;
