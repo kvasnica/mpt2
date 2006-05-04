@@ -143,6 +143,35 @@ if Options.qpsolver==-1,
     Options.mplpver = 1;
 end
 
+% make sure all matrices are in full format. this is important to do, because we
+% call mpt_solvelpi which doesn't convert sparse matrices to full for solvers
+% which don't support them
+Matrices.H  = full(Matrices.H);
+Matrices.G  = full(Matrices.G);
+Matrices.E  = full(Matrices.E);
+Matrices.W  = full(Matrices.W);
+if isfield(Matrices, 'F'),
+    Matrices.F  = full(Matrices.F);
+end
+if isfield(Matrices, 'Y'),
+    Matrices.Y  = full(Matrices.Y);
+end
+if isfield(Matrices, 'Cf'),
+    Matrices.Cf  = full(Matrices.Cf);
+end
+if isfield(Matrices, 'Cx'),
+    Matrices.Cx  = full(Matrices.Cx);
+end
+if isfield(Matrices, 'Cc'),
+    Matrices.Cc  = full(Matrices.Cc);
+end
+if isfield(Matrices, 'bndA'),
+    Matrices.bndA = full(Matrices.bndA);
+end
+if isfield(Matrices, 'bndb'),
+    Matrices.bndb = full(Matrices.bndb);
+end
+
 switch Options.mplpver
     case 1,
         [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp_ver1(Matrices,Options);

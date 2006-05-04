@@ -130,6 +130,19 @@ if(~isfield(Matrices,'Cc') | isempty(Matrices.Cc))
     Matrices.Cc=0;
 end
 
+% make sure all matrices are in full format. this is important to do, because we
+% call mpt_solvelpi which doesn't convert sparse matrices to full for solvers
+% which don't support them
+Matrices.F  = full(Matrices.F);
+Matrices.Y  = full(Matrices.Y);
+Matrices.H  = full(Matrices.H);
+Matrices.G  = full(Matrices.G);
+Matrices.E  = full(Matrices.E);
+Matrices.W  = full(Matrices.W);
+Matrices.Cf  = full(Matrices.Cf);
+Matrices.Cx  = full(Matrices.Cx);
+Matrices.Cc  = full(Matrices.Cc);
+
 if ~isfield(Matrices, 'PbndIncluded'),
     % only include bndA and bnbd if not added in mpt_constructMatrices
     Matrices.E=[Matrices.E; -Matrices.bndA];
