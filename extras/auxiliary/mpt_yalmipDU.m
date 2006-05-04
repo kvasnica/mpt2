@@ -243,8 +243,21 @@ if ispwa,
     sysStruct.guardU = guardU;
 end
 
-sysStruct.umax = sysStruct.dumax;
-sysStruct.umin = sysStruct.dumin;
+if all(isinf(sysStruct.dumax)) & all(isinf(sysStruct.dumin)),
+    % in tracking=1 we go for deltaU formulation, therefore we take the
+    % constraints on deltaU from sysStruct.{dumin|dumax}. however it is very
+    % frequent that these bounds are +/- Inf (either specified like that by
+    % the user or set automatically by mpt_verifySysStruct(). therefore if
+    % we detect such case, we compute the bounds on deltaU from constraints
+    % on "u" itself
+    umin = sysStruct.umin - sysStruct.umax;    
+    umax = sysStruct.umax - sysStruct.umin;
+else
+    umin = sysStruct.dumin;
+    umax = sysStruct.dumax;
+end
+sysStruct.umax = umax;
+sysStruct.umin = umin;
 sysStruct.dumax = Inf*ones(nu,1);
 sysStruct.dumin = -Inf*ones(nu,1);
 if isfield(probStruct, 'Rdu'),
