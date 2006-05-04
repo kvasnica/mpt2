@@ -214,11 +214,30 @@ end
 haveXbounds = isfield(sysStruct, 'xmax');
 haveYbounds = isfield(sysStruct, 'ymax');
 
-xrefmax = mpt_defaultField(sysStruct, 'xrefmax', repmat(mptOptions.infbox, nx, 1));
-xrefmin = mpt_defaultField(sysStruct, 'xrefmin', repmat(-mptOptions.infbox, nx, 1));
-yrefmax = mpt_defaultField(sysStruct, 'yrefmax', repmat(mptOptions.infbox, ny, 1));
-yrefmin = mpt_defaultField(sysStruct, 'yrefmin', repmat(-mptOptions.infbox, ny, 1));
+% since reference is now part of the state vector, it is always a good idea to
+% keep all elements bounded. therefore if we are tracking the system states
+% (outputs), we use state (output) constraints as bounds on references
+if haveXbounds,
+    default_xrefmax = sysStruct.xmax;
+    default_xrefmin = sysStruct.xmin;
+else
+    default_xrefmax = repmat(mptOptions.infbox, nx, 1);
+    default_xrefmin = -repmat(mptOptions.infbox, nx, 1);
+end
+if haveYbounds,
+    default_yrefmax = sysStruct.ymax;
+    default_yrefmin = sysStruct.ymin;
+else
+    default_yrefmax = repmat(mptOptions.infbox, ny, 1);
+    default_yrefmin = -repmat(mptOptions.infbox, ny, 1);
+end
+xrefmax = mpt_defaultField(sysStruct, 'xrefmax', default_xrefmax);
+xrefmin = mpt_defaultField(sysStruct, 'xrefmin', default_xrefmin);
+yrefmax = mpt_defaultField(sysStruct, 'yrefmax', default_yrefmax);
+yrefmin = mpt_defaultField(sysStruct, 'yrefmin', default_yrefmin);
 
+% replace any +/- Inf bounds with the value of mptOptions.infbox to keep at
+% least some level of scaling
 xrefmax(find(xrefmax==Inf)) = mptOptions.infbox;
 xrefmin(find(xrefmin==-Inf)) = -mptOptions.infbox;
 yrefmax(find(yrefmax==Inf)) = mptOptions.infbox;
