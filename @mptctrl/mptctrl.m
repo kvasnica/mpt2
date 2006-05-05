@@ -538,8 +538,17 @@ end
 
 % =========================================================================
 % store dimensions
-[nx,nu,ny] = mpt_sysStructInfo(ctrl.sysStruct);
-ctrl.details.dims = struct('nx', nx, 'nu', nu, 'ny', ny);
+if ~isfield(ctrl.details, 'dims'),
+    [nx,nu,ny] = mpt_sysStructInfo(ctrl.sysStruct);
+    ctrl.details.dims = struct('nx', nx, 'nu', nu, 'ny', ny);
+end
+
+
+% =========================================================================
+% set format of the state vector
+if ~isfield(ctrl.details, 'x0format'),
+    ctrl = sub_setX0format(ctrl);
+end
 
 
 % =========================================================================
@@ -783,4 +792,60 @@ if Qx_cell | Qu_cell | Qy_cell | Qz_cell | Qd_cell,
     end
 else
     W = weights;
+end
+
+
+%---------------------------------------------------
+function ctrl = sub_setX0format(ctrl)
+% determines whether the state vector was augmented to deal with tracking/deltaU
+% formulation. sets "ctrl.details.x0format" to a structure with following
+% fields:
+%
+%  x0format.required   - number of states required
+%  x0format.reference  - number of references (0 if the reference is not part of
+%                        the state vector)
+%  x0format.uprev      - number of inputs (0 if the previous control input is
+%                        not part of the state vector)
+%
+% This data are then later used in extendx0()
+
+sysStruct = ctrl.sysStruct;
+probStruct = ctrl.probStruct;
+dims = ctrl.details.dims;
+uprev_in_x0 = isfield(ctrl.details, 'uprev_in_x0');
+reference_in_x0 = isfield(ctrl.details, 'reference_in_x0');
+
+% is u(k-1) included in the state vector?
+include_uprev = (probStruct.tracking==0 & isfield(sysStruct, 'dumode')) | ...
+    (probStruct.tracking==1 & (isfield(probStruct, 'tracking_augmented') | ...
+    isfulldim(ctrl.Pn))) | uprev_in_x0;
+
+% is the reference included in the state vector?
+include_ref = reference_in_x0 | ((probStruct.tracking > 0) & ...
+    (isfield(probStruct, 'tracking_augmented') | isfulldim(ctrl.Pn)));
+
+[nx, nu, ny] = mpt_sysStructInfo(ctrl.details.origSysStruct);
+
+if include_ref==0,
+    nref = 0;
+elseif isfield(ctrl.probStruct, 'Qy'),
+    nref = ny;
+else
+    nref = nx;
+end
+
+if include_uprev==0,
+    nu = 0;
+end
+
+ctrl.details.x0format = struct('required', nx + nu + nref, ...
+    'reference', nref, ...
+    'uprev', nu );
+
+% remove fields which are no longer needed
+if uprev_in_x0,
+    ctrl.details = rmfield(ctrl.details, 'uprev_in_x0');
+end
+if reference_in_x0,
+    ctrl.details = rmfield(ctrl.details, 'reference_in_x0');
 end

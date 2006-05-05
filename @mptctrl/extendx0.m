@@ -60,79 +60,41 @@ function [x0, dumode] = extendx0(ctrl, x0, uprev, reference)
 %
 % ---------------------------------------------------------------------------
 
-x0 = x0(:);
-sysStruct = ctrl.sysStruct;
-probStruct = ctrl.probStruct;
-include_uprev = 0;
-include_ref = 0;
-
-
-ref_in_x0 = isfield(ctrl.details, 'reference_in_x0');
-uprev_in_x0 = isfield(ctrl.details, 'uprev_in_x0');
-
-%=====================================================================
-% first determine what is the needed dimension of x0
-if isexplicit(ctrl),
-    x0_required = dimension(ctrl.Pn);
-    
-elseif isfield(ctrl.details, 'yalmipMatrices'),
-    x0_required = size(ctrl.details.yalmipMatrices.E, 2);
-    if  ~uprev_in_x0 & isfield(ctrl.details.yalmipMatrices, 'uprev_length'),
-        x0_required = x0_required - ctrl.details.yalmipMatrices.uprev_length;
-    end
-    if ~ref_in_x0 & isfield(ctrl.details.yalmipMatrices, 'reference_length'),
-        x0_required = x0_required - ctrl.details.yalmipMatrices.reference_length;
-    end
-    
-elseif isfield(ctrl.details, 'yalmipData'),
-    x0_required = length(ctrl.details.yalmipData.vars.x{1});
-    if ~uprev_in_x0 & isfield(ctrl.details.yalmipData, 'uprev_length'),
-        x0_required = x0_required - ctrl.details.yalmipData.uprev_length;
-    end
-    if ~ref_in_x0 & isfield(ctrl.details.yalmipData, 'reference_length'),
-        x0_required = x0_required - ctrl.details.yalmipData.reference_length;
-    end
-    
-elseif isfield(ctrl.details, 'Matrices'),
-    if ~isempty(ctrl.details.Matrices),
-        x0_required = size(ctrl.details.Matrices.E, 2);
-    else
-        x0_required = ctrl.details.dims.nx;
-    end
-    
-else
-    error('Unknown controller.');
-    
+error(nargchk(2,4,nargin));
+if nargin < 3,
+    uprev = [];
+    reference = [];
+elseif nargin < 4,
+    reference = [];
 end
 
-%---------------------------------------------------------------------
-% do we need to include u(k-1) ?
-include_uprev = (probStruct.tracking==0 & isfield(sysStruct, 'dumode')) | ...
-    (probStruct.tracking==1 & (isfield(probStruct, 'tracking_augmented') | ...
-    isexplicit(ctrl))) | uprev_in_x0;
-dumode = include_uprev;
+x0 = x0(:);
+uprev = uprev(:);
+reference = reference(:);
 
-%---------------------------------------------------------------------
-% do we need to include the reference
-include_ref = ref_in_x0 | ((probStruct.tracking > 0) & ...
-    (isfield(probStruct, 'tracking_augmented') | isexplicit(ctrl)));
-
+x0format = ctrl.details.x0format;
+dumode = x0format.uprev > 0;
 
 %=====================================================================
 % exit quickly if the state already has correct length
-if length(x0) == x0_required,
+if length(x0) == x0format.required,
     return
 end
 
-
 %=====================================================================
 % augment the state vector if need
-if include_uprev,
-    x0 = [x0; uprev(:)];
+if x0format.uprev > 0,
+    if length(uprev) ~= x0format.uprev,
+        error('Wrong dimension of u(k-1).');
+    end
+    x0 = [x0; uprev];
 end
-if include_ref,
+if x0format.reference > 0,
+    if length(reference) ~= x0format.reference,
+        error('Wrong dimension of the reference.');
+    end
     x0 = [x0; reference(:)];
 end
-if length(x0) ~= x0_required,
-    error('Wrong dimension of u(k-1) and/or the reference.');
+if length(x0) ~= x0format.required,
+    error('Wrong dimension of x0.');
 end
