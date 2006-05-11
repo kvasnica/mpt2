@@ -39,12 +39,12 @@
   /* RTW is used, switch to real_T data types to avoid problems with TLC compilation */
   static long mpt_searchTree(const real_T *X, real_T *U)
 #else
-  static long mpt_searchTree(const double *X, double *U)
+  static long mpt_searchTree(const float *X, float *U)
 #endif
 {
     int ix, iu;
     long node = 1, row;
-    double hx, k;
+    float hx, k;
     
     /* initialize U to zero*/
     for (iu=0; iu<MPT_NU; iu++) {

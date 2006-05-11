@@ -90,7 +90,7 @@ out = strvcat(out, sprintf('#define MPT_NX %d', nx));
 template = fileread(template_file);
 
 ctr = 0;
-out = strvcat(out, 'static double MPT_ST[] = {');
+out = strvcat(out, 'static float MPT_ST[] = {');
 
 o = '';
 for ii = 1:length(ST),
@@ -103,7 +103,7 @@ for ii = 1:length(ST),
 end
 out = strvcat(out, '};');
 
-out = strvcat(out, 'static double MPT_F[] = {');
+out = strvcat(out, 'static float MPT_F[] = {');
 for ii = 1:nr,
     F = Fi{ii};
     for jj = 1:nu,
@@ -117,7 +117,7 @@ for ii = 1:nr,
 end
 out = strvcat(out, '};');
 
-out = strvcat(out, 'static double MPT_G[] = {');
+out = strvcat(out, 'static float MPT_G[] = {');
 for ii = 1:nr,
     F = Gi{ii};
     for jj = 1:nu,
