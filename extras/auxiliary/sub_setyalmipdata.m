@@ -42,13 +42,6 @@ function model = sub_setyalmipdata(model,H,f,A,B,Aeq,Beq,lb,ub,vartype,x0)
 
 [nr, nx] = size(A);
 
-% we can add lower and upper bound directly to constraints if we want:
-% if ~isempty(lb) & ~isempty(ub),
-%     A = [A; eye(nx); -eye(nx)];
-%     B = [B; ub; -lb];
-%     [nr, nx] = size(A);
-% end
-
 interfacedata = model.interfacedata;
 
 interfacedata.K.f = size(Aeq, 1);
@@ -61,7 +54,7 @@ end
 A = [Aeq; A];
 B = [Beq; B];
 
-interfacedata.F_struc = [B -A];
+interfacedata.F_struc = sparse([B -A]);
 interfacedata.c = f;
 interfacedata.x0 = x0;
 interfacedata.lb = lb;
@@ -73,6 +66,22 @@ interfacedata.problemclass.constraint.integer = 0;
 if ~isempty(vartype),
     interfacedata.binary_variables = find(vartype=='B')';
     interfacedata.integer_variables = find(vartype=='I')';
+    if interfacedata.solver.constraint.binary==0 & ~isempty(interfacedata.binary_variables),
+        % some solvers (e.g. MOSEK) only support integer variables. therefore we
+        % have to denote binary variables as integer with 0 <= x <= 1 bounds
+        interfacedata.integer_variables = union(interfacedata.binary_variables, ...
+            interfacedata.integer_variables);
+        if isempty(lb),
+            lb = repmat(-Inf, size(A, 2), 1);
+        end
+        if isempty(ub),
+            ub = repmat(Inf, size(A, 2), 1);
+        end
+        lb(interfacedata.binary_variables) = 0;
+        ub(interfacedata.binary_variables) = 1;
+        interfacedata.binary_variables = [];
+    end
+        
     if ~isempty(interfacedata.binary_variables),
         interfacedata.problemclass.constraint.binary = 1;
     end
