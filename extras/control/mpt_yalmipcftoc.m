@@ -978,7 +978,7 @@ end
 variables.x = x;
 variables.u = u(1:Nc);
 variables.y = y;
-if havePWA | haveMLD | haveNONLIN,
+if havePWA | haveMLD | havePNONLIN,
     variables.d = d;
 end
 if haveMLD,
