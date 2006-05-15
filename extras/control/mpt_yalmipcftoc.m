@@ -237,6 +237,12 @@ if haveNONLIN & Options.yalmip_online==0,
     error('Only on-line controllers can be designed for non-linear plants.');
 end
 
+% when formulating the MPC problem for PWA and piecewise nonlinear systems, we
+% use the implies() operator, which requires all variables to be bounded. this
+% flag therefore indicates later that we should introduce non-infty bounds on
+% x,u and y variables to prevent warnings from YALMIP.
+bigM_used = havePWA | havePNONLIN;
+
 
 %===============================================================================
 % check whether one can use the DP formulation
@@ -407,13 +413,30 @@ for im = 1:length(SST),
         isfield(probStruct, 'Rdu');
 end
 
-
-%===============================================================================
-% when deltaU formulation is introduced, input constraints are set to +/- Inf.
-% make them tighther.
-for im = 1:length(SST),
-    SST{im}.umax(isinf(SST{im}.umax)) = mptOptions.infbox;
-    SST{im}.umin(isinf(SST{im}.umin)) = -mptOptions.infbox;
+% if bigM technique is used for PWA and Piecewise Nonlinear systems, we do
+% require state and input constraints to be present in order to be able to make
+% tight relaxations. If such constraints are not present, we give a warning and
+% set them to +/- mptOptions.infbox (which is 1e4 by default)
+noXbounds = find(haveXbounds==0);
+noYbounds = find(haveYbounds==0);
+noUbounds = find(haveUbounds==0);
+if bigM_used & ~isempty(noXbounds),
+    fprintf('WARNING: state constraints not given but required, setting them to +/- %d\n', ...
+        mptOptions.infbox);
+    SST = sub_force_bounds(SST, 'x', nx, noXbounds, mptOptions.infbox);
+    haveXbounds(noXbounds) = 1;
+end
+if bigM_used & ~isempty(noYbounds),
+    fprintf('WARNING: output constraints not given but required, setting them to +/- %d\n', ...
+        mptOptions.infbox);
+    SST = sub_force_bounds(SST, 'y', ny, noYbounds, mptOptions.infbox);
+    haveYbounds(noYbounds) = 1;
+end
+if bigM_used & ~isempty(noUbounds),
+    fprintf('WARNING: input constraints not given but required, setting them to +/- %d\n', ...
+        mptOptions.infbox);
+    SST = sub_force_bounds(SST, 'u', nu, noUbounds, mptOptions.infbox);
+    haveUbounds(noUbounds) = 1;
 end
 
 
@@ -484,7 +507,7 @@ for im = 1:length(SST)-1,
     end
 end
 
-
+Fbounds = set([]);
 reference_used = 0;
 uprev_used = 0;
 if Options.yalmip_online & tracking_data.need_uprev
@@ -493,7 +516,9 @@ if Options.yalmip_online & tracking_data.need_uprev
     uprev = sdpvar(nu, 1);
     % add bounds on this variable for better scaling
     [umin, umax] = sub_getMaxBounds(SST, 'u', nu);
-    bounds(uprev, umin, umax);
+    tag = 'umin < u(k-1) < umax';
+    Fbounds = Fbounds + set(umin < uprev < umax, tag);
+    uprev_used = 1;
 end
 if Options.yalmip_online & tracking_data.need_reference,
     % we have a varying reference in tracking problems, introduce a new
@@ -503,7 +528,8 @@ if Options.yalmip_online & tracking_data.need_reference,
         reference = sdpvar(ny, 1);
         % add bounds on this variable for better scaling
         [ymin, ymax] = sub_getMaxBounds(SST, 'y', ny);
-        bounds(reference, ymin, ymax);
+        tag = 'ymin < reference < ymax';
+        Fbounds = Fbounds + set(ymin < reference < ymax, tag);
         yref = reference;
         
     else
@@ -511,7 +537,8 @@ if Options.yalmip_online & tracking_data.need_reference,
         reference = sdpvar(nx, 1);
         % add bounds on this variable for better scaling
         [xmin, xmax] = sub_getMaxBounds(SST, 'x', nx);
-        bounds(reference, xmin, xmax);
+        tag = 'xmin < reference < xmax';
+        Fbounds = Fbounds + set(xmin < reference < xmax, tag);
         xref = reference;
     end
     reference_used = 1;
@@ -537,14 +564,13 @@ dims = struct('nx', nx, 'nu', nu, 'ny', ny);
 %===============================================================================
 % initialize the solution
 F = set([]);
+if uprev_used | reference_used,
+    % add any constraints defined previously on uprev and the reference
+    F = F + Fbounds;
+end
 J{N} = 0;  % initial cost
 obj = 0;
 starttime = cputime;
-% when formulating the MPC problem for PWA and piecewise nonlinear systems, we
-% use the implies() operator, which requires all variables to be bounded. this
-% flag therefore indicates later that we should introduce non-infty bounds on
-% x,u and y variables to prevent warnings from YALMIP.
-bigM_used = havePWA | havePNONLIN;
 
 
 %===============================================================================
@@ -560,7 +586,6 @@ for k = N-1:-1:1
     if k > Nc,
         % block u_k, k=Nc+1..N to be equal to u_Nc
         ku = Nc;
-        sub_setbounds('u', u{ku}, SST{ku}, haveUbounds(ku), soften, smax, bigM_used);        
     else
         % otherwise u_k is a free variable
         ku = k;
@@ -569,22 +594,15 @@ for k = N-1:-1:1
 
     
     %===============================================================================
-    % set bounds on states, inputs and outputs.
-    sub_setbounds('x', x{k}, SST{k}, haveXbounds(k), soften, smax, bigM_used);
-    sub_setbounds('x', x{k+1}, SST{k+1}, haveXbounds(k+1), soften, smax, bigM_used);
-    sub_setbounds('u', u{k}, SST{k}, haveUbounds(k), soften, smax, bigM_used);
-    if ~(k==1 & probStruct.y0bounds==0)
-        % do not impose constraints on y0 if user does not want to
-        sub_setbounds('y', y{k}, SST{k}, haveYbounds(k), soften, smax, bigM_used);
-    end
-    
-
-    %===============================================================================
     if Options.dp,
         % in the DP formulation we formulate constraints for each step
         % separatelly. In the one-shot formulation, we add constraints for all
         % steps.
         F = set([]);
+        if uprev_used | reference_used,
+            % add any constraints defined previously on uprev and the reference
+            F = F + Fbounds;
+        end
         
         % in the DP formulation we start a new objective for each step, in the
         % one-shot formulation we sum up cost for each horizon.
@@ -618,7 +636,7 @@ for k = N-1:-1:1
         dumin = SST{k}.dumin - slacks.all{k} - slacks.u{k};
         dumax = SST{k}.dumax + slacks.all{k} + slacks.u{k};
 
-        if Options.yalmip_online & k==1,
+        if uprev_used & k==1,
             % add constraint dumin < u(0)-u(-1) < dumax, such that we can
             % enforce deltaU constraints knowing the previous input (which is a
             % parametric variable)
@@ -660,8 +678,14 @@ for k = N-1:-1:1
         end        
         F = F + set(xmin < x{k} < xmax, tag);
     end
-    if k==N-1 & haveXbounds(k+1),
-        % add state constraints on x_N
+    if (k==N-1 | (Options.dp==1 & bigM_used)) & haveXbounds(k+1),
+        % add state constraints on x_N or on x{k+1} if needed
+        %
+        % notice that if the dynamic programming approach is used and bigM
+        % technique has to be used by means of the implies() operator, we must
+        % also add constraints on x{k+1}, otherwise YALMIP would scream that the
+        % problem is badly scaled
+        
         xmin = SST{k+1}.xmin - slacks.all{k+1} - slacks.x{k+1};
         xmax = SST{k+1}.xmax + slacks.all{k+1} + slacks.x{k+1};
         tag = sprintf('xmin < x_%d < xmax', iN+1);
@@ -752,17 +776,22 @@ for k = N-1:-1:1
                 guardeq = feval(SST{k}.nonlinhandle, 'guards', x{k}, u{ku}, i);
                 error(sub_check_nonlinearity(guardeq));
                 
-                % we must bound the guards, otherwise YALMIP would give a nasty
-                % warning, because bounds are not auto-propagated to
-                % "constraint" objects.
+                % YALMIP would give a nasty warning if the guard expression is
+                % not bounded by a aconstraint. however, it is currently not
+                % clear how to come up with good bounds. just imagine our guard
+                % is defined as follows:
+                %   guardeq = (x(1)^2 + x(2)^2 <= 1)
+                % even though all elements of the state vector are bounded,
+                % YALMIP currently does not propagate such bounds into nonlinear
+                % expressions. if we just add dummy bounds like
+                %   set( -1e4 < guardeq < 1e4)
+                % then it is NOT imposing +/-1e4 bounds on individual variables,
+                % but instead on the whole nonlinear expression (which can be a
+                % wrong thing to do). 
                 %
-                % It would be possible to derive tighter bounds, but we
-                % don't do it, becauase it's plain pain in the ass. One would
-                % basically need to recover the nonlinear function from the
-                % "guardeq" object and then do an exhaustive enumeration by
-                % plugging in bounds on individual variables which appear in a
-                % given (possibly nonlinear) constraint.
-                bounds(sdpvar(guardeq), -mptOptions.infbox, mptOptions.infbox);
+                % therefore for now we don't assign any bounds, which will cause
+                % a warning to be displayed by YALMIP. we use it as a reminder
+                % that this should be improved
                 F = F + set(implies(d{k}(i), guardeq), tag);
             end
             
@@ -843,8 +872,6 @@ for k = N-1:-1:1
             end
             
             % add bounds on auxiliary "z" variables
-            % note: we could also use bounds() here:
-            %   bounds(z{k}, MLD{k}.zl, MLD{k}.zu);
             tag = sprintf('MLD.zl < z_%d < MLD.zu', iN);
             F = F + set(MLD{k}.zl <= z{k} <= MLD{k}.zu, tag);
 
@@ -1376,7 +1403,6 @@ else
             soften.x = 1;
             % upper bound on this slack
             smax.x = mpt_defaultField(probStruct, 'sxmax', mptOptions.infbox);
-            for i = 1:length(slacks.x), bounds(slacks.x{i}, 0, smax.x); end
             % penalty on slacks
             sweights.x = mpt_defaultField(probStruct, 'Sx', 1e3);
         end
@@ -1390,7 +1416,6 @@ else
             soften.y = 1;
             % upper bound on this slack
             smax.y = mpt_defaultField(probStruct, 'symax', mptOptions.infbox);
-            for i = 1:length(slacks.y), bounds(slacks.y{i}, 0, smax.y); end
             % penalty on slacks
             sweights.y = mpt_defaultField(probStruct, 'Sy', 1e3);
         end
@@ -1401,7 +1426,6 @@ else
         soften.u = 1;
         % upper bound on this slack
         smax.u = mpt_defaultField(probStruct, 'sumax', mptOptions.infbox);
-        for i = 1:length(slacks.u), bounds(slacks.u{i}, 0, smax.u); end
         % penalty on slacks
         sweights.u = mpt_defaultField(probStruct, 'Su', 1e3);
     end
@@ -1454,46 +1478,6 @@ function out = sub_check_nonlinearity(expression)
 out = '';
 if any(is(set(expression), 'sigmonial')),
     out = 'Only polynomial nonlinearities are allowed.';
-end
-
-
-%---------------------------------------------------------
-function sub_setbounds(flag, z, sysStruct, havebounds, soften, smax, bigM_used)
-% sets bounds on a given variable "z" if they are needed/present
-
-global mptOptions
-
-slack_bound = getfield(smax, flag);
-if isinf(slack_bound),
-    slack_bound = mptOptions.infbox;
-end
-
-if havebounds,
-    minb = getfield(sysStruct, [flag 'min']);
-    maxb = getfield(sysStruct, [flag 'max']);
-
-    if bigM_used,
-        % if implies() of iff() functions must be used (bigM_used will be true in
-        % that case), we replace any Inf-terms by +/- mptOptions.infbox (havebounds
-        % will be 1 iff there are any Inf terms in minb/maxb)
-        minb(find(isinf(minb))) = -mptOptions.infbox;
-        maxb(find(isinf(maxb))) = mptOptions.infbox;
-    end
-    
-    % increase bounds by limits on slacks (if no soft constraints are defined,
-    % respective slack bounds will be zero)
-    minb = minb - slack_bound;
-    maxb = maxb + slack_bound;
-end
-    
-if havebounds,
-    % bounds known, set them
-    bounds(z, minb, maxb);
-
-elseif bigM_used,
-    % no bounds present, but required, use +/- mptOptions.infbox
-    bounds(z, -mptOptions.infbox, mptOptions.infbox);
-    
 end
 
 
@@ -1627,8 +1611,10 @@ function [do_tracking, do_deltaU, need_tracking, need_dU] = ...
 sys_type = sub_sysStruct_type(sysStruct);
 [nx,nu,ny,ndyn,nbool] = mpt_sysStructInfo(sysStruct);
 
-need_tracking = (probStruct.tracking > 0) & ...
-    ~isfield(probStruct, 'tracking_augmented');
+need_tracking = 0;
+if ~isfield(probStruct, 'tracking_augmented'),
+    need_tracking = probStruct.tracking;
+end
 need_dU = isfield(probStruct, 'Rdu') | ~(all(isinf(sysStruct.dumax)) & ...
     all(isinf(sysStruct.dumin)));
 
@@ -1673,4 +1659,16 @@ else
     do_tracking = 0;
     do_deltaU = 0;
     
+end
+
+
+%-------------------------------------------------------------------------
+function SST = sub_force_bounds(SST, flag, dim, nobounds, infbox)
+% sets missing state/input/output constraints to +/- infbox
+
+for i = 1:length(nobounds),
+    S = SST{nobounds(i)};
+    S = setfield(S, [flag 'max'], repmat(infbox, dim, 1));
+    S = setfield(S, [flag 'min'], repmat(-infbox, dim, 1));
+    SST{nobounds(i)} = S;
 end
