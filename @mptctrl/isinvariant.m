@@ -6,8 +6,13 @@ function result = isinvariant(ctrl)
 % ---------------------------------------------------------------------------
 % DESCRIPTION
 % ---------------------------------------------------------------------------
-% Returns 1 if a given explicit controller is invariant, i.e. if it satysfies
-% system constraints for all time in closed loop. Returns 0 otherwise
+% Returns 1 if a given explicit controller is invariant, i.e. if it satisfies
+% system constraints for all time in closed loop. Returns 0 if invariance
+% properties aren't guaranteed. 
+%
+% NOTE! Returning 0 does not imply that the closed-loop system will not be
+% invariant! Merely it says that no such guarantees can be given without further
+% computation.
 %
 % ---------------------------------------------------------------------------
 % INPUT
@@ -17,7 +22,8 @@ function result = isinvariant(ctrl)
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
 % ---------------------------------------------------------------------------
-% result - 1 if the controller is invariant, 0 otherwise
+% result - 1 if the controller is invariant, 0 if no invariance guanratees can
+%          be given (see the note above)
 %
 
 % Copyright is with the following author(s):
