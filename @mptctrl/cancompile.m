@@ -48,7 +48,7 @@ if ~isexplicit(ctrl),
     % cannot compile on-line controllers
     yesno = 0;
     
-elseif iscell(ctrl.sysStruct.A) & ctrl.probStruct.norm == 2 & ...
+elseif ctrl.overlaps & ctrl.probStruct.norm == 2 & ...
         ctrl.probStruct.subopt_lev == 0,
     % currently cannot compile optimal controllers for PWA systems with
     % quadratic cost
