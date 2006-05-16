@@ -107,6 +107,22 @@ if isempty(A),
     A = zeros(0, nx);
     B = zeros(0, 0);
 end
+
+% some solvers don't like +/- Inf terms in constraints
+minfb = find(B == -Inf);
+if ~isempty(minfb),
+    % trivially infeasible problem
+    xopt = repmat(NaN, length(f), 1);
+    objqp = NaN;
+    lambda = [];
+    exitflag = -1;
+    how = 'infeasible';
+    return
+end
+pinfb = find(B == Inf);
+A(pinfb, :) = [];
+B(pinfb) = [];
+
 [m,n]=size(A);
 [meq,neq]=size(Aeq);
 f = f(:);

@@ -139,9 +139,20 @@ end
     
 rescue = mptOptions.rescueLP;
 
-if any(B<-1e9),
-    error('mpt_solveLP: Upper bound exceeded. Most probably the problem is unbounded.');
+% some solvers don't like +/- Inf terms in constraints
+minfb = find(B == -Inf);
+if ~isempty(minfb),
+    % trivially infeasible problem
+    xopt = repmat(NaN, length(f), 1);
+    fval = NaN;
+    lambda = [];
+    exitflag = -1;
+    how = 'infeasible';
+    return
 end
+pinfb = find(B == Inf);
+A(pinfb, :) = [];
+B(pinfb) = [];
 
 % NAG and CDD do not like inputs which are sparse matrices
 no_sparse_solvers = [0 9 3 5];
