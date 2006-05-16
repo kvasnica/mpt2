@@ -239,6 +239,10 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         yalmipOptions.bmibnb.lowersolver = Options.lowersolver;
         yalmipOptions.bmibnb.uppersolver = Options.uppersolver;
         yalmipOptions.bmibnb.maxiter = Options.nliter;
+        if isfield(ctrl.details.yalmipData, 'model_expanded'),
+            % the model was already expanded in mptctrl()
+            yalmipOptions.expand = 0;
+        end
         
         starttime = cputime;
         diagnost = solvesdp(F, obj, yalmipOptions);

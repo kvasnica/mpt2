@@ -384,8 +384,22 @@ elseif nargin==2 | nargin==3
             if ~isfield(sysStruct, 'nonlinhandle'),
                 fprintf('WARNING: Setup contains nonlinear constraints.\n');
             end
-            ctrl.details.yalmipData = struct('F', F, 'obj', obj, 'vars', vars, ...
-                'uprev_length', uprev_length, 'reference_length', reference_length);
+            
+            % expand the model. two reasons for doing that:
+            %  1. expansion is expensive and hence we save time by not doing it
+            %     at every step in mpt_getInput()
+            %  2. YALMIP as of 16-May-2006 cannot save and load models which
+            %     involve operators like iff() or implies(). however we can
+            %     save/load the expanded model
+            [Fexp, failure, cause] = expandmodel(F, obj, mptOptions.sdpsettings);
+            if failure,
+                fprintf('\n%s\n\n', cause);
+                error('Cannot deal with given setup, see message above.');
+            end
+
+            ctrl.details.yalmipData = struct('F', Fexp, 'obj', obj, 'vars', vars, ...
+                'uprev_length', uprev_length, 'reference_length', reference_length, ...
+                'model_expanded', 1);
             
         else
             % expand the YALMIP model into MPT format
