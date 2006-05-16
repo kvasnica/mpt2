@@ -82,12 +82,12 @@ for ii = 1:ne-1,
         % sign) are really equal (hence they form an equality constraint)
         a2 = -A(jj, :);
         b2 = -B(jj);
-        if b1==b2,
+        if abs(b1-b2) < 1e-12,
             % first compare the B part, this is very cheap
-            if sum(a1)==sum(a2),
-                % now compare sum of the A part (this is still cheaper then
+            if abs(sum(a1)-sum(a2)) < 1e-12,
+                % now compare sum of the A part (this is still cheaper than
                 % doing all(a1==a2) here
-                if all(a1==a2),
+                if all(abs(a1-a2) < 1e-12)
                     % finaly compare every element of the two inequalities
                     
                     % jj-th inequality together with ii-th inequality forms an equality
