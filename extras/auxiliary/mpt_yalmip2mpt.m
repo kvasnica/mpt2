@@ -16,7 +16,23 @@ end
 yalmipOptions = mptOptions.sdpsettings;
 
 % first expand the model
-[Fexp, failure, cause] = expandmodel(F, obj, yalmipOptions);
+
+% if implies() or iff() operators have been used and the variables contained
+% therein are unbounded, expandmodel() will give a nasty warning. although we
+% try to set as much bounds on variables in mpt_yalmipcftoc() as possible,
+% currently we cannot impose such bounds if we have nonlinear guards.
+%
+% therefore we switch off the warnings not to annoy the user
+w = warning;
+warning('off')
+try
+    [Fexp, failure, cause] = expandmodel(F, obj, yalmipOptions);
+catch
+    warning(w)
+    error(lasterr)
+end
+warning(w)
+
 if failure,
     fprintf('\n%s\n\n', cause);
     error('Cannot deal with given setup, see message above.');
