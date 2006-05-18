@@ -1,10 +1,35 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.6 30-Mar-2006
+% Version 2.6.1 17-May-2006
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
+
+
+Version 2.6.1 (17-May-2006)
+--------------------------
+
+[NEW] included latest release of YALMIP. note that YALMIP changed its
+directory structure and you need to adjust your Matlab path accordingly!!
+
+[PATCH] consistent use of deltaU formulation. if probStruct.tracking=1 is 
+used with LTI or PWA systems, MPT now always goes for deltaU formulation 
+
+[PATCH] fixed a performance regression in on-line control of LTI systems
+
+[PATCH] fixed loading of saved controllers for nonlinear systems
+
+[PATCH] C-code obtained by mpt_exportST() now uses single-precision numbers
+instead of double-precision
+
+[PATCH] mpt_mplp, mpt_mpqp now accept sparse matrices
+
+[PATCH] fixed problems with MOSEK on mixed-integer problems
+
+[PATCH] fixed passing of optional arguments to the HYSDEL compiler
+
+
 
 Version 2.6 (30-Mar-2006)
 -------------------------

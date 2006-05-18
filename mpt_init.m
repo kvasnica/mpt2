@@ -127,7 +127,7 @@ function out=mpt_init(varargin)
 % ---------------------------------------------------------------------------
 global mptOptions;
 
-mpt_ver = '2.6';
+mpt_ver = '2.6.1';
 
 try
     matlabrelease = str2num(version('-release'));
