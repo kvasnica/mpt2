@@ -81,7 +81,7 @@ if ~isfield(probStruct,'N'),
     if Options.guierrors,
         error('Prediction horizon must be specified!');
     else
-        error(['Prediction horizon "' psn '.N" must to be specified!']);
+        error(['Prediction horizon "' psn '.N" must be specified!']);
     end
 end
 if probStruct.N<1,
@@ -103,21 +103,21 @@ if ~isfield(probStruct,'Q')
     if Options.guierrors,
         error('Penalty on states must be specified!');
     else
-        error(['"' psn '.Q" must to be specified!']);
+        error(['"' psn '.Q" must be specified!']);
     end
 end
 if ~isfield(probStruct,'R')
     if Options.guierrors,
         error('Penalty on inputs must be specified!');
     else
-        error(['"' psn '.R" must to be specified!']);
+        error(['"' psn '.R" must be specified!']);
     end
 end
 if ~isfield(probStruct,'norm')
     if Options.guierrors,
         error('Type of cost function must be specified!');
     else
-        error(['"' psn '.norm" must to be specified! Allowed values are 1, 2, Inf.']);
+        error(['"' psn '.norm" must be specified! Allowed values are 1, 2, Inf.']);
     end
 end
 if ~any(probStruct.norm==[1 2 Inf]),
