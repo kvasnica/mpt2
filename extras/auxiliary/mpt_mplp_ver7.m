@@ -408,7 +408,7 @@ if ~initPointFound,
     details.Gi = {};
     details.nRegions=0;
     details.nHard=nHard;
-    details.Phard = polytope(hardA, hardb);
+    details.Phard = polytope;
     details.adjacencyInfo=struct('adjacencyList', {[]}, ...
         'tSetList', {[]});
     details.feasible = 0;
