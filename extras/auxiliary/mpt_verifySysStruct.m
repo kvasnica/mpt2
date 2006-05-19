@@ -200,7 +200,7 @@ if strcmp(sysStruct.type,'LTI') | sysStruct.type==0,
             error(['"' ssn '.Aunc" must be a cell array!']);
         end
         if ~iscell(sysStruct.Bunc),
-            error(['"' ssn '.Bunc" must to be a cell array!']);
+            error(['"' ssn '.Bunc" must be a cell array!']);
         end
         if length(sysStruct.Aunc)~=length(sysStruct.Bunc),
             error(['Uncertainty matrices "' ssn '.Aunc" and "' ssn '.Bunc" must have the same number of elements!']);
