@@ -571,7 +571,7 @@ try
             disp('Corrupted settings found, re-initializing...');
             dosave = 1;
             % this error will be catched by the master try-block
-            error('Corrupter settings found.');
+            error('Corrupted settings found.');
         end
         
         if ~isfield(mptOptions, 'version'),
