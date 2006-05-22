@@ -152,6 +152,11 @@ lb = lb(:);
 ub = ub(:);
 vartype = vartype(:);
 
+% CPLEXINT doesn't like options.verbose=-1
+if isfield(options, 'verbose'),
+    options.verbose = max(options.verbose, 0);
+end
+
 if solver==0
     % use cplex 9
     
