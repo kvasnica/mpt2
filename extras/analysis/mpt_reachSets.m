@@ -13,7 +13,7 @@ function [Psets, Vsets, PreachN, VreachN] = mpt_reachSets(structure, X0, U0, N, 
 % defined as:
 %   x(k+1) = (A+Fi)*x + (Gi+f)
 %
-% If the system is not autonomuos, it is converted to such by setting
+% If the system is not autonomous, it is converted to such by setting
 %   x(k+1) = A*x + fcl
 % where
 %   fcl = f + B*Options.U
@@ -466,7 +466,7 @@ elseif isfield(structure, 'Pn')
             Fi = ctrlStruct.Fi{ireg};
             Gi = ctrlStruct.Gi{ireg};
             
-            % autonomuos system dynamics:
+            % autonomous system dynamics:
             % x+ = (A+B*Fi)*x + (B*Gi + f)
             ACL{ireg} = A + B*(Fi(1:nu,:) + FBgain(1:nu,:));
             FCL{ireg} = f + B*Gi(1:nu,:);
@@ -483,7 +483,7 @@ elseif isfield(structure, 'Pn')
             Fi = ctrlStruct.Fi{ireg};
             Gi = ctrlStruct.Gi{ireg};
             
-            % autonomuos system dynamics:
+            % autonomous system dynamics:
             % x+ = (A+B*Fi)*x + (B*Gi + f)
             ACL{ireg} = A + B*(Fi(1:nu,:) + FBgain(1:nu,:));
             FCL{ireg} = f + B*Gi(1:nu,:);
