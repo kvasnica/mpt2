@@ -349,15 +349,15 @@ end
 
 %===================================================================
 % update Pbnd
-Br = polytope([eye(refdim); -eye(refdim)], [sysStruct.ymax; -sysStruct.ymin]);
+if ycost,
+    Br = polytope([eye(refdim); -eye(refdim)], [yrefmax; -yrefmin]);
+else
+    Br = polytope([eye(refdim); -eye(refdim)], [xrefmax; -xrefmin]);
+end
 Bu = polytope([eye(nu); -eye(nu)], [sysStruct.umax; -sysStruct.umin]);
 % create polytopes in higher dimension
 if probStruct.tracking==2,
-    if ycost,
-        sysStruct.Pbnd = sysStruct.Pbnd * Br;
-    else
-        sysStruct.Pbnd = sysStruct.Pbnd * sysStruct.Pbnd;
-    end
+    sysStruct.Pbnd = sysStruct.Pbnd * Br;
 else
     sysStruct.Pbnd = sysStruct.Pbnd * Bu * Br;
 end
