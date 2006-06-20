@@ -1508,7 +1508,7 @@ if probStruct.tracking==1,
     unsupported_type = '';
     for ii = 1:length(SST),
         sys_type = sub_sysStruct_type(SST{ii});
-        if sys_type.mld,
+        if sys_type.mld & ~sys_type.pwa,
             unsupported_type = 'MLD';
             break
         elseif sys_type.nonlin,
@@ -1623,7 +1623,7 @@ if need_tracking & probStruct.tracking==1 & need_dU,
     need_dU = 0;
 end
 
-if sys_type.mld | sys_type.nonlin,
+if (sys_type.mld & ~sys_type.pwa) | sys_type.nonlin,
     % no augmentation possible for MLD and nonlinear systems
     cantr = 0; 
     candU = 0;
