@@ -35,6 +35,8 @@ function [A, B, Aeq, Beq, ind_eq] = mpt_ineq2eq(A, B)
 
 % Copyright is with the following author(s):
 %
+% (C) 2006 Johan Loefberg, Automatic Control Laboratory, ETH Zurich,
+%          loefberg@control.ee.ethz.ch
 % (C) 2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 
@@ -63,16 +65,13 @@ Aeq = [];
 Beq = [];
 ind_eq = [];
 I = ones(nx+1, 1);
+sumM = [-A -B]*I;
+ss = sum(A,2) + B;
 for ii = 1:ne-1,
-    a1 = A(ii, :);
-    b1 = B(ii);
-    s = sum(a1) + b1;
+    s = ss(ii);
     
     % get matrix which contains all rows starting from ii+1 
-    M = [-A(ii+1:end, :) -B(ii+1:end)];
-    
-    % quickly compute sum of each row
-    sumM = M*I;
+    sumM = sumM(2:end,:);
     
     % possible candidates are those rows whose sum is equal to the sum of the
     % original row
@@ -82,6 +81,8 @@ for ii = 1:ne-1,
         % sign) are really equal (hence they form an equality constraint)
         a2 = -A(jj, :);
         b2 = -B(jj);
+        a1 = A(ii, :);
+        b1 = B(ii);        
         if abs(b1-b2) < 1e-12,
             % first compare the B part, this is very cheap
             if abs(sum(a1)-sum(a2)) < 1e-12,
