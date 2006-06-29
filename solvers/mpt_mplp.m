@@ -204,3 +204,15 @@ if Options.mplpver >= 6,
         end
     end
 end
+
+% handle non-zero affine cost term
+if isfield(Matrices, 'F'),
+    F = Matrices.F(:)';
+    if nnz(F)>0,
+        Bi = details.Bi;
+        for i = 1:length(Bi)
+            Bi{i} = Bi{i} + F;
+        end
+        details.Bi = Bi;
+    end
+end
