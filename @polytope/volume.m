@@ -105,7 +105,16 @@ else
         %polytope is simplex
         nconv= 1:(size(size,1)+1);
     else
-        nconv= delaunayn(vertices);               % compute the volume
+        % compute the volume        
+        if str2num(version('-release')) >= 14,
+            % matlab R14 should use additional options
+            nconv= delaunayn(vertices, {'Qt','Qbb','Qc','Qz'});
+        else
+            % however matlab R13 does not support callinf delaunayn() with two
+            % input arguments
+            nconv= delaunayn(vertices);
+        end
+            
     end
     nx=size(vertices,2);
     V=0;
