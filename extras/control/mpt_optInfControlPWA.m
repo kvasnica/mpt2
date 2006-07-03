@@ -173,13 +173,14 @@ Step = {};
 cs.sysStruct = sysStruct;
 cs.probStruct = probStruct;
 cs.Pfinal = polytope;
-cs.Pn = [];
+cs.Pn = polytope;
 cs.Fi = {};
 cs.Gi = {};
 cs.Ai = {};
 cs.Bi = {};
 cs.Ci = {};
 cs.dynamics = [];
+cs.details.runTime = 0;
 
 cs.overlaps = 0;
 emptyCS = cs;
