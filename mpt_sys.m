@@ -18,7 +18,7 @@ function [sysStruct, msg] = mpt_sys(obj, varargin)
 % General usage:
 %   sysStruct = mpt_sys(object, Ts, flag1, flag2)
 %
-% To convert a HYSDEL model, call:
+% To convert a HYSDEL model and convert into a PWA representation, use:
 %   sysStruct = mpt_sys('hysdelsource')  - provide name of HYSDEL file
 %
 % To convert a HYSDEL model without creating an equivalent PWA representation:
