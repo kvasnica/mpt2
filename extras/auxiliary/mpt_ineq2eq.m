@@ -79,12 +79,12 @@ for ii = 1:ne-1,
     for jj = possible_eq',
         % now compare if the two inequalities (the second one with opposite
         % sign) are really equal (hence they form an equality constraint)
-        a2 = -A(jj, :);
         b2 = -B(jj);
-        a1 = A(ii, :);
         b1 = B(ii);        
         if abs(b1-b2) < 1e-12,
             % first compare the B part, this is very cheap
+            a2 = -A(jj, :);
+            a1 = A(ii, :);
             if abs(sum(a1)-sum(a2)) < 1e-12,
                 % now compare sum of the A part (this is still cheaper than
                 % doing all(a1==a2) here
