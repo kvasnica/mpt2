@@ -171,6 +171,9 @@ end
 if isfield(Matrices, 'bndb'),
     Matrices.bndb = full(Matrices.bndb);
 end
+if isfield(Matrices, 'D'),
+    Matrices.D = full(Matrices.D);
+end
 
 switch Options.mplpver
     case 1,
