@@ -1065,7 +1065,7 @@ end
 % solve the one-shot problem as mpMIQP/mpMILP if necessary
 if Options.dp==0,
     % obtain the open-loop solution:
-    [sol{k}, diagnost{k}, Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, [u{:}]);
+    [sol{k}, diagnost{k}, Uz{k}] = solvemp(F, obj, yalmipOptions, x{k}, cat(1, u{:}));
 end
 
 

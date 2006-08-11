@@ -257,7 +257,7 @@ else
     yalmipOptions.debug = 1;
     yalmipOptions.verbose = 1;
     starttime = cputime;
-    [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, [vars.u{:}]);
+    [sol, diagnost, Uz] = solvemp(F, obj, yalmipOptions, vars.x{1}, cat(1, vars.u{:}));
     if diagnost.problem ~= 0,
         fprintf('%s\n', diagnost.info);
         error('mpt_ownmpc: an error has occurred, see message above.');
