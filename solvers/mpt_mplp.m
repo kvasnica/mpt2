@@ -208,6 +208,13 @@ if Options.mplpver >= 6,
     end
 end
 
+if ~isfield(details, 'Bi'),
+    details.Bi = {};
+end
+if ~isfield(details, 'Ci'),
+    details.Ci = {};
+end
+
 % handle non-zero affine cost term
 if isfield(Matrices, 'F'),
     F = Matrices.F(:)';
