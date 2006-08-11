@@ -1,4 +1,6 @@
 % Multi-Parametric Toolbox Computational geometry functions
+%   
+%   mpt_convhulln          - Internal helper for convhulln
 %   mpt_getInnerEllipsoid  - Computes the largest ellipsoid inscribed in a polytope
 %   mpt_getOutterEllipsoid - Computes the smallest ellipsoid which covers the polytope P
 %   mpt_plotellip          - Plots a given ellipsoid

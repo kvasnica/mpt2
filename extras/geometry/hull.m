@@ -228,7 +228,7 @@ if Options.debug_level>0
 
         disp('HULL: problem detected, using alternative method...');
         V = unique(Vorig, 'rows');     % first kick out identical points
-        Vconv=convhulln(V);            % identify points forming the convex hull
+        Vconv=mpt_convhulln(V);        % identify points forming the convex hull
         Vconv=V(unique(Vconv),:);      % store extreme points
         [nvert,ndim] = size(Vconv);
         xmid = (sum(Vconv)/nvert)';    % compute interior point
@@ -383,7 +383,7 @@ function [P,Vconv,H,K]=hull_matlab(V, Options)
 
 V = unique(V, 'rows');             % first kick out identical points
 if size(V,2)==3,                   % points in 3D space
-    Vconv=convhulln(V);            % identify points forming the convex hull
+    Vconv=mpt_convhulln(V);        % identify points forming the convex hull
     H=[];                          % initialize the matrices
     K=[];
     for ii=1:size(Vconv,1),
@@ -418,7 +418,7 @@ if size(V,2)==3,                   % points in 3D space
     return
 
 elseif size(V,2)==2,               % points in 2D space
-    Vconv=convhulln(V);            % identify points forming the convex hull
+    Vconv=mpt_convhulln(V);        % identify points forming the convex hull
     puni=V(unique(Vconv),:);       % pick up extreme points
 
     % create a point in the middle by taking a convex combination of all extreme points
@@ -473,9 +473,9 @@ else
     
     V_all=V;                
     
-    Vconv = convhulln(V);         
+    Vconv = mpt_convhulln(V);         
     V=V(unique(Vconv),:);       % pick up only extreme points
-    Vconv=convhulln(V);         % take the combinations of extreme points only
+    Vconv=mpt_convhulln(V);     % take the combinations of extreme points only
     nx = size(Vconv,2);           % dimension
     nv = size(V,1);               % number of extreme points
     I=1:nv;                       % I is the set of all extreme points
@@ -570,7 +570,7 @@ function [P,Vconv,H,K]=hull_matlab_alt(V, Options)
 w = warning;
 warning off
 V = unique(V, 'rows');
-k = convhulln(V);
+k = mpt_convhulln(V);
 Vconv = V(unique(k),:);  % store extreme points
 c = mean(Vconv);
 V = V - repmat(c,[size(V,1) 1]);
@@ -614,7 +614,7 @@ warning(w);
 function [P,Vconv,H,K]=hull_lrs(V, Options)
 
 V = unique(V, 'rows');     % kick out identical points
-Vconv=convhulln(V);        % identify points forming the convex hull
+Vconv=mpt_convhulln(V);    % identify points forming the convex hull
 Vconv=V(unique(Vconv),:);  % store extreme points
 [P,dummy,H,K] = mpt_lrs('hull',Vconv,Options);
 

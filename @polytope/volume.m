@@ -91,7 +91,7 @@ if lenP>0
         
         vert = extreme(P.Array{ii},Options);     % compute vertices of P(ii)
         try
-            [nconv, V(ii)] = convhulln(vert);        % compute the volume
+            [nconv, V(ii)] = mpt_convhulln(vert);        % compute the volume
         catch
             % in Matlab < 6.1, convhulln does not return the volume, therefore we call 'triangulate' which computes it
             [hPoly,adj,vPoly,V(ii)]=triangulate(P.Array{ii},Options);

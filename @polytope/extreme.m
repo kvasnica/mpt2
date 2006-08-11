@@ -580,7 +580,7 @@ K = P.K;
 % shift polytope such that it contains the origin
 K = K - H*xcheb;
 D = H ./ repmat(K,[1 size(H,2)]);
-k = convhulln(D);
+k = mpt_convhulln(D);
 G  = zeros(size(k,1),size(D,2));
 for ii = 1:size(k,1)
     F = D(k(ii, :), :);
