@@ -43,7 +43,7 @@ function [V,R,H,K] = mpt_lrs(method,VP,Options)
 % Portugal. kovacec@mat.uc.pt. 
 %
 % Pre-Publicacoes do Departamento de Matematica, Universidade de Coimbra,
-% Preprint Number 03–26
+% Preprint Number 03/26
 %
 
 % Copyright is with the following author(s):
@@ -237,7 +237,7 @@ function [vertices, rays]=lrs
 % [vertices, rays]=lrs(lrsDictionary,lrsBasis,NlrsBasis): given a valid
 % triple (D,B,N) as input, as obtained from tratodic.m, returns
 % all vertices and extreme rays of associated polytope in
-% ‘vertices' and ‘rays' in form ‘origin ray origin ray ... '.
+% 'vertices' and 'rays' in form origin ray origin ray ... '.
 global lrsDictionary lrsBasis NlrsBasis
 vertices = []; 
 rays = [];
@@ -385,7 +385,7 @@ while ~isempty(j)
     pivot(r,NlrsBasis(j));
     [r,j]=slctpivo;
 end
-xk=lrsDictionary(2:lNb+1,sD2)
+xk=lrsDictionary(2:lNb+1,sD2);
 maxim=lrsDictionary(1, sD2);
 
 function [r,j]=slctpivo
