@@ -540,5 +540,5 @@ N = 0;
 for i=1:d
     N = N + nchoosek(n,i);
 end;
-N
+
 
