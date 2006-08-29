@@ -231,7 +231,7 @@ else
     % display information about a given model
     if Options.verbose > 0,
         % expand the model to see how many binary variables we have
-        Matrices = mpt_yalmip2mpt(F, obj, vars.x{1}, [vars.u{:}]);
+        Matrices = mpt_yalmip2mpt(F, obj, vars.x{1}, cat(1, vars.u{:}));
         nbinary = length(mpt_defaultField(Matrices, 'binary_var_index', []));
         nparam = length(mpt_defaultField(Matrices, 'param_var', []));
         noptim = length(mpt_defaultField(Matrices, 'requested_variables', []));
