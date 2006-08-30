@@ -295,6 +295,7 @@ alpha=5*Options.rel_tol;
 tolerance=Options.abs_tol;
 
 nR = length(Pn);
+nx = dimension(Pn);
 
 for ii=1:nR
     
@@ -306,8 +307,10 @@ for ii=1:nR
     Hnii = Hn{ii};
     for kk=1:nconstr(Pnii)
         [xfacet,rfacet]=facetcircle(Pnii,kk);
-        if rfacet<Options.abs_tol,
-            %disp('SOMETHING IS NOT RIGHT!!!!');
+        if rfacet<Options.abs_tol & nx > 1,
+            % facetcircle() always returns the radius as zero for 
+            % 1-D polytopes. for dimensions above 1, zero radius indicates
+            % a problem.
             continue;
         end
         xbeyond=xfacet+alpha*Hnii(kk,:)';
