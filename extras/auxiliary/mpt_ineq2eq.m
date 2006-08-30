@@ -76,26 +76,22 @@ for ii = 1:ne-1,
     % possible candidates are those rows whose sum is equal to the sum of the
     % original row
     possible_eq = find(abs(sumM-s)<1e-12) + ii;
+
+    % now compare if the two inequalities (the second one with opposite
+    % sign) are really equal (hence they form an equality constraint)
     for jj = possible_eq',
-        % now compare if the two inequalities (the second one with opposite
-        % sign) are really equal (hence they form an equality constraint)
         b2 = -B(jj);
         b1 = B(ii);        
+        % first compare the B part, this is very cheap
         if abs(b1-b2) < 1e-12,
-            % first compare the B part, this is very cheap
+            % now compare the A parts as well
             a2 = -A(jj, :);
             a1 = A(ii, :);
-            if abs(sum(a1)-sum(a2)) < 1e-12,
-                % now compare sum of the A part (this is still cheaper than
-                % doing all(a1==a2) here
-                if all(abs(a1-a2) < 1e-12)
-                    % finaly compare every element of the two inequalities
-                    
-                    % jj-th inequality together with ii-th inequality forms an equality
-                    % constraint
-                    ind_eq = [ind_eq; ii jj];
-                    break
-                end
+            if norm(a1 - a2, Inf) < 1e-12,
+                % jj-th inequality together with ii-th inequality forms an equality
+                % constraint
+                ind_eq = [ind_eq; ii jj];
+                break
             end
         end
     end
