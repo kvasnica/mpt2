@@ -64,30 +64,26 @@ function [A, B, Aeq, Beq, ind_eq] = mpt_ineq2eq(A, B)
 Aeq = [];
 Beq = [];
 ind_eq = [];
-I = ones(nx+1, 1);
-sumM = [-A -B]*I;
-ss = sum(A,2) + B;
+sumM = sum(A, 2) + B;
 for ii = 1:ne-1,
-    s = ss(ii);
+    s = sumM(1);
+    b1 = B(ii);
+    a1 = A(ii, :);
     
     % get matrix which contains all rows starting from ii+1 
     sumM = sumM(2:end,:);
     
     % possible candidates are those rows whose sum is equal to the sum of the
     % original row
-    possible_eq = find(abs(sumM-s)<1e-12) + ii;
+    possible_eq = find(abs(sumM + s) < 1e-12) + ii;
 
     % now compare if the two inequalities (the second one with opposite
     % sign) are really equal (hence they form an equality constraint)
     for jj = possible_eq',
-        b2 = -B(jj);
-        b1 = B(ii);        
         % first compare the B part, this is very cheap
-        if abs(b1-b2) < 1e-12,
+        if abs(b1 + B(jj)) < 1e-12,
             % now compare the A parts as well
-            a2 = -A(jj, :);
-            a1 = A(ii, :);
-            if norm(a1 - a2, Inf) < 1e-12,
+            if norm(a1 + A(jj, :), Inf) < 1e-12,
                 % jj-th inequality together with ii-th inequality forms an equality
                 % constraint
                 ind_eq = [ind_eq; ii jj];
