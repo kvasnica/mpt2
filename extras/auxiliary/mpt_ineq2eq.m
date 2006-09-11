@@ -67,8 +67,6 @@ ind_eq = [];
 sumM = sum(A, 2) + B;
 for ii = 1:ne-1,
     s = sumM(1);
-    b1 = B(ii);
-    a1 = A(ii, :);
     
     % get matrix which contains all rows starting from ii+1 
     sumM = sumM(2:end,:);
@@ -76,7 +74,12 @@ for ii = 1:ne-1,
     % possible candidates are those rows whose sum is equal to the sum of the
     % original row
     possible_eq = find(abs(sumM + s) < 1e-12) + ii;
-
+    if isempty(possible_eq),
+        continue
+    end
+    b1 = B(ii);    
+    a1 = A(ii, :);
+    
     % now compare if the two inequalities (the second one with opposite
     % sign) are really equal (hence they form an equality constraint)
     for jj = possible_eq',
