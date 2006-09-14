@@ -142,10 +142,15 @@ end
 if mptctrl_input,
     if ~mpt_isValidCS(ctrlStruct),
         error('mpt_simplify: input argument must be a valid controller structure!');
-    end
-    if ctrlStruct.overlaps %& Options.greedy==1,
+    elseif ctrlStruct.overlaps & ctrlStruct.probStruct.norm==2,
+        error('Can''t use this function for overlapping partitions.');
+    elseif ctrlStruct.overlaps,
         disp('Overlaps detected, removing overlaps...');
-        ctrlStruct = mpt_removeOverlaps(ctrlStruct);
+        % we have to call mpt_removeOverlaps() with the controller object,
+        % otherwise it would not return sysStruct/probStruct fields, which
+        % we need later
+        ctrlStruct = mpt_removeOverlaps(ctrl);
+        ctrlStruct = struct(ctrlStruct);
     end
 end
 
