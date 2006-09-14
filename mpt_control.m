@@ -184,7 +184,8 @@ elseif iscell(userSysStruct),
     nompt_because = 'time-varying model';
 elseif isfield(sysStruct, 'nonlinhandle'),
     nompt_because = 'non-linear dynamics';
-elseif iscell(sysStruct.A) & isfield(probStruct, 'Nc'),
+elseif iscell(sysStruct.A) & isfield(probStruct, 'Nc') & ...
+        probStruct.subopt_lev~=1,
     nompt_because = 'control horizon for PWA systems';
 elseif probStruct.norm~=2 & isfield(probStruct, 'Nc'),
     nompt_because = 'control horizon with linear cost';
