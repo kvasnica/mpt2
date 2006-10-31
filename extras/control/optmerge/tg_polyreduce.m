@@ -70,6 +70,8 @@ end
 
 isemptypoly=0;
 keptrows=(1:length(Bt))';
+Aorig = At;
+Borig = Bt;
 
 
 % clear empty rows
@@ -129,7 +131,16 @@ end
 if useCdd==1
     
     % use cdd
-    [Pred, redrows] = cddmex('reduce_h', Pfull);
+    try
+        [Pred, redrows] = cddmex('reduce_h', Pfull);
+    catch
+        % CDD failed, try an alternative method (reduce.m)
+        Punred = polytope(Aorig, Borig, 0, 2);
+        [Pred, keptrows] = reduce(Punred);
+        isemptypoly = ~isfulldim(Pred);
+        [At, Bt] = double(Pred);
+        return
+    end
     
     % find the indices of the rows that we want to remove (rows that are
     % both in candidates and redrows)
