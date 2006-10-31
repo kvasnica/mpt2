@@ -258,6 +258,15 @@ elseif solver==1,
         options=optimset(optimset('quadprog'),'Display','off','LargeScale','off');
     end
     options.Display = 'off';
+    
+    % make sure the Hessian is symmetric.
+    if norm(H-H', Inf) < 1e-10,
+        % but we only remove numerical noise if the hessian is only
+        % "slightly" wrong. for clerly non-symmetrical hessians we still
+        % let quadprog to display a proper warning
+        H = (H + H')*0.5;
+    end
+    
     [xopt,objqp,exitflag,OUTPUT,lambdav]=quadprog(H,f,A,B,Aeq,Beq,[],[],x0,options);
     if exitflag>0 %then QUADPROG converged with a solution X.
         how = 'ok';
