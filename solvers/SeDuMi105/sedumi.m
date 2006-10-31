@@ -246,7 +246,7 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
  [A,b,c,K,prep] = pretransfo(A,b,c,K);
  lponly = (K.l == length(c));
  pars = checkpars(pars,lponly);
- fprintf(pars.fid,'SeDuMi 1.05R5 by Jos F. Sturm, 1998, 2001-2003.\n');
+ sub_fprintf(pars.fid,'SeDuMi 1.05R5 by Jos F. Sturm, 1998, 2001-2003.\n');
 % --------------------------------------------------
 % Remove dense columns (if any)
 % --------------------------------------------------
@@ -296,25 +296,25 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
 % Print welcome and statistics of cone-problem
 % ----------------------------------------
  if pars.alg == 0
-   fprintf(pars.fid,'Alg = 0: No corrector, ');
+   sub_fprintf(pars.fid,'Alg = 0: No corrector, ');
  elseif pars.alg == 1
-   fprintf(pars.fid,'Alg = 1: v-corrector, ');
+   sub_fprintf(pars.fid,'Alg = 1: v-corrector, ');
  else
-   fprintf(pars.fid,'Alg = 2: xz-corrector, ');
+   sub_fprintf(pars.fid,'Alg = 2: xz-corrector, ');
  end
  if pars.stepdif == 1
-   fprintf(pars.fid,'Step-Differentiation, ');
+   sub_fprintf(pars.fid,'Step-Differentiation, ');
  end
- fprintf(pars.fid,'theta = %5.3f, beta = %5.3f\n',pars.theta,pars.beta);
- fprintf(pars.fid,'eqs m = %g, order n = %g, dim = %g, blocks = %g\n',...
+ sub_fprintf(pars.fid,'theta = %5.3f, beta = %5.3f\n',pars.theta,pars.beta);
+ sub_fprintf(pars.fid,'eqs m = %g, order n = %g, dim = %g, blocks = %g\n',...
        length(b),n,length(c),1 + length(K.q) + length(K.s));
- fprintf(pars.fid,'nnz(A) = %d + %d, nnz(ADA) = %d, nnz(L) = %d\n',nnz(A),nnz(dense.A), nnz(ADA), nnz(L.L));
+ sub_fprintf(pars.fid,'nnz(A) = %d + %d, nnz(ADA) = %d, nnz(L) = %d\n',nnz(A),nnz(dense.A), nnz(ADA), nnz(L.L));
  if length(dense.cols) > 0
-   fprintf(pars.fid,'Handling %d + %d dense columns.\n',...
+   sub_fprintf(pars.fid,'Handling %d + %d dense columns.\n',...
        length(dense.cols),length(dense.q));
  end
- fprintf(pars.fid,' it :     b*y       gap    delta  rate   t/tP*  t/tD*   feas cg cg\n');
- fprintf(pars.fid,'  0 :            %8.2E %5.3f\n',merit,0);
+ sub_fprintf(pars.fid,' it :     b*y       gap    delta  rate   t/tP*  t/tD*   feas cg cg\n');
+ sub_fprintf(pars.fid,'  0 :            %8.2E %5.3f\n',merit,0);
 % ----------------------------------------
 % Initialize iterative statistics
 % ----------------------------------------
@@ -395,7 +395,7 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
      STOP = -1;                  % insuf. progress in descent direction.
      iter = iter - 1;
      y0 = y0Old;
-     fprintf(pars.fid,'Run into numerical problems.\n');
+     sub_fprintf(pars.fid,'Run into numerical problems.\n');
      break
    end
    feasratio = dxmdz(1) / v(1);            % (deltax0/x0) - (deltaz0/z0)
@@ -410,7 +410,7 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
 % ----------------------------------------
 % SHOW ITERATION STATISTICS
 % ----------------------------------------
-   fprintf(pars.fid,' %2.0f : %10.2E %8.2E %5.3f %6.4f %6.4f %6.4f %6.2f %2d %2d\n',...
+   sub_fprintf(pars.fid,' %2.0f : %10.2E %8.2E %5.3f %6.4f %6.4f %6.4f %6.2f %2d %2d\n',...
          iter,by/x0,merit,wr.delta,rate,relt.p,relt.d,feasratio,err.kcg, Lsd.kcg);
    if pars.vplot == 1
      vlist = [vlist vfrm.lab/sqrt((R.b0*y0)/n)];
@@ -456,7 +456,7 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
      end
    end
    if iter >= pars.maxiter
-     fprintf(pars.fid,'Maximum number of iterations reached.\n');
+     sub_fprintf(pars.fid,'Maximum number of iterations reached.\n');
      STOP = -1;
    end
  end % while STOP == 0.
@@ -539,11 +539,11 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
    else                       % Optimization problem
      sigdig = -log((cx-by)/(abs(by) + 1E-5 * (x0+abscx))) / log(10);
    end
-   fprintf(pars.fid,...
+   sub_fprintf(pars.fid,...
 'iter seconds digits       c*x               b*y\n');
-   fprintf(pars.fid,'%3d %8.1f %5.1f %- 17.10e %- 17.10e\n',...
+   sub_fprintf(pars.fid,'%3d %8.1f %5.1f %- 17.10e %- 17.10e\n',...
        iter,info.cpusec,sigdig,cx,by);
-   fprintf(pars.fid,'|Ax-b| = %9.1e, [Ay-c]_+ = %9.1E, |x|=%9.1e, |y|=%9.1e\n',...
+   sub_fprintf(pars.fid,'|Ax-b| = %9.1e, [Ay-c]_+ = %9.1E, |x|=%9.1e, |y|=%9.1e\n',...
        pinf,dinf,normx,normy);
 % ------------------------------------------------------------
 % Determine level of numerical problems with x0>0 (feasible)
@@ -552,7 +552,7 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
      r0 = max([10^(-sigdig); pinf;dinf] ./ [1; 1+R.maxb+1E-3*R.maxRb;...
 	     1+R.maxc+1E-3*R.maxRc]);
      if r0 > pars.bigeps
-       fprintf(pars.fid, 'No sensible solution found.\n');
+       sub_fprintf(pars.fid, 'No sensible solution found.\n');
        info.numerr = 2;                          % serious numerical error
      elseif r0 > pars.eps
        info.numerr = 1;                          % moderate numerical error
@@ -570,23 +570,23 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
      pinf = pinf / abscx;
      normx = normx / abscx;
      x = x / abscx;
-     fprintf(pars.fid, 'Dual infeasible, primal improving direction found.\n');
+     sub_fprintf(pars.fid, 'Dual infeasible, primal improving direction found.\n');
    end
    if dinf < pars.bigeps * by
      info.pinf = 1;
      dinf = dinf / by;
      normy = normy / by;
      y = y / by;
-     fprintf(pars.fid, 'Primal infeasible, dual improving direction found.\n');
+     sub_fprintf(pars.fid, 'Primal infeasible, dual improving direction found.\n');
    end
-   fprintf(pars.fid,'iter seconds  |Ax|    [Ay]_+     |x|       |y|\n');
-   fprintf(pars.fid,'%3d %8.1f %9.1e %9.1e %9.1e %9.1e\n',...
+   sub_fprintf(pars.fid,'iter seconds  |Ax|    [Ay]_+     |x|       |y|\n');
+   sub_fprintf(pars.fid,'%3d %8.1f %9.1e %9.1e %9.1e %9.1e\n',...
       iter,info.cpusec,pinf,dinf,normx,normy);
 % --------------------------------------------------
 % Guess infeasible, but stopped due to numerical problems
 % --------------------------------------------------
    if info.pinf + info.dinf == 0
-     fprintf(pars.fid, 'Failed: no sensible solution/direction found.\n');
+     sub_fprintf(pars.fid, 'Failed: no sensible solution/direction found.\n');
      info.numerr = 2;
    elseif STOP == -1
      if (pinf > -pars.eps * cx) & (dinf > pars.eps * by)
@@ -620,6 +620,17 @@ function [x,y,info] = sedumi(A,b,c,K,pars)
    xlabel('iterations')
    ylabel('reduction rate')
  end
- fprintf(pars.fid,'Max-norms: ||b||=%d, ||c|| = %d,\n',R.maxb,R.maxc);
- fprintf(pars.fid,'Cholesky |add|=%d, |skip| = %d, ||L.L|| = %g.\n',...
+ sub_fprintf(pars.fid,'Max-norms: ||b||=%d, ||c|| = %d,\n',R.maxb,R.maxc);
+ sub_fprintf(pars.fid,'Cholesky |add|=%d, |skip| = %d, ||L.L|| = %g.\n',...
      nnz(L.add), nnz(L.skip), full(max(max(abs(L.L)))));
+
+ 
+ % ----------------------------------------
+    function sub_fprintf(fid, str, varargin)
+        
+        if fid == 0,
+            % Matlab R2006b gives an error when trying to print to STDIN
+            return
+        else
+            fprintf(fid, str, varargin{:});
+        end
