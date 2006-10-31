@@ -208,17 +208,9 @@ end
 
 
 %====================================================================
-% store length of each partition to avoid calling length(Pn) later on
-nx = dimension(Partition{1}.Pn);
-PartLength = zeros(1, npart);
-for ii = 1:npart,
-    PartLength(ii) = length(Partition{ii}.Pn);
-end
-
-
-%====================================================================
 % stack bounding boxes of all partitions' Pfinal polytopes together
 % for faster access later
+nx = dimension(Partition{1}.Pn);
 PartBBoxes = zeros(nx, npart*2);
 PartLength = zeros(1, npart);
 for ii = 1:npart,
