@@ -510,7 +510,8 @@ if ~isfield(sysStruct,'noise'),
     sysStruct.noise=polytope;
 end
 if ~isfield(sysStruct,'Pbnd'),
-    sysStruct.Pbnd=polytope([eye(size(A));-eye(size(A))],mptOptions.infbox*ones(size(A,1)*2,1));
+    % unitbox() is more efficient than constructing the polytope directly
+    sysStruct.Pbnd = unitbox(size(A, 2), mptOptions.infbox);
 else
     if ~isa(sysStruct.Pbnd,'polytope'),
         error(['"' ssn '.Pbnd" must be a polytope object!']);
