@@ -28,6 +28,8 @@ function P=unitbox(dimension, boxsize)
 
 % Copyright is with the following author(s):
 %
+% (C) 2006 Michal Kvasnica, DIEPC, STU Bratislava
+%     michal.kvasnica@stuba.sk
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich
 %     kvasnica@control.ee.ethz.ch
 
@@ -60,4 +62,8 @@ if nargin < 2,
     boxsize = 1;
 end
 
-P=polytope([eye(dimension); -eye(dimension)], boxsize*ones(2*dimension,1));
+% every unitbox is by construction in normalized and minimal representation
+isnormalized = 1;
+isminrep = 1;
+P = polytope([eye(dimension); -eye(dimension)], ...
+    boxsize*ones(2*dimension, 1), isnormalized, isminrep);
