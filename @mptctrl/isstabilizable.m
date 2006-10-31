@@ -64,11 +64,7 @@ if probStruct.tracking>0
 end
 if probStruct.norm==2 & probStruct.Tconstraint==1 & probStruct.subopt_lev==0
     % stability guaranteed for 2-norm problems with LQR target set
-    
-    % but only for LTI systems currently!
-    if ~iscell(sysStruct.A),
-        result = 1;
-    end
+    result = 1;
     
 elseif probStruct.subopt_lev == 1
     % stability guaranteed for minimum-time solutions
