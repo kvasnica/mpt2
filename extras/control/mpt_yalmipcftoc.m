@@ -826,7 +826,7 @@ for k = N-1:-1:1
             if YeqSame,
                 % all output equations are the same for all dynamics, it is
                 % enough to define one output variable
-                tag = sprintf('y_%d == C*x_%d + D*u_%d + g', iN, iNu, iN);
+                tag = sprintf('y_%d == C*x_%d + D*u_%d + g', iN, iN, iNu);
                 F = F + set(y{k} == SST{k}.C{1}*x{k} + ...
                     SST{k}.D{1}*u{ku} + SST{k}.g{1}, tag);
             end
