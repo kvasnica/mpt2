@@ -354,8 +354,12 @@ if(isemptypoly)
     else
         options=[];
     end
-    
-    [zopt,lambda,how,exitflag,Vz]=mpt_solveQP(H,zeros(nu,1),G,W+S*xFeasible,[],[],[],Options.qpsolver,options);
+
+    % removing redundant constraints helps to improve robustness for
+    % certain QP solvers (e.g. for quadprog)
+    [A, b] = double(polytope(G, W+S*xFeasible));
+    [zopt,lambda,how,exitflag,Vz] = mpt_solveQP(H, zeros(nu,1), ...
+        A, b, [], [], [], Options.qpsolver, options);
     ii=find(abs(G*zopt-W-S*xFeasible)<=zero_tol);   % active constraints
     %ii=find(lambda>0);
     if exitflag<=0,
