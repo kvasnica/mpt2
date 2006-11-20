@@ -62,36 +62,16 @@ function [sys,x0,str,ts] = mpt_simInput_sfunc(t,x,u,flag,ctrl,Ts,infbreak)
 
 persistent Uprev
 
-dumode = isfield(ctrl.sysStruct, 'dumode');
-isPWA = iscell(ctrl.sysStruct.A);
-tracking = ctrl.probStruct.tracking;
-ycost = isfield(ctrl.probStruct, 'Qy');
+dimref = ctrl.details.x0format.reference;
+nx = ctrl.details.x0format.required - ...
+    ctrl.details.x0format.reference - ...
+    ctrl.details.x0format.uprev;
+nu = ctrl.details.dims.nu;
+ny = ctrl.details.dims.ny;
 
-dimref = 0;
-
-if ctrl.probStruct.tracking>0
-    nx = ctrl.sysStruct.dims.nx;
-    nu = ctrl.sysStruct.dims.nu;
-    ny = ctrl.sysStruct.dims.ny;
-else
-    nx = ctrl.details.dims.nx;
-    nu = ctrl.details.dims.nu;
-    ny = ctrl.details.dims.ny;
-end
-
-if tracking>0,
-    if ycost
-        dimref = ny;
-    else
-        dimref = nx;
-    end
-    
-elseif dumode
-    nx = nx - nu;
-        
-end
-
-dumode = dumode | tracking==1;
+dumode = isfield(ctrl.sysStruct, 'dumode') | ...
+    ctrl.probStruct.tracking==1 | ...
+    ctrl.details.x0format.uprev>0;
 
 switch flag,
     
@@ -105,13 +85,13 @@ switch flag,
         % Update %
         %%%%%%%%%%
     case 2,
-        sys = mdlUpdate(t,x,u,ctrl, nu, nx, dimref, dumode, tracking, isPWA);
+        sys = mdlUpdate(t,x,u,ctrl, nu, nx, dimref, dumode);
         
         %%%%%%%%%%
         % Output %
         %%%%%%%%%%
     case 3,
-        [sys, Uprev] = mdlOutputs(t,x,u,ctrl, nu, nx, dimref, dumode, tracking, isPWA, Uprev, infbreak);
+        [sys, Uprev] = mdlOutputs(t,x,u,ctrl, nu, nx, dimref, dumode, Uprev, infbreak);
         
         %%%%%%%%%%%%%
         % Terminate %
@@ -164,7 +144,7 @@ Uprev = zeros(nu, 1);
 % requirements.
 %=======================================================================
 %
-function sys = mdlUpdate(t,x,u,ctrl, nu, nx, dimref, dumode, tracking, isPWA)
+function sys = mdlUpdate(t,x,u,ctrl, nu, nx, dimref, dumode)
 
 sys = [];
 
@@ -174,7 +154,7 @@ sys = [];
 % Return the output vector for the S-function
 %=======================================================================
 %
-function [sys, Uprev] = mdlOutputs(t,x,u,ctrl, nu, nx, dimref, dumode, tracking, isPWA, Uprev, infbreak)
+function [sys, Uprev] = mdlOutputs(t,x,u,ctrl, nu, nx, dimref, dumode, Uprev, infbreak)
 
 if isempty(Uprev),
     Uprev = zeros(nu, 1);
@@ -215,4 +195,3 @@ sys = [U; feasible];
 
 
 %end mdlOutputs
-

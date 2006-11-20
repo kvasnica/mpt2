@@ -104,30 +104,27 @@ end
 nr = length(Pn);
 Fi = ctrl.Fi;
 Gi = ctrl.Gi;
-nx = ctrl.details.dims.nx;
+
+nref = ctrl.details.x0format.reference;
+nxt = ctrl.details.x0format.required - ...
+    ctrl.details.x0format.reference - ...
+    ctrl.details.x0format.uprev;
 nu = ctrl.details.dims.nu;
 ny = ctrl.details.dims.ny;
-nref = 0;
-nxt = nx;
+dumode = isfield(ctrl.sysStruct, 'dumode') | ...
+    ctrl.probStruct.tracking==1 | ...
+    ctrl.details.x0format.uprev>0;
+tracking = ctrl.probStruct.tracking;
+nx = ctrl.details.x0format.required;
+
+% all boolean variables have to be represented as doubles, otherwise C-code
+% S-functions do not recognize them
+dumode = double(dumode);
+tracking = double(tracking);
 
 for ii=1:length(Fi),
     Fi{ii} = Fi{ii}(1:nu,:);
     Gi{ii} = Gi{ii}(1:nu);
-end
-dumode = isfield(ctrl.sysStruct, 'dumode')+0;
-tracking = ctrl.probStruct.tracking;
-if tracking==1,
-    nxt = ctrl.sysStruct.dims.nx;
-elseif dumode,
-    nxt = nx - nu;
-end
-if tracking>0,
-    nxt = ctrl.sysStruct.dims.nx;
-    if isfield(ctrl.probStruct, 'Qy'),
-        nref = ctrl.sysStruct.dims.ny;
-    else
-        nref = ctrl.sysStruct.dims.nx;
-    end
 end
 
 if isfield(ctrl.sysStruct, 'Ts'),
