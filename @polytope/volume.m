@@ -106,7 +106,7 @@ else
         nconv= 1:(size(size,1)+1);
     else
         % compute the volume        
-        if str2num(version('-release')) >= 14,
+        if mpt_matlabrelease >= 14,
             % matlab R14 should use additional options
             nconv= delaunayn(vertices, {'Qt','Qbb','Qc','Qz'});
         else

@@ -101,7 +101,16 @@ minVol=Options.rel_tol;         %simplices with a volume smaller than this are c
 
 vert=extreme(P,Options);        %compute/extract extreme vertices  
 P.vertices = vert;              % update extreme points
-adj = delaunayn(vert);          %compute delaunay triangulation using qhull
+%compute delaunay triangulation using qhull
+if mpt_matlabrelease >= 14,
+    % matlab R14 should use additional options
+    adj = delaunayn(vert, {'Qt', 'Qbb', 'Qc', 'Qz'});
+else
+    % however matlab R13 does not support callinf delaunayn() with two
+    % input arguments
+    adj = delaunayn(vert);
+end
+
 nx=size(vert(adj(1,:)',:),2);   %number of states
 %compute V representation of simplices
 vPoly = cell(1,size(adj,1));
