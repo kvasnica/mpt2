@@ -32,12 +32,7 @@ if ~isstruct(mptOptions)
     mpt_error;
 end
 
-numrel = 0;
-try
-    release = version('-release');
-    numrel = str2num(release);
-end
-if numrel<12
+if mpt_matlabrelease < 12
     fprintf('\nWARNING: The GUI was not tested with MATLAB 5.x and older, full functionality is not guaranteed.\n\n');
     fprintf('Press any key to continue...');
     pause

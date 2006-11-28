@@ -43,7 +43,15 @@ function rel = mpt_matlabrelease
 %
 % ---------------------------------------------------------------------------
 
-rel = str2num(version('-release'));
+try
+    rel = str2num(version('-release'));
+catch
+    % matlab versions prior to R12 do not allow to call version with the
+    % '-release' argument, therefore if an error occures, it indicates an
+    % old version of  matlab
+    rel = 11;
+    return
+end
 if isempty(rel)
     % Matlab R2006a, R2006b, ... return release as '2006a', '2006b', ...
     % hence str2num() will return an empty string

@@ -129,15 +129,7 @@ global mptOptions;
 
 mpt_ver = '2.6.1';
 
-try
-    matlabrelease = str2num(version('-release'));
-catch
-    % matlab versionbs prior to R12 do not allow to call version with '-release'
-    % argument, therefore if an error occures, it indicates an old version of
-    % matlab
-    matlabrelease = 0;
-end
-if matlabrelease < 12,
+if mpt_matlabrelease < 12,
     error('MPT only works with Matlab R12 or newer.');
 end
 
