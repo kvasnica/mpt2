@@ -127,7 +127,7 @@ function out=mpt_init(varargin)
 % ---------------------------------------------------------------------------
 global mptOptions;
 
-mpt_ver = '2.6.1';
+mpt_ver = '2.6.2';
 
 if mpt_matlabrelease < 12,
     error('MPT only works with Matlab R12 or newer.');
