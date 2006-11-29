@@ -88,6 +88,6 @@ else
         Q = P.Array{indices};
     else
         Q = P;
-        Q.Array = {P.Array{indices}};
+        Q.Array = P.Array(indices);
     end
 end
