@@ -1504,14 +1504,18 @@ verOpt.verbose = 1;
 % notice that we don't have to care whether the controller to be computed is
 % explicit or on-line, since we do require PWA/LTI models for explicit control
 % anyhow (this is checked by mpt_control)
+sys_type = cell(1, length(SST));
+for i = 1:length(SST),
+    sys_type{i} = sub_sysStruct_type(SST{i});
+end
+
 if probStruct.tracking==1,
     unsupported_type = '';
     for ii = 1:length(SST),
-        sys_type = sub_sysStruct_type(SST{ii});
-        if sys_type.mld & ~sys_type.pwa,
+        if sys_type{ii}.mld & ~sys_type{ii}.pwa,
             unsupported_type = 'MLD';
             break
-        elseif sys_type.nonlin,
+        elseif sys_type{ii}.nonlin,
             unsupported_type = 'nonlinear';
             break
         end
@@ -1523,6 +1527,17 @@ if probStruct.tracking==1,
         probStruct.tracking = 2;
     end
 end
+if probStruct.tracking > 0,
+    for ii = 1:length(SST),
+        if sys_type{ii}.mld & sys_type{ii}.pwa,
+            % we can only deal with tracking if we switch to PWA
+            % formulation. that involves clearing the MLD description from
+            % the system structure.
+            SST{ii} = rmfield(SST{ii}, 'data');
+        end
+    end
+end
+
 pst = probStruct;
 
 for ii = 1:length(SST),
