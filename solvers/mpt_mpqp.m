@@ -875,7 +875,9 @@ else
     Matrices.bndb=[];
 end
 
+H = (H + H')/2;
 Hinv=inv(H);
+Hinv = (Hinv + Hinv')/2;
 GHinv=G*Hinv;
 S=Matrices.E + GHinv*F';
 if isfield(Matrices,'Cf'),
