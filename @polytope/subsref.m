@@ -69,21 +69,27 @@ if isempty(indices),
 end
 
 lenP = length(P.Array);
+lenInd = length(indices);
+
 if (lenP==0)
-    if indices(1)>1 | length(indices)>1,
+    if any(indices>1),
         error('SUBSREF: ??? Index exceeds array dimension');
     end
-    Q=P;
-    return
+    Q = P;
+    if lenInd > 1,
+        Q.Array = cell(1, lenInd);
+        for i = 1:lenInd,
+            Q.Array{i} = P;
+        end
+    end
+    
 else
     if any(indices<=0),
         error('POLYTOPE:SUBSREF: Index is negative or zero');
     end
     if any(indices>lenP),
-        %if any(indices > length(P.Array))
         error('POLYTOPE:SUBSREF: Index exceeds matrix dimension');
     end
-    lenInd = length(indices);
     if (lenInd==1),
         Q = P.Array{indices};
     else
