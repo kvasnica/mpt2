@@ -302,11 +302,9 @@ if Options.qpsolver==1,
 else
     options=[];
 end
-Pquadrant = {};
-Pquadrant = cell(1,2^nx); % number of quadrant is 2^nx
-for ii=1:length(Pquadrant),
-    Pquadrant{ii} = PEmpty;
-end
+
+
+PquadrantMap = [];
 
 %%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%                                                               
 %%      FIND THE STARTING POINT                   
@@ -384,21 +382,14 @@ if(isemptypoly)
             error('mpt_mpqp: Initial region is empty despite feasible constraints !!!');
         end
         q = sub_whichquadrant(Pn(reg_ctr),center);
-        for qqq=1:length(q),
-            Pquadrant{q(qqq)} = [Pquadrant{q(qqq)} Pn(reg_ctr)];
-        end
+        PquadrantMap = [PquadrantMap sparse(q,1,1,2^nx,1)];
         if(length(Fi)>reg_ctr)
             nR=nR+1;
         end
     end
 end
 
-for iq=1:length(Pquadrant),
-    if ~isfulldim(Pquadrant{iq}),
-        Pquadrant{iq} = Pn;
-    end
-end
-
+PquadrantMap = [sparse(1:2^nx,1,1,2^nx,1)];
 
 activeConstraints{nR}=ii;
 nii=length(ii);
@@ -461,7 +452,8 @@ while region<=nR,
             %--------------------------------------------------------------------
             % Check wheter point already exist inside a polyhedra
             %---------------------------------------------------------------------
-            [nMatch,RegionStore]=sub6_RedundantPolyhedron(nR,Pn,region,xBeyond,Pquadrant,center);
+            [nMatch,RegionStore]=sub6_RedundantPolyhedron(nR, Pn, ...
+                region, xBeyond, PquadrantMap, center);            
             %-----------------------------------------------------------------
             % Polyhedras should not overlap
             %-----------------------------------------------------------------
@@ -543,11 +535,8 @@ while region<=nR,
                         Gi{nR}=Gii{reg_ctr};
                         Pn(nR)=Pcr(reg_ctr);
                         q = sub_whichquadrant(Pn(nR),center);
-                        for qqq=1:length(q),
-                            Pquadrant{q(qqq)} = [Pquadrant{q(qqq)} Pn(nR)];
-                        end
-                        
-                        %%keptrows{nR} = getkeptrows(Pcr(reg_ctr));
+                        PquadrantMap = [PquadrantMap sparse(q,1,1,2^nx,1)];
+
                         keptrows{nR} = kr{reg_ctr};
                         if(length(Fii)>reg_ctr)
                             nR=nR+1;
@@ -574,7 +563,8 @@ while region<=nR,
                         else
                             % Check wheter point already exist inside a polyhedra
                             %%% nMatch=0;
-                            [nMatch,RegionStore]=sub6_RedundantPolyhedron((nR-1),Pn,region,xBeyond,Pquadrant,center);
+                            [nMatch,RegionStore]=sub6_RedundantPolyhedron((nR-1), ...
+                                Pn,region,xBeyond,PquadrantMap,center);
                             if (nMatch>=1)
                                 outsidebounds=1;
                                 if nMatch>1
@@ -612,9 +602,8 @@ while region<=nR,
                                             Gi{nR}=Gii{reg_ctr};
                                             Pn(nR)=Pcr(reg_ctr);
                                             q = sub_whichquadrant(Pn(nR),center);
-                                            for qqq=1:length(q),
-                                                Pquadrant{q(qqq)} = [Pquadrant{q(qqq)} Pn(nR)];
-                                            end
+                                            PquadrantMap = [PquadrantMap ...
+                                                sparse(q,1,1,2^nx,1)];
                                             
                                             %%keptrows{nR} = getkeptrows(Pcr(reg_ctr));
                                             keptrows{nR} = kr{reg_ctr};
@@ -626,7 +615,9 @@ while region<=nR,
                                         isemptypoly = ~isfulldim(Pcr);
                                         if(isemptypoly==0)
                                             nMatch=0;
-                                            [nMatch,RegionStore]=sub6_RedundantPolyhedron((nR-1),Pn,nR,xBeyond,Pquadrant,center);
+                                            [nMatch,RegionStore]= ...
+                                                sub6_RedundantPolyhedron((nR-1), ...
+                                                Pn,nR,xBeyond,PquadrantMap,center);
                                             if(nMatch>0)
                                                 isemptypoly=1;
                                             end
@@ -652,9 +643,7 @@ while region<=nR,
                             keptrows{nR}=keptrows{nR-1};
                             Pn(nR) = -Pn(nR-1);
                             q = sub_whichquadrant(Pn(nR),center);
-                            for qqq=1:length(q),
-                                Pquadrant{q(qqq)} = [Pquadrant{q(qqq)} Pn(nR)];
-                            end
+                            PquadrantMap = [PquadrantMap sparse(q,1,1,2^nx,1)];
                             
                             Fi{nR} = Fi{nR-1};
                             Gi{nR} = -Gi{nR-1};
@@ -664,10 +653,6 @@ while region<=nR,
                         %---------------------------------------------------------------
                         % Remove empty polyhedron
                         %--------------------------------------------------------------
-                        for qqq=1:length(q),
-                            Pquadrant{q(qqq)}(nR) = PEmpty;
-                        end
-                        
                         Pn(nR) = PEmpty;
                         activeConstraints{nR}=[];
                         Fi{nR}=[];
@@ -1063,7 +1048,7 @@ end
 %-------------------------------------------------------------------
 % Checks if a point lies inside one or more polyhedrons
 %-------------------------------------------------------------------
-function [nMatch,RegionStore]=sub6_RedundantPolyhedron(nR,Pn,region,xBeyond,Pquadrant,center)
+function [nMatch,RegionStore]=sub6_RedundantPolyhedron(nR,Pn,region,xBeyond,PquadrantMap,center)
 %-------------------------------------------------------------------
 % Checks if a point lies inside one or more polyhedrons
 %-------------------------------------------------------------------
@@ -1072,6 +1057,9 @@ RegionStore=[];
 isinOpt.abs_tol = 0;
 isinOpt.fastbreak = 1;
 
+if isempty(PquadrantMap)
+    return
+end
 
 nx = length(xBeyond);
 
@@ -1087,8 +1075,7 @@ end
 
 % --------------Raphael--------------
 
-
-[ii,iwhere] = isinside(Pquadrant{q}, xBeyond, isinOpt);
+[ii,iwhere] = isinside(Pn(find(PquadrantMap(q,:))), xBeyond, isinOpt);
 
 for ii=1:length(iwhere),
     if iwhere(ii)~=region & iwhere(ii)<=nR,
@@ -1334,6 +1321,11 @@ function quadIdx = sub_whichquadrant(P,center)
 
 Options.noPolyOutput = 1;
 [R,l,u] = bounding_box(P, Options);
+if isempty(l),
+    % polytope was empty
+    quadIdx = 0;
+    return
+end
 
 nx = length(center);
 
@@ -1341,7 +1333,6 @@ S =  (1+sign([l-center u-center]))/2;
 S = round(S');
 
 C = S(1,:);
-quadIdx = [];
 for i = 1:nx
     if S(1,i) == 1
         CC = C;
