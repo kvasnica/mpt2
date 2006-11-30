@@ -11,6 +11,10 @@ function Q = subsref(P, X)
 %
 % If P is an array of polytopes (e.g. P=[P1 P2 P3]), P(2) returns P2, etc.
 %
+% Indexing by logicals is supported as well, e.g.
+%
+%    P(logical([0 1 0 1]))
+%
 % ---------------------------------------------------------------------------
 % INPUT
 % ---------------------------------------------------------------------------
@@ -24,8 +28,8 @@ function Q = subsref(P, X)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
-%          kvasnica@control.ee.ethz.ch
+% (C) 2003-2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+%               kvasnica@control.ee.ethz.ch
 % (C) 2003 Mato Baotic, Automatic Control Laboratory, ETH Zurich,
 %          baotic@control.ee.ethz.ch
 
@@ -63,6 +67,11 @@ else
 end
 
 indices = X.subs{1};
+if islogical(indices)
+    indices = double(find(indices));
+elseif any(indices<0),
+    error('??? Subscript indices must either be real positive integers or logicals.');
+end
 if isempty(indices),
     Q = polytope;
     return
@@ -73,7 +82,7 @@ lenInd = length(indices);
 
 if (lenP==0)
     if any(indices>1),
-        error('SUBSREF: ??? Index exceeds array dimension');
+        error('??? Index exceeds array dimension');
     end
     Q = P;
     if lenInd > 1,
@@ -84,11 +93,9 @@ if (lenP==0)
     end
     
 else
-    if any(indices<=0),
-        error('POLYTOPE:SUBSREF: Index is negative or zero');
-    end
+    lenP = length(P.Array);
     if any(indices>lenP),
-        error('POLYTOPE:SUBSREF: Index exceeds matrix dimension');
+        error('??? Index exceeds matrix dimension');
     end
     if (lenInd==1),
         Q = P.Array{indices};
