@@ -93,7 +93,6 @@ if (lenP==0)
     end
     
 else
-    lenP = length(P.Array);
     if any(indices>lenP),
         error('??? Index exceeds matrix dimension');
     end
