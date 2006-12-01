@@ -67,7 +67,10 @@ if ~isempty(P.Array)
         Q.H = -Q.H;
         Q.xCheb = -Q.xCheb;
         Q.vertices=-Q.vertices;
-        Q.bbox = [];
+        bbox = Q.bbox;
+        if ~isempty(bbox),
+            Q.bbox = [-bbox(:, 2) -bbox(:, 1)];
+        end
         U = [U Q];
     end
     P = U;
@@ -81,4 +84,7 @@ end
 P.H=-P.H;
 P.xCheb=-P.xCheb;
 P.vertices=-P.vertices;
-P.bbox = [];
+bbox = P.bbox;
+if ~isempty(bbox),
+    P.bbox = [-bbox(:, 2), -bbox(:, 1)];
+end
