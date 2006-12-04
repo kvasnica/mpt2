@@ -109,8 +109,8 @@ if isempty(PArray),
     end
 end
 
-for ii=2:nargs,
-    Q = varargin{ii};
+for jj=2:nargs,
+    Q = varargin{jj};
     QArray = Q.Array;
     if ~isempty(QArray),         % in case Q is a polyarray
         for ii=1:length(QArray)  % cycle through all it's elements

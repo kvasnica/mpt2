@@ -104,8 +104,8 @@ if isempty(P.Array),
     end
 end
 
-for ii=2:nargs,
-    Q = varargin{ii};
+for jj=2:nargs,
+    Q = varargin{jj};
     if ~isempty(Q.Array),         % in case Q is a polyarray
         for ii=1:length(Q.Array)  % cycle through all it's elements
             if Q.Array{ii}.H==1 & Q.Array{ii}.K==-Inf & Q.Array{ii}.RCheb==-Inf,

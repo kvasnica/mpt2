@@ -477,7 +477,7 @@ while index<nii
                 f(border,1)=points(npoints);
                 active=f(border,1);
                 previous=0;
-                for ii=2:npoints,
+                for kk=2:npoints,
                     aux=intersect(VA{active},points);
                     if length(aux)~=2,
                         if isbounded(P),
@@ -488,12 +488,12 @@ while index<nii
                         end
                     else
                         if aux(1)~=previous,
-                            f(border,ii)=aux(1);
+                            f(border,kk)=aux(1);
                         else
-                            f(border,ii)=aux(2);
+                            f(border,kk)=aux(2);
                         end
                         previous=active;
-                        active=f(border,ii);
+                        active=f(border,kk);
                     end
                 end
                 if Options.wire

@@ -193,7 +193,7 @@ if any(round(color.Reg)~=color.Reg),
     error('the colors must be integers')
 end;
 colorSorted = sort(unique(color.Reg));
-if min(colorSorted) < 1 or max(colorSorted) > size(colorSorted)
+if min(colorSorted) < 1 | max(colorSorted) > size(colorSorted)
     error('colors need to be 1, 2, ...')
 end;    
 
