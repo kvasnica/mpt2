@@ -90,6 +90,12 @@ if ~isfield(Options,'fastbreak')
     Options.fastbreak = 0;
 end
 
+if nargout < 2,
+    % we can always switch to fastbreak=1 if the user doesn't ask for
+    % the "inwhich" output argument
+    Options.fastbreak = 1;
+end
+
 if nargin<2
     if dimension(P)>2,
         error('polytope/isinside: Only 2D partitions are allowed if x0 is not provided!');

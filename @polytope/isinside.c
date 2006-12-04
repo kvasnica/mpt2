@@ -167,6 +167,10 @@ void mexFunction(int nlhs, mxArray * plhs[], int nrhs, const mxArray * prhs[])
     true_nPn = nPn>0 ? nPn : 1;
     inwhichp = mxGetPr(mxCreateDoubleMatrix(true_nPn, 1, mxREAL));
     
+    /* we can always do fastbreak if the user doesn't ask for "inwhich" */
+    if (nlhs < 2)
+        options.fastbreak = 1;
+    
     for (i=0; i<true_nPn; i++)
     {
         if (isinside(Pn[i], x0, dimx0, options.abs_tol))
