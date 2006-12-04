@@ -1,7 +1,6 @@
 function X = grid(P, gridpoints)
 %GRID Returns equidistantly spaced data points contained in a polytope/polyarray
 %
-% X = grid(P)
 % X = grid(P, gridpoints)
 %
 % ---------------------------------------------------------------------------
@@ -14,7 +13,7 @@ function X = grid(P, gridpoints)
 % INPUT
 % ---------------------------------------------------------------------------
 % P               - Polytope object
-% gridpoints      - number of grid points (if not provided, 30 is default)
+% gridpoints      - Number of grid points
 %
 % ---------------------------------------------------------------------------
 % OUTPUT
@@ -47,11 +46,7 @@ function X = grid(P, gridpoints)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(1,2,nargin));
-
-if nargin<2
-    gridpoints = 30;
-end
+error(nargchk(2, 2, nargin));
 
 bbOptions.noPolyOutput = 1; % we don't need the bounding box as a polytope object
 [B, lb, ub] = bounding_box(P, bbOptions);
