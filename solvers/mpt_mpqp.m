@@ -1070,7 +1070,8 @@ isinOpt.fastbreak = 1;
 % precise
 LOWER = BBoxes.bmin;
 UPPER = BBoxes.bmax;
-repX = repmat(xBeyond, 1, size(LOWER,2));
+%repX = repmat(xBeyond, 1, size(LOWER,2));
+repX = xBeyond(:, ones(1, size(LOWER, 2))); % same as repmat, but faster
 myfind = find(all((repX >= LOWER-1e-4) & (repX <= UPPER+1e-4), 1));
 [ii,iwhere] = isinside(Pn(myfind), xBeyond, isinOpt);
 iwhere = myfind(iwhere);
