@@ -86,6 +86,6 @@ npoints = size(datapoints,1);
 isin = zeros(npoints, 1);
 locOpt.fastbreak = 1;
 for i = 1:npoints,
-    isin(i) = isinside(P, datapoints(ii, :)', locOpt);
+    isin(i) = isinside(P, datapoints(i, :)', locOpt);
 end
 X = datapoints(find(isin), :);
