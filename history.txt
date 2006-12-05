@@ -1,10 +1,75 @@
 % MPT Multi-Parametric Toolbox
-% Version 2.6.1 17-May-2006
+% Version 2.6.2 05-Dec-2006
 %
 % Authors: Michal Kvasnica, Pascal Grieder, Mato Baotic
 % kvasnica@control.ee.ethz.ch, grieder@control.ee.ethz.ch, baotic@control.ee.ethz.ch
 %
 % For support, write to: mpt@control.ee.ethz.ch
+
+
+Version 2.6.2 (05-Dec-2006)
+--------------------------
+
+[NEW] included latest release of YALMIP
+
+[NEW] Massive speedup of the mpQP algorithm especially for large dimensions
+
+[NEW] Included a mex version of polytope/isinside.m
+
+[NEW] mpt_mpsol2ctrl: convert YALMIP solution into an MPTCTRL object
+
+[NEW] speed improvements especially when solving mpMILP/mpMIQP problems
+
+[NEW] new function polytope/grid
+
+[PATCH] fixed mpt_solveMILP and mpt_solveMIQP when CPLEX is used and options.verbose=-1
+
+[PATCH] mpt_mplp: properly handle F*x terms in cost
+
+[PATCH] mpt_simplify: properly reject/accept controllers with overlaps
+
+[PATCH] mpt_sys: fixed an undefined variable
+
+[PATCH] simulink interface: improved detection of tracking controllers
+
+[PATCH] Bug 13: improve qhull numerical robustness in matlab R14 and newer
+
+[PATCH] Bug 28: mpt_mplp: improved detection of infeasible cases
+
+[PATCH] Bug 30: Open-loop solution had wrong number of elements
+
+[PATCH] Bug 37: improved mpt_verify()
+
+[PATCH] Bug 38: use ctrl.details.x0format instead of ctrl.details.dims
+
+[PATCH] Bug 39: Greedy merging failed for 1D polytopes
+
+[PATCH] Bug 41: tracking=1 fails for on-line MPC for MLD systems
+
+[PATCH] Bug 43: fprintf(0, ...) throws an error in R2006b (affects SeDuMi)
+
+[PATCH] Bug 46: isinvariant/isstabilizable was broken in MPT 2.6.1
+
+[PATCH] Bug 47: suppress annoying warnings when using quadprog
+
+[PATCH] Bug 50: make optimal merging more numerically robust
+
+[PATCH] Bug 51: mpQP fails to find an initial feasible point
+
+[PATCH] Bug 54: Better detection of the MATLAB release number
+
+[PATCH] Bug 56: Complex referencing of polytopes/polyarrays fails
+
+[PATCH] Bug 57: Automatically symmetrize the H matrix in mpt_mpqp
+
+[PATCH] Bug 60: Speedup of polytope/subsref
+
+[PATCH] Bug 61: Indexing of polyarrays by logicals now works
+
+[PATCH] Bug 64: polytope/uminus didn't update bounding box
+
+[PATCH] Bug 67: polytope/isinside: auto-switch to fastbreak=1 if nargout < 2
+
 
 
 Version 2.6.1 (17-May-2006)
