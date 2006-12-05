@@ -422,12 +422,14 @@ end
 
 nRegions = 1; % new region
 
-Pquadrant    = {};
-Pquadrant    = cell(1,2^nx); % number of quadrant is 2^nx
-q = sub_whichquadrant(cr.P, center);
-for qqq=1:length(q),
-    Pquadrant{q(qqq)}(end+1) = nRegions;
-end
+isinOpt.abs_tol = 0;
+isinOpt.fastbreak = 0;
+bboxOpt.noPolyOutput = 1;
+BBoxes = struct('bmin', [], 'bmax', []);
+[d, bmin, bmax] = pelemfun(@bounding_box, cr.P, bboxOpt);
+BBoxes.bmin = [BBoxes.bmin [bmin{:}]];
+BBoxes.bmax = [BBoxes.bmax [bmax{:}]];
+
 %
 % store the initial region and continue exploration of the
 % parameter space
@@ -643,31 +645,11 @@ while region <= nRegions & nRegions <= MAXREGIONS,
         % Check if the point is inside of any existing polyhedra
         %
         solveNewLP = 1;
-        isinOpt.abs_tol   = 0;
-        isinOpt.fastbreak = 0;
-        vi = (xBeyond - center) > 0;
-        q = 1 + 2.^[0:nx-1] * vi;
-        % polytopes in the same quadrant excluding the present one
-        %
-        if isempty(Pquadrant{q}),
-            searchIndex = [];
-        else
-            searchIndex = Pquadrant{q}(find(Pquadrant{q}~=region));  
-        end
-        if ( ~isCostParametrized ),
-            % we can speed-up the search by exploiting the fact that the
-            % value function is convex
-            %
-            valueSlacks = BC(searchIndex,:) * [xBeyond(:);1];
-            [maxValue,firstNeighbor] = max(valueSlacks);
-            neighborsIdx = find(abs(valueSlacks-maxValue) < 10*ZERO_TOL);  
-            searchIndex = searchIndex(neighborsIdx);
-        end
-        [isin,neighbor] = isinside(Pn(searchIndex), xBeyond, isinOpt);
+        [isin, neighbor] = sub_redundantPolyhedron(Pn, xBeyond, BBoxes, ...
+            BC, isCostParametrized, ZERO_TOL);
         nMatch = length(neighbor);
         if nMatch > 0,
             solveNewLP = 0;
-            neighbor = searchIndex(neighbor);    % actual region index Pquadrant{q}(neighbor)
             if nMatch > 1,
                 if Options.verbose > 1,
                     disp('Polyhedra should not overlap');
@@ -879,10 +861,9 @@ while region <= nRegions & nRegions <= MAXREGIONS,
                 if ( cr.type == -1 ),
                     degenerate(end+1) = nRegions;
                 end
-                q = sub_whichquadrant(cr.P,center);
-                for qqq = 1:length(q),
-                    Pquadrant{q(qqq)}(end+1) = nRegions;
-                end
+                [d, bmin, bmax] = pelemfun(@bounding_box, cr.P, bboxOpt);
+                BBoxes.bmin = [BBoxes.bmin [bmin{:}]];
+                BBoxes.bmax = [BBoxes.bmax [bmax{:}]];
                 nFacets = nconstr(cr.P);
                 no_of_constr(end+1) = nFacets;
                 adjacent{nRegions}  = zeros(nFacets,1);   % creating adj matrix for the newly discovered region
@@ -1686,6 +1667,40 @@ function [isBorder,xBorder] = checkIfBorder(borderVec,kBorder,ZXpoly,Options)
     xBorder = xoptLP(nz+1:length(xoptLP));
     isBorder = ( abs(borderVec'*xBorder-kBorder)<Options.zeroTol );
 %
+
+
+
+function [isin, neighbor] = sub_redundantPolyhedron(Pn, xBeyond, BBoxes, ...
+    BC, isCostParametrized, ZERO_TOL)
+%-------------------------------------------------------------------
+% Checks if a point lies inside one or more polyhedrons
+%-------------------------------------------------------------------
+isinOpt.abs_tol = 0;
+isinOpt.fastbreak = 0;
+
+% use bounding boxes for pruning. "ind" will be a logical array of 1/0
+% indicies of possible candidate regions
+%
+% we introduce a tolerance since bounding boxes are not always
+% precise
+bbox_tol = 1000*ZERO_TOL;
+LOWER = BBoxes.bmin;
+UPPER = BBoxes.bmax;
+repX = xBeyond(:, ones(1, size(LOWER, 2))); % same as repmat, but faster
+searchIndex = find(all((repX >= LOWER-bbox_tol) & (repX <= UPPER+bbox_tol), 1));
+
+if ( ~isCostParametrized ),
+    % we can speed-up the search by exploiting the fact that the
+    % value function is convex
+    %
+    valueSlacks = BC(searchIndex,:) * [xBeyond(:);1];
+    [maxValue, firstNeighbor] = max(valueSlacks);
+    neighborsIdx = find(abs(valueSlacks-maxValue) < 10*ZERO_TOL);
+    searchIndex = searchIndex(neighborsIdx);
+end
+
+[isin, inwhich] = isinside(Pn(searchIndex), xBeyond, isinOpt);
+neighbor = searchIndex(inwhich);
 
 
 %============= sub_whichquadrant  ====================
