@@ -529,9 +529,9 @@ while region<=nR,
                         end
                         break
                     end
-                    nR=nR+1; % new region
-                    activeConstraints{nR}=ii; %store active constraints
                     for reg_ctr=1:length(Fii)
+                        nR = nR + 1;
+                        activeConstraints{nR}=ii; %store active constraints
                         Fi{nR}=Fii{reg_ctr};
                         Gi{nR}=Gii{reg_ctr};
                         Pn(nR)=Pcr(reg_ctr);
@@ -540,9 +540,6 @@ while region<=nR,
                         BBoxes.bmax = [BBoxes.bmax bmax];
 
                         keptrows{nR} = kr{reg_ctr};
-                        if(length(Fii)>reg_ctr)
-                            nR=nR+1;
-                        end
                     end
                     
                     %---------------------------------
@@ -655,7 +652,7 @@ while region<=nR,
                         %---------------------------------------------------------------
                         % Remove empty polyhedron
                         %--------------------------------------------------------------
-                        Pn(nR) = PEmpty;
+                        Pn(nR) = [];
                         activeConstraints{nR}=[];
                         Fi{nR}=[];
                         Gi{nR}=[];
