@@ -73,10 +73,11 @@ for ii = 1:ne-1,
     
     % possible candidates are those rows whose sum is equal to the sum of the
     % original row
-    possible_eq = find(abs(sumM + s) < 1e-12) + ii;
+    possible_eq = find(abs(sumM + s) < 1e-12);
     if isempty(possible_eq),
         continue
     end
+    possible_eq = possible_eq + ii;
     b1 = B(ii);    
     a1 = A(ii, :);
     
