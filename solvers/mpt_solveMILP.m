@@ -229,7 +229,7 @@ elseif solver==2,
     end
     
     switch status
-        case 171,
+        case {171, 180, 181, 151, 200}
             how = 'ok';
             exitflag = 1;
         otherwise

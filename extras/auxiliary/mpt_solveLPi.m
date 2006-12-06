@@ -387,7 +387,7 @@ elseif (lpsolver==4)
 
     lambda = -lambda_struct.lambda;
     switch status
-        case {180,181,151}   % optimal, feasible
+        case {180,181,151,171,200}   % optimal, feasible
             how = 'ok';
             exitflag = 1;
         case {182}   % infeasible
