@@ -425,6 +425,26 @@ mptOptions.details = 0;
 
 
 
+%-----------------------
+% Default YALMIP options
+%-----------------------
+
+% there are two possible options here:
+%    'fixer'    - each branch&bound iteration takes longer, but this
+%                 algorithm finds an initial feasible point quicker than
+%                 'rounder' does
+%    'rounder'  - faster iterations, but it takes longer to find a feasible
+%                 initial point
+bnb_upper_solver = 'fixer';
+
+yalmip_options = {'verbose', 0, ...
+    'warning', 0, ...
+    'cachesolvers', 1, ...
+    'bnb.branchrule', 'weight', ...
+    'bnb.upper', bnb_upper_solver };
+
+
+
 %-------------------------------------------------------------------------------
 % DO NOT EDIT BEYOND THIS LINE!!!
 %-------------------------------------------------------------------------------
@@ -580,8 +600,7 @@ try
         try
             % update mptOptions.sdpsettings if somebody installed a new version
             % of YALMIP
-            mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, ...
-                'cachesolvers', 1, 'bnb.branchrule', 'weight');
+            mptOptions.sdpsettings = sdpsettings(yalmip_options{:});
         catch
             warning('YALMIP not found, some functionality may not be accessible.');
             mptOptions.sdpsettings = [];
@@ -621,6 +640,11 @@ try
             % something is wrong. before installing any version of MPT, you must first
             % remove any previous installation from your disk.
             warning('It appears that previous version of MPT was not removed from your computer. This can lead to serious problems! Please remove all previous versions of MPT from your disk and install latest version.');
+        end
+        
+        out=mptOptions;
+        if nargin<1,
+            clear out
         end
         
         return
@@ -670,8 +694,7 @@ if rem(nargs, 2)~=0,
 end
 
 try
-    mptOptions.sdpsettings = sdpsettings('Verbose', 0, 'warning', 0, ...
-        'cachesolvers', 1, 'bnb.branchrule', 'weight');
+    mptOptions.sdpsettings = sdpsettings(yalmip_options{:});
 catch
     warning('YALMIP not found, some functionality may not be accessible.');
     mptOptions.sdpsettings = [];
