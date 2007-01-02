@@ -280,7 +280,7 @@ if 0 & ctrlStruct.probStruct.tracking,
         % plot states
         ctr = ctr+1;
         Xmat = [Xmat X(1:end-endp,ii)];
-        legendXtext{ctr}=sprintf('x_%d',ii);
+        legendXtext{ctr}=sprintf('x_{%d}',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
             % use user defined text labels if defined
             if ~isempty(ctrlStruct.sysStruct.StateName),
@@ -293,7 +293,7 @@ if 0 & ctrlStruct.probStruct.tracking,
         % plot references
         ctr = ctr+1;
         Xrefmat = [Xrefmat X(1:end-endp,nxt+nu+ii)];
-        refname = sprintf('r_%d',ii);
+        refname = sprintf('r_{%d}',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
             if ~isempty(ctrlStruct.sysStruct.StateName),
                 % use user defined text labels if defined
@@ -314,7 +314,7 @@ else
     for ii=1:nx,
         % create legend description (i.e. x_1, x_2, ... )
         Xmat = [Xmat X(1:end-endp,ii)];
-        legendXtext{ii}=sprintf('x_%d',ii);
+        legendXtext{ii}=sprintf('x_{%d}',ii);
         if isfield(ctrlStruct.sysStruct, 'StateName'),
             if ~isempty(ctrlStruct.sysStruct.StateName),
                 % use user defined text labels if defined
@@ -359,7 +359,7 @@ if ctrlStruct.probStruct.tracking,
         % plot outputs
         ctr = ctr+1;
         Ymat = [Ymat Y(:,ii)];
-        legendYtext{ctr}=sprintf('y_%d',ii);
+        legendYtext{ctr}=sprintf('y_{%d}',ii);
         if isfield(ctrlStruct.sysStruct, 'OutputName'),
             if ~isempty(ctrlStruct.sysStruct.OutputName),
                 % use user defined text labels if defined
@@ -371,7 +371,7 @@ else
     for ii=1:ny,
         % create legend description (i.e. y_1, y_2, ...)
         Ymat = [Ymat Y(:,ii)];
-        legendYtext{ii}=sprintf('y_%d',ii);
+        legendYtext{ii}=sprintf('y_{%d}',ii);
         if isfield(ctrlStruct.sysStruct, 'OutputName'),
             if ~isempty(ctrlStruct.sysStruct.OutputName),
                 % use user defined text labels if defined
@@ -383,7 +383,7 @@ else
         Ymatref = [];
         for ii=1:ny,
             Ymatref = [Ymatref ctrlStruct.probStruct.yref(ii)*ones(length(T),1)];
-            refname = sprintf('r_%d',ii);
+            refname = sprintf('r_{%d}',ii);
             if isfield(ctrlStruct.sysStruct, 'OutputName'),
                 if ~isempty(ctrlStruct.sysStruct.OutputName),
                     % use user defined text labels if defined
@@ -444,7 +444,7 @@ for ii=1:nu,
     % create legend description (i.e. u_1, u_2, ...)
     [Tx,Uy]=stairs(T,U(:,ii));
     Umat = [Umat Uy];
-    legendUtext{ii}=sprintf('u_%d',ii);
+    legendUtext{ii}=sprintf('u_{%d}',ii);
     if isfield(ctrlStruct.sysStruct, 'InputName'),
         if ~isempty(ctrlStruct.sysStruct.InputName),
             % use user defined text labels if defined
@@ -522,7 +522,7 @@ else
             % plot states
             ctr = ctr+1;
             Dmat = [Dmat D(:,ii)];
-            legendDtext{ctr}=sprintf('d_%d',ii);
+            legendDtext{ctr}=sprintf('d_{%d}',ii);
             if isfield(ctrlStruct.sysStruct, 'StateName'),
                 if ~isempty(ctrlStruct.sysStruct.StateName),
                     % use user defined text labels if defined
@@ -534,7 +534,7 @@ else
         for ii=1:nd,
             % create legend description (i.e. d_1, d_2, ...)
             Dmat = [Dmat D(:,ii)];
-            legendDtext{ii}=sprintf('d_%d',ii);
+            legendDtext{ii}=sprintf('d_{%d}',ii);
             if isfield(ctrlStruct.sysStruct, 'StateName'),
                 if ~isempty(ctrlStruct.sysStruct.StateName),
                     % use user defined text labels if defined
