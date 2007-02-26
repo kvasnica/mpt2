@@ -49,9 +49,7 @@ function [P]= projection(PA,dim,Options)
 % implementation
 
 % ---------------------------------------------------------------------------
-% $Version: 1.1 $ $Date: 2005/06/13 12:30:44 $
-%
-% (C) 2004-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (C) 2004-2007 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %               kvasnica@control.ee.ethz.ch
 % (C) 2004 Raphael Suard, Automatic Control Laboratory, ETH Zurich,
 %          suardr@ee.ethz.ch
@@ -396,6 +394,9 @@ for qq=length(dim):-1:2,
         error('Projected polytope is R^n');
     end
     P = polytope(D(:,1:end-1), D(:,end));
+    if ~isfulldim(P), 
+        return
+    end
     H = P.H;
     K = P.K;
     HK = [H K];
