@@ -77,6 +77,7 @@ end
 
 PArray = P.Array;
 
+dimP = 0;
 if ~isempty(PArray),
     dimP=size(PArray{1}.H,2);
 elseif isfulldim(P)
@@ -88,10 +89,14 @@ else
         if ~isempty(QArray),
             dimP=size(QArray{1}.H,2);
             break
-        else
+        elseif isfulldim(Q)
             dimP=size(Q.H,2);
         end
     end
+end
+if dimP == 0
+    P = polytope;
+    return
 end
 
 if isempty(PArray),
