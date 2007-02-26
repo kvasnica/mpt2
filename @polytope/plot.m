@@ -568,13 +568,13 @@ set(h1,'Fontname','times');
 set(h1,'Fontsize',min(Options.fontsize,14));
 
 
-if problemtolctr > 0,
+if problemtolctr > 0 & Options.verbose > 0,
     disp('PLOT: Problem detected. Try to change value of abs_tol in mpt_init. 1e-7 should be a good value.');
 end
-if emptypolymsgctr > 0,
+if emptypolymsgctr > 0 & Options.verbose > 0,
     disp('PLOT: Empty polytope(s) detected!');          
 end
-if sectionemptyctr>0,
+if sectionemptyctr>0 & Options.verbose > 0,
     disp('PLOT: Section through polytope(s) at the given location is empty! Try to plot the projection (help projection) or specify Options.xvalues.');
 end
 if unbctr > 0,
