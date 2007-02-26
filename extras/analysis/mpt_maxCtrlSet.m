@@ -282,7 +282,13 @@ while notconverged
         % time.
         P=polytope([-Matrices.E Matrices.G], Matrices.W, 1, 1);  
         
-        Pfinal=projection(P,(1:size(Matrices.E,2)),Options);
+        try
+            % first try projection, it's faster
+            Pfinal=projection(P, (1:size(Matrices.E,2)), Options);
+        catch
+            % in case of troubles switch to mpQP
+            [dd1,dd2,dd3,dd4,Pfinal] = mpt_mpqp(Matrices);
+        end
         
         if Options.verbose > 1,
             fprintf('i = %d, nc(P) = %d, nc(Pfinal) = %d\n', loopCtr, nconstr(P), nconstr(Pfinal));
