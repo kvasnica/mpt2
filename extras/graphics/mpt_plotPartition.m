@@ -67,8 +67,12 @@ if nargin<1,
 end
 
 if nargin<2,
-    Options = mptOptions;
+    Options = [];
 end
+Options = mpt_defaultOptions(Options, ...
+    'noInfCol', 0, ...
+    'newfigure', mptOptions.newfigure );
+
 
 if isa(ctrl, 'mptctrl')
     if ~isexplicit(ctrl)
@@ -77,19 +81,11 @@ if isa(ctrl, 'mptctrl')
     ctrlStruct = struct(ctrl);
 else
     ctrlStruct = ctrl;
+    if ~mpt_isValidCS(ctrlStruct)
+        error('mpt_plotPartition: First argument has to be a valid controller structure! See mpt_control for details.');
+    end
 end
 
-if ~isfield(Options,'noInfCol'),
-    Options.noInfCol=0;
-end
-if ~isfield(Options,'newfigure')
-    Options.newfigure=mptOptions.newfigure;
-end
-
-
-if ~mpt_isValidCS(ctrlStruct)
-    error('mpt_plotPartition: First argument has to be a valid controller structure! See mpt_control for details.');
-end
 
 % if regions do not overlap, we can enforce break in isinside at least it finds the first region associated
 % to a given state (since there cannot be more than one if there are no overlaps)
@@ -120,45 +116,33 @@ if Options.newfigure,
     Options.newfigure = 0;  % we need to tell polytope/plot() not to open a yet another window
 end
 
-
 PA = fliplr(ctrlStruct.Pn);
 nx = dimension(PA);
 dimP = nx;
 
-mergetitles = 1;
-if ctrlStruct.probStruct.tracking,
-    if isfield(ctrlStruct.sysStruct,'dims'),
-        % use stored dimensions if available
-        nu = ctrlStruct.sysStruct.dims.nu;
-        nx = ctrlStruct.sysStruct.dims.nx;
-    else
-        if iscell(ctrlStruct.sysStruct.B),
-            nu = size(ctrlStruct.sysStruct.B{1},2);
-            nx = (size(ctrlStruct.sysStruct.A{1},2)-nu)/2;
-        else
-            nu = size(ctrlStruct.sysStruct.B,2);
-            nx = (size(ctrlStruct.sysStruct.A,2)-nu)/2;
-        end
-    end
-    % tracking partition is in higher dimension, we just plot the section
-    % through true system states
-    Options.xsection = ((min(nx, 3)+1):dimP);
-    Options.verbose = 0;   % to avoid 'section is empty' warnings
-    mergetitles = 0;  % do not add 'section through x3=... x4=...' to the figure title
-end
-if isfield(ctrlStruct.sysStruct,'dumode')
-    % if this flag is set, solution has been computed for extended state-space
-    % to guarantee fullfilment of deltaU constraints in closed-loop
-    if iscell(ctrlStruct.sysStruct.B),
-        nu = size(ctrlStruct.sysStruct.B{1}, 2);
-        nx = size(ctrlStruct.sysStruct.A{1}, 2) - nu;
-    else
-        nu = size(ctrlStruct.sysStruct.B, 2);
-        nx = size(ctrlStruct.sysStruct.A, 2) - nu;
-    end
-    Options.xsection = nx+1:nx+nu;
+nxt = ctrlStruct.details.x0format.required - ...
+    ctrlStruct.details.x0format.reference - ...
+    ctrlStruct.details.x0format.uprev;
+nu = ctrlStruct.details.dims.nu;
+nref = ctrlStruct.details.x0format.reference;
+isdumode = isfield(ctrlStruct.sysStruct, 'dumode') | ...
+    ctrlStruct.probStruct.tracking==1 | ...
+    ctrlStruct.details.x0format.uprev>0;
+istracking = ctrlStruct.probStruct.tracking > 0;
+
+if istracking | isdumode,
+    Options.xsection = min([3 nxt])+1:dimP;
+    mergetitles = 1;
+    % to avoid 'section is empty' warnings
     Options.verbose = 0;
-    mergetitles = 0;
+elseif nx > 3,
+    Options.xsection = 4:nx;
+    % do not add 'section through x3=... x4=...' to the figure title
+    mergetitles = 1; 
+    % to avoid 'section is empty' warnings
+    Options.verbose = 0;
+else
+    mergetitles = 1;
 end
 
 if isfield(Options,'color'),
@@ -193,31 +177,58 @@ end
 
 % set figure properties:
 if ~isempty(titlehandle) & mergetitles
-    oldtitle=get(titlehandle,'String');
+    oldtitle = get(titlehandle,'String');
 else
     oldtitle='';
 end
-if ctrlStruct.probStruct.tracking,
-    oldtitle = '(tracking)';
-elseif isfield(ctrlStruct.sysStruct,'dumode'),
-    oldtitle = '(deltaU mode)';
-end
-title(['Controller partition with ' num2str(length(PA)) ' regions. ' oldtitle],'FontSize',14);
-
-if isfield(ctrlStruct.sysStruct,'StateName'),
-    xlabel(ctrlStruct.sysStruct.StateName{1},'Fontsize',14); % LaTeX math symbols are directly supported!
-    ylabel(ctrlStruct.sysStruct.StateName{2},'Fontsize',14);
-else
-    xlabel('x_1','Fontsize',14); % LaTeX math symbols are directly supported!
-    ylabel('x_2','Fontsize',14);
-end
-%if dimension(PA(1))>=3,
-if nx>=3,
-    if isfield(ctrlStruct.sysStruct,'StateName'),
-        zlabel(ctrlStruct.sysStruct.StateName{3},'FontSize',14);
-    else
-        zlabel('x_3','Fontsize',14);
+uprev = ctrlStruct.details.x0format.uprev;
+if istracking
+    for i = nxt+1:nxt+uprev,
+        oldtitle = strrep(oldtitle, ...
+            sprintf('x_{%d}', i), sprintf('u_{%d}', i-nxt));
     end
+    for i = nxt+uprev+1:nx,
+        oldtitle = strrep(oldtitle, ...
+            sprintf('x_{%d}', i), sprintf('ref_{%d}', i-nxt-uprev));
+    end
+    oldtitle = sprintf('(tracking)\n%s', oldtitle);
+
+elseif isdumode
+    for i = nxt+1:nxt+uprev,
+        oldtitle = strrep(oldtitle, ...
+            sprintf('x_{%d}', i), sprintf('u_{%d}', i-nxt));
+    end
+    oldtitle = sprintf('(deltaU mode)\n%s', oldtitle);
+
+end
+
+title(['Controller partition with ' num2str(length(PA)) ...
+    ' regions. ' oldtitle], 'FontSize', 14);
+
+ylab = ''; zlab = '';
+if isfield(ctrlStruct.sysStruct, 'StateName'),
+    xlab = ctrlStruct.sysStruct.StateName{1};
+else
+    xlab = 'x_1';
+end
+if isfield(ctrlStruct.sysStruct, 'StateName') & nxt >= 2,
+    ylab = ctrlStruct.sysStruct.StateName{2};
+elseif nxt >= 2,
+    ylab = 'x_2';
+end
+if isfield(ctrlStruct.sysStruct, 'StateName') & nxt >= 3,
+    zlab = ctrlStruct.sysStruct.StateName{3};
+elseif nxt >= 3,
+    zlab = 'x_3';
+end
+if ~isempty(xlab),
+    xlabel(xlab, 'FontSize', 14);
+end
+if ~isempty(ylab),
+    ylabel(ylab, 'FontSize', 14);
+end
+if ~isempty(zlab),
+    zlabel(zlab, 'FontSize', 14);
 end
 h=gcf;
 h1 = get(h,'CurrentAxes');
