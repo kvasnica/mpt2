@@ -545,6 +545,9 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
     end
     
     nu = ctrl.details.dims.nu;
+    if ~feasible,
+        U = repmat(NaN, nu*probStruct.N, 1);
+    end
     % if control horizon was used, make sure that we have the full open-loop
     % optimizer at disposal (if mpt_yalmipcftoc() was used to do move blocking,
     % the optimizer would just consist of free control moves, therefore we add
