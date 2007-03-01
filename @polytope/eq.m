@@ -196,6 +196,10 @@ end
 if nxP~=nxQ
     error('EQ: Only polytopes of equal dimensionality can be compared');
 end
+if ncP ~= ncQ,
+    status = 0;
+    return
+end
 
 Pbbox = P.bbox;
 Qbbox = Q.bbox;
