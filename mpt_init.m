@@ -643,7 +643,7 @@ try
         end
         
         out=mptOptions;
-        if nargin<1,
+        if nargout<1,
             clear out
         end
         
