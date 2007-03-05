@@ -691,10 +691,14 @@ if(DEBUG==1|DEBUG==2)
     [hardA,hardb,NoSolutionToPoint]=sub4_fixouterhull(hardA,hardb,xB,Pn,lpsolver,TOLERANCE,stepSize,xBRegion,Options);
 end
 if isempty(hardA),
-    if Options.verbose >= 0,
-        fprintf('mpt_mpqp: Warning: Phard is returned as an empty polytope. Please report this case to mpt@control.ee.ethz.ch\n');
-    end
     Phard = union(Pn);
+    if length(Phard) > 1 | ~isfulldim(Phard)
+        % union is non-convex or empty
+        if Options.verbose >= 0,
+            fprintf('mpt_mpqp: Warning: Phard is returned as an empty polytope. Please report this case to mpt@control.ee.ethz.ch\n');
+        end
+        Phard = polytope;
+    end
 else
     Phard = polytope(hardA, hardb);
 end
@@ -906,6 +910,12 @@ function [hardA,hardb,NoSolutionToPoint2]=sub4_fixouterhull(hardA,hardb,xB,Pn,lp
 % (DEBUG = 1, tolerance is equal to stepsize
 %  DEBUG = 2, tolerance is strictly zero     )
 %------------------------------------------------------------------------------------
+if isempty(hardA),
+    % will be handled outside
+    NoSolutionToPoint2 = [];
+    return
+end
+
 len_Pn = length(Pn);
 x = cell(1,len_Pn);
 R = cell(1,len_Pn);
