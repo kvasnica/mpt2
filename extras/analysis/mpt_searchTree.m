@@ -112,7 +112,7 @@ PA=ctrlStruct.Pn;
 Fi=ctrlStruct.Fi;
 Gi=ctrlStruct.Gi;
 %Pfinal=hull(ctrlStruct.Pfinal);  % took too long to calculate for PWA systems
-Pfinal=polytope;
+Pfinal = bounding_box(ctrlStruct.Pfinal);
 
 if iscell(ctrlStruct.sysStruct.B),
     nu = size(ctrlStruct.sysStruct.B{1},2);
