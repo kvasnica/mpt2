@@ -162,7 +162,7 @@ else
     if ~(isa(F, 'lmi') | isa(F, 'set')),
         error('Third input must be a set of constraints.');
     end
-    if ~isa(obj, 'sdpvar'),
+    if ~(isa(obj, 'sdpvar') | isa(obj, 'double'))
         error('Fourth input must be an optimization objective.');
     end
     if ~isstruct(vars),
@@ -174,7 +174,7 @@ else
     if any(is(F, 'sigmonial')),
         error('Sigmonial constraints (e.g. 1/x <= a) not supported.');
     end
-    if is(obj, 'sigmonial'),
+    if isa(obj, 'sdpvar') & is(obj, 'sigmonial'),
         error('Sigmonial objectives not supported.');
     end
     
