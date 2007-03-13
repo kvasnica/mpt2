@@ -295,12 +295,9 @@ else
     % =================================================================
     % set necessary fields of the controller structure
     ctrl.details.runTime = cputime - starttime;
-    if probStruct.norm~=2,
-        nx = length(ctrl.Bi{1});
-        for ii = 1:length(ctrl.Ai),
-            ctrl.Ai{ii} = zeros(nx);
-        end
-    end
+    nx = length(ctrl.Bi{1});
+    empty_Ais = cellfun('isempty', ctrl.Ai);
+    [ctrl.Ai{empty_Ais}] = deal(zeros(nx));
 
     ctrl.overlaps = overlaps;
     ctrl.details.origSysStruct = origSysStruct;
