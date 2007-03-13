@@ -265,6 +265,12 @@ U=1;
 
 ctr = 0;
 
+% catch cases when we have only one region
+if length(ctrlStruct.Pn)==1
+    U = [];
+    searchTree = [zeros(1, dimension(ctrlStruct.Pn)) -1 -1];
+end
+
 while ~isempty(U)
     ctr = ctr + 1;
     if mod(ctr,20)==0 | ctr==1
