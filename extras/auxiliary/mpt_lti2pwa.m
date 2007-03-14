@@ -82,8 +82,6 @@ else
     sysStruct.B = B;
     sysStruct.C = C;
     sysStruct.D = D;
-    ymax = 10*max(sysStruct.ymax);
-    ymin = 10*min(sysStruct.ymin);
     sysStruct.guardX{1} = [eye(nx); -eye(nx)];
     sysStruct.guardC{1} = [ones(2*nx,1)*infbox];
     verOpt.verbose=0;
