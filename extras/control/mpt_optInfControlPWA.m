@@ -608,7 +608,6 @@ if isfield(Options,'core'),
     try
         msg = evalc('status = mpt_isValidCS(Core);');
     catch
-        disp(msg)
         error('mpt_optInfControlPWA: Options.core is not a valid controller structure!');
         msg = 0;
     end
