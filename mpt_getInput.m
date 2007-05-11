@@ -250,8 +250,7 @@ if isa(ctrl, 'mptctrl') & ~isexplicit(ctrl)
         
         feasible = (diagnost.problem==0);
         fullopt = [];
-        U = double([vars.u{:}]);
-        U = U(:);
+        U = double(cat(1, u{:}));
         cost = double(obj);
         
     elseif isfield(ctrl.details, 'yalmipMatrices'),
