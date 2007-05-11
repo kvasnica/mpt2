@@ -373,7 +373,7 @@ elseif nargin==2 | nargin==3
         end
         
         % define which variables should be optimization variables
-        requested_vars = [vars.u{:}];
+        requested_vars = cat(1, vars.u{:});
 
         Fnonlin = any(~is(F, 'linear'));  % constraints are not linear
         if isfield(sysStruct, 'nonlinhandle') | Fnonlin,
