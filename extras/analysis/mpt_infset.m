@@ -15,7 +15,7 @@ function [Oinf,tstar,fd,isemptypoly] = mpt_infset(A,X,tmax,Pnoise,Options)
 % INPUT
 % --------------------------------------------------------------------------- 
 % A                - The A matrix of the discrete-time LTI system x{k+1} = Ax{k}.
-% X                - State constraints given as a polytope (x \in X)_
+% X                - State constraints given as a polytope (x \in X)
 % tmax             - Maximum number of iterations allowed.
 % Options.lpsolver - Solver for LPs (see help mpt_solveLP for details)
 % Options.verbose  - level of verbosity (see help mpt_init for details)
@@ -52,7 +52,7 @@ function [Oinf,tstar,fd,isemptypoly] = mpt_infset(A,X,tmax,Pnoise,Options)
 
 % Copyright is with the following author(s):
 %
-% (C) 2003-2005 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
+% (C) 2003-2007 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %          kvasnica@control.ee.ethz.ch
 % (C) 2003 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
@@ -101,6 +101,9 @@ end
 if ~isfield(Options,'verbose'),
     Options.verbose=mptOptions.verbose;
 end
+if length(X) > 1 | (iscell(A) & length(A) > 1)
+    error('Use mpt_infsetPWA for PWA systems.');
+end
 if(nargin<4 | isempty(Pnoise))
     addNoise=0;
 elseif(mpt_isnoise(Pnoise))
@@ -126,9 +129,7 @@ if(~isfulldim(X))
     return
 end
 if(~iscell(A))
-    tmpA=A;     %make cell out of A
-    clear A;
-    A{1}=tmpA;
+    A = {A};
 end
 
 [H,h] = double(X);
