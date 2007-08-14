@@ -112,7 +112,7 @@ PA=ctrlStruct.Pn;
 Fi=ctrlStruct.Fi;
 Gi=ctrlStruct.Gi;
 %Pfinal=hull(ctrlStruct.Pfinal);  % took too long to calculate for PWA systems
-Pfinal = bounding_box(ctrlStruct.Pfinal);
+Pfinal = bounding_box(ctrlStruct.Pn);
 
 if iscell(ctrlStruct.sysStruct.B),
     nu = size(ctrlStruct.sysStruct.B{1},2);
