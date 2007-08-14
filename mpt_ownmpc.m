@@ -296,8 +296,10 @@ else
     % set necessary fields of the controller structure
     ctrl.details.runTime = cputime - starttime;
     nx = length(ctrl.Bi{1});
-    empty_Ais = cellfun('isempty', ctrl.Ai);
-    [ctrl.Ai{empty_Ais}] = deal(zeros(nx));
+    empty_Ais = find(cellfun('isempty', ctrl.Ai));
+    if ~isempty(empty_Ais)
+        [ctrl.Ai{empty_Ais}] = deal(zeros(nx));
+    end
 
     ctrl.overlaps = overlaps;
     ctrl.details.origSysStruct = origSysStruct;
