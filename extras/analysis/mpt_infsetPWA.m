@@ -182,8 +182,10 @@ if nargs==1,
             error('This function supports only explicit controllers!');
         end
         ctrlStruct = struct(ctrl);
+        input_is_mptctrl = 1;
     else
         ctrlStruct = ctrl;
+        input_is_mptctrl = 0;
     end
 
     if ~mpt_isValidCS(ctrlStruct)
@@ -196,20 +198,21 @@ if nargs==1,
     Pn = ctrlStruct.Pn;
     Fi = ctrlStruct.Fi;
     Gi = ctrlStruct.Gi;
+    [nx, nu] = mpt_sysStructInfo(ctrlStruct.sysStruct);
     if (iscell(sysStruct.A))
         pwasystem=1;
-        if length(sysStruct.A)~=length(Pn)
-            disp('In PWA case, each dynamics has to be associated with exactly one region!');
-            disp('Linking dynamics to regions...');
-            Acell={};
-            Fcell={};
-            for ii=1:length(Pn)
-                [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
-                for jj=1:length(sysStruct.A)          % go through all dynamics description
-                    if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*(Fi{ii}*x+Gi{ii})-sysStruct.guardC{jj})<Options.abs_tol,    % check which dynamics is active in the region
-                        Acell{ii}=sysStruct.A{jj}+sysStruct.B{jj}*ctrlStruct.Fi{ii};
-                        Fcell{ii}=sysStruct.B{jj}*ctrlStruct.Gi{ii}+sysStruct.f{jj};
-                    end
+        disp('In PWA case, each dynamics has to be associated with exactly one region!');
+        disp('Linking dynamics to regions...');
+        Acell={};
+        Fcell={};
+        for ii=1:length(Pn)
+            [x,R] = chebyball(Pn(ii));            % compute center of the chebyshev's ball
+            for jj=1:length(sysStruct.A)          % go through all dynamics description
+                if max(sysStruct.guardX{jj}*x + ...c
+                        sysStruct.guardU{jj}*(Fi{ii}(1:nu, :)*x+Gi{ii}(1:nu))-sysStruct.guardC{jj}) ...
+                        <Options.abs_tol,    % check which dynamics is active in the region
+                    Acell{ii}=sysStruct.A{jj}+sysStruct.B{jj}*ctrlStruct.Fi{ii}(1:nu, :);
+                    Fcell{ii}=sysStruct.B{jj}*ctrlStruct.Gi{ii}(1:nu)+sysStruct.f{jj};
                 end
             end
         end
