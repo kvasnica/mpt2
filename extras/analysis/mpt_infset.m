@@ -82,184 +82,38 @@ function [Oinf,tstar,fd,isemptypoly] = mpt_infset(A,X,tmax,Pnoise,Options)
 
 error(nargchk(3,5,nargin));
 
-global mptOptions;
-if ~isstruct(mptOptions),
-    mpt_error;
+if nargin < 5
+    Options = [];
 end
-if(nargin<5)
-    Options=[];
-end
-if(~isfield(Options,'lpsolver'))
-    Options.lpsolver=mptOptions.lpsolver;          %0: NAG ; 1: LINPROG ; 2: CPLEX; 3:CDD
-end
-if(~isfield(Options,'debug_level'))
-    Options.debug_level=mptOptions.debug_level;
-end
-if ~isfield(Options,'abs_tol'),
-    Options.abs_tol=mptOptions.abs_tol;
-end
-if ~isfield(Options,'verbose'),
-    Options.verbose=mptOptions.verbose;
-end
-if length(X) > 1 | (iscell(A) & length(A) > 1)
-    error('Use mpt_infsetPWA for PWA systems.');
-end
-if(nargin<4 | isempty(Pnoise))
-    addNoise=0;
-elseif(mpt_isnoise(Pnoise))
-    if isa(Pnoise, 'polytope'),
-        % remember that noise can also be in V-representation
-        [Hnoise,Knoise]=double(Pnoise);
-        polynoise = 1;
-    else
-        Vnoise = Pnoise;
-        polynoise = 0;
-    end
-    addNoise=1;
-    X=X-Pnoise;
-else
-    addNoise=0;
-end
-if(~isfulldim(X))
-    disp('No invariant set exists')
-    Oinf=polytope;
-    isemptypoly=1;
-    fd=1;
-    tstar=0;
-    return
-end
-if(~iscell(A))
-    A = {A};
+if nargin < 4
+    Pnoise = polytope;
 end
 
-[H,h] = double(X);
-s = length(h);
-noiseVal=zeros(s,1);
+Options = mpt_defaultOptions(Options, ...
+    'maxIter', tmax, ...
+    'verbose', -1 );
 
-HH = H;
-hh = h;
-t = 0;
-
-fd = 0;
-while (fd == 0) & (t+1 <= tmax)
-    if Options.verbose>1,
-        disp(sprintf('\nCalculating O_%d, tmax = %d',t+1,tmax));
-    end
-    fd = 1;
-    for k=1:length(A) %got through all dynamics in cell array A
-        Hnew = H*A{k}^(t+1);
-        for i = 1:s
-            if(~addNoise)
-                %do nothing
-            else
-                HAnew=H*(A{k}^t);
-                if polynoise,
-                    [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(HAnew(i,:),Hnoise,Knoise,[],[],[],Options.lpsolver);
-                    noiseVal(i)=noiseVal(i)+HAnew(i,:)*xopt;
-                else
-                    % V-represented noise, we can just plug in vertices.
-                    % NOTE! vertices are stored column-wise!!!
-                    noiseVal(i) = noiseVal(i) + min(HAnew(i,:)*Vnoise);
-                end
-            end
-            isred=sub_isredundant([HH; Hnew(i,:)],[hh; h(i)+noiseVal(i)],length(hh)+1,Options.abs_tol,Options.lpsolver);
-            if(isred==0)
-                fd = 0; % if new constraint not redundant then not finished yet
-                HH = [HH; Hnew(i,:)]; % and add new constraint to previous constraints
-                hh = [hh; h(i)+noiseVal(i)];
-            elseif(isred==2)
-                disp('mpt_infset: No invariant set exists');   
-                Oinf=polytope;
-                isemptypoly=1;
-                tstar=t;
-                return
-            end
-        end
-    end
-    t = t + 1;
+if ~iscell(A)
+    A = { A };
+end
+ndyn = length(A);
+if ndyn == 1 & length(X) > 1
+    % handle special case with a single dynamics but the target is a
+    % polytope array
+    ndyn = length(X);
+    Anew = cell(1, ndyn);
+    [Anew{:}] = deal(A{1});
+    A = Anew;
 end
 
-if Options.verbose>1,
-    disp(sprintf('\nFinished. Final check for and removal of redundant inequalities...\n'))
-end
-Oinf = polytope(HH,hh);
+nx = size(A{1}, 1);
+f = cell(1, ndyn);
+[f{:}] = deal(zeros(nx, 1));
+
+% mpt_infsetPWA() is more numerically robust, uses more heuristics and
+% handles more general cases (such as "A" being a cell array or "X" being a
+% polytope array)
+Oinf = mpt_infsetPWA(X, A, f, Pnoise, Options);
+fd = 1;
+tstar = 1;
 isemptypoly = ~isfulldim(Oinf);
-
-if fd == 1
-  tstar = t-1;
-else
-  tstar = t;
-end
-
-if(t+1>=tmax)
-    disp('mpt_infset WARNING: ITERATION TERMINATED BECAUSE OF THE MAX LOOP COUNTER. THE SET MAY NOT BE INVARIANT.')
-end
-
-%===========================================================================
-function [how] = sub_isredundant(A,b,row,tolerance,lpsolver)
-% [how] = ifa_isredundant(A,b,row,tolerance,lpsolver)
-%
-%+++++++++++++++++++++++++++++++++++++++++++
-% Syntax
-%
-%    [how] = isredundant(A,b,row,tolerance,lpsolver)
-%
-% Description
-%   
-%    Check if constraint defined by f*x<=g (f=A(row,:), g=b(row)) isredundant.
-%
-% where
-%    f,g   - additional constraint,
-%    A,b   - original problem.
-%    how   = 1 (TRUE) redundant
-%          = 0 (FALSE) non-redundant
-%          = 2 empty polyhedron.
-%
-% (C) 2002 by Pascal Grieder, modifications/bug fix
-% (C) 2001 by M. Baotic, Zurich, 21.03.2001
-% Version 1.0
-%+++++++++++++++++++++++++++++++++++++++++++
-
-% nobody is perfectzz
-if nargin<4 | isempty(tolerance),
-   tolerance=1e-6; % default
-end
-if nargin<5,
-   lpsolver=0; %E04MBF.M
-end
-
-[m,n]=size(A);
-
-if m ~= size(b,1) | row > m | row < 1,
-   error('mpt_infset: Bad sizes in ISREDUNDANT.'); 
-end
-
-%LPi%f  = A(row,:)';
-f = A(row,:);
-
-ii = [1:row-1, row+1:m];
-
-if ~isempty(ii),
-   [xopt,fval,lambda,exitflag,status]=mpt_solveLPi(-f,A(ii,:),b(ii),[],[],[],lpsolver);
-   %LPi%obj=f'*xopt-b(row);
-   obj=f*xopt-b(row);
-else
-   status='unbounded';
-end
-
-if strcmp(status,'unbounded') | (obj>tolerance & strcmp(status,'ok')),  
-   how=0; % non-redundant
-elseif(strcmp(status,'infeasible'))
-   %double check to make sure that the problem is really infeasible
-   [x,R]=chebyball(polytope(A(ii,:),b(ii),0,2));
-   if(R<tolerance)
-     how=2; % infeasible
-   else
-     how=1;
-   end   
-else 
-   how=1; % redundant
-end
-
-
-return
