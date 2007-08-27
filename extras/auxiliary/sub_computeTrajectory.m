@@ -455,7 +455,6 @@ else
         if isEXPctrl,
             dyn = ctrl.dynamics(region);
         end
-        dyn = 0;
         simSysOpt.dynamics = dyn;
     
         if dumode,
