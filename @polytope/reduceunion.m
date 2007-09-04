@@ -1,4 +1,4 @@
-function [Pret,keep] = reduceunion(P,Options)
+function [Pret, keep] = reduceunion(P,Options)
 % REDUCEUNION Removes redundant elements from a polytope array
 %
 % [Pret,kept] = reduceunion(P,Options),
@@ -31,6 +31,8 @@ function [Pret,keep] = reduceunion(P,Options)
 %             P(i) is redundant and 1 at index i if P(i) is not redundant.
 %
 
+% (C) 2007 Michal Kvasnica, Slovak University of Technology in Bratislava
+%          michal.kvasnica@stuba.sk
 % (C) 2004 Pascal Grieder, Automatic Control Laboratory, ETH Zurich,
 %          grieder@control.ee.ethz.ch
 % (C) 2003 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
@@ -55,48 +57,56 @@ function [Pret,keep] = reduceunion(P,Options)
 %
 % ---------------------------------------------------------------------------
 
+if nargin < 2
+    Options = [];
+end
+Options = [];
+
 lenP=length(P.Array);
-if(lenP==0)
-    Pret=P;
-    keep=1;
+if lenP == 0
+    Pret = P;
+    regions_kept = 1;
+    keep = 1;
     return 
 end
 
-%initialize
-Options.reduce=0;         % for fast subset check
-Options.constructset=0;   % for fast subset check
-Options.reduce_output=0;  % for fast subset check
+% options for fast subset check
+Options = mpt_defaultOptions(Options, ...
+    'reduce', 0, ...
+    'constructset', 0, ...
+    'reduce_output', 0 );
 
-%sort polyarray according to chebychev radius
-index=[];
-for i=1:length(P.Array)
-    index = [index; P.Array{i}.RCheb i];
-end
-index = sort(index,1);   %sort in ascending order
+% sort regions by size for better performance.
+% reasoning: at each step we need to check whether polytope P(i) is covered
+%            by all other remaining polytopes. it is more likely that small
+%            regions will be kicked out at the beginning, reducing the size
+%            of the polytope array we need to check P(i) against.
+[xcheb, rcheb] = chebyball(P);
+[rcheb, index] = sort(rcheb); 
+keep=ones(1, lenP);
 
-keep=ones(1,lenP);     % initialize the vector, 1 means keep the region, 0 kick it out
-for ii=1:lenP,   
-    sel=index(end-ii+1);          %access region number
-    ind1=[1:sel-1,sel+1:lenP];    % all indices except of the current one
-    ind2=find(keep==0);           % indices of regions which were kicked out
-    ind=setdiff(ind1,ind2);       % remove indices of regions, which were already kicked out
-    
-    if isempty(ind),              % if the set of indices is empty, that means that we kicked out all polytopes except of the last one
-        Pret=P.Array{sel};          % so return it
+index = index(:);
+for selected = index',
+    regions_kept = find(keep);
+    to_check = setdiff(regions_kept, selected);
+    selected_region = P.Array{selected};
+    if isempty(to_check)
+        % we kicked out all other regions, return the current one
+        Pret = selected_region;
         return
     end
-    Pum = [P.Array{ind}];
-    R=regiondiff(P.Array{sel},Pum,Options);    % solve the coverage problem
-    if ~isfulldim(R),
-        keep(end-ii+1)=0;                            % if the solution is not empty, means that Pu(ii) is fully covered by the remaining polytopes, we kick it out
+    Q = P; Q.Array = P.Array(to_check);
+    R = regiondiff(selected_region, Q, Options);
+    if ~isfulldim(R)
+        % region "selected" is covered by the remaining regions
+        keep(selected) = 0;
     end
 end
 
 %write ouput
-ind=find(keep==1);
-Pret=polytope;
-for kk=1:length(ind)
-    Pret=[Pret P.Array{ind(kk)}];
+regions_kept = find(keep);
+if isempty(regions_kept)
+    Pret=polytope;
+else
+    Pret = polytope(P.Array(regions_kept));
 end
-
-return
