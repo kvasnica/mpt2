@@ -65,6 +65,19 @@ if ~isstruct(mptOptions),
     mpt_error;
 end
 
+if nargin==1 & isa(P1, 'polytope')
+    if isempty(P1.Array),
+        P1.Array{1} = P1;
+    end
+    lenP1 = length(P1.Array);
+    R = P1.Array{1};
+    for i = 2:lenP1
+        R = R & P1.Array{i};
+    end
+    fulldim = isfulldim(R);
+    return
+end
+
 if nargin<3
     Options = [];
 end
@@ -95,6 +108,7 @@ maxdimP=0;
 
 
 normal=1;
+
 
 if ~isa(P1,'polytope') | ~isa(P2,'polytope')
     error('INTERSECT: arguments MUST be a polytope object!');

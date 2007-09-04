@@ -20,6 +20,14 @@ function [Pm,details] = merge(Pn,Options)
 % Options.verbose   - level of verbosity (0/1/2)
 % Options.trials    - for greedy merging, defines number of trials to
 %                     improve the solution (default is 1, corresponds to 1 run)
+% Options.use_reduceunion - if set to 1 (default is 0) regions which are
+%                           completely covered by other regions are kicked
+%                           out using the reduceunion() function. this can
+%                           have both positive and negative implication on
+%                           the speed of merging! usually it makes sense to
+%                           activate this option when calculating invariant
+%                           subsets where a large number of small regions
+%                           are generated.
 %
 % NOTE!!! if optimal merging is used (Options.greedy=0), then the result might
 % contain overlaps! if you do not want them, you must additionaly specify
@@ -32,12 +40,14 @@ function [Pm,details] = merge(Pn,Options)
 % details.before   - number of polytopes before merging
 % details.after    - number of polytopes after merging
 % details.runTime  - run time of the algorithm
-% details.alg      - string, either 'greedy' or 'optimal'
+% details.alg      - string, either 'greedy', 'optimal', or 'reduceunion'
 %
 % see also MPT_GREEDYMERGING, MPT_OPTMERGE
 
 % Copyright is with the following author(s):
 %
+% (C) 2007 Michal Kvasnica, Slovak University of Technology in Bratislava
+%          michal.kvasnica@stuba.sk
 % (C) 2005 Frank J. Christophersen, Automatic Control Laboratory, ETH Zurich,
 %          fjc@control.ee.ethz.ch
 % (C) 2005 Tobias Geyer, Automatic Control Laboratory, ETH Zurich,
@@ -85,24 +95,34 @@ if nargin<2,
     Options = [];
 end
 
-if ~isfield(Options,'greedy')
-    % by default use greedy merging. Set this option to 1 for Optimal merging 
-    Options.greedy = 1;
-end
+Options = mpt_defaultOptions(Options, ...
+    'greedy', 1, ... % set this option to 0 for Optimal merging 
+    'verbose', 0, ...
+    'trials', 1, ... % number of attempts to improve solution of greedy merging
+    'Pn_convex', 0, ... % set to 1 if you know the array is convex (speeds up computation)
+    'use_reduceunion', 0 ); 
 
-if ~isfield(Options,'verbose')
-    Options.verbose=0;
+if Options.use_reduceunion
+    % try to use reduceunion() first to kick out regions which are completely
+    % covered by other regions.
+    % NOTE: this only helps if Pn is overlapping! luckily this is mostly the
+    %       case when calculating invariant subsets
+    startt = clock;
+    Pm = reduceunion(Pn);
+    runtime = etime(clock, startt);
+    if isempty(Pm.Array)
+        if nargout > 1,
+            details.before = length(Pn);
+            details.after = 1;
+            details.runTime = runtime;
+            details.alg = 'reduceunion';
+        end
+        return
+    else
+        Pn = Pm;
+    end
 end
-
-if ~isfield(Options,'trials')
-    % number of attempts to improve solution of greedy merging
-    Options.trials = 1;
-end
-
-if ~isfield(Options,'Pn_convex')
-    % number of attempts to improve solution of greedy merging
-    Options.Pn_convex = 0;
-end
+    
 
 if Options.greedy,
     [Pm, details] = mpt_greedyMerging(Pn, Options);
