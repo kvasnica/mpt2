@@ -310,7 +310,7 @@ P = sdpvar(nx,nx);
 rho=sdpvar(1,1);
 ctr=0;
 
-myprog=lmi;
+myprog=set([]);
 
 
 for i=1:length(Hn)
@@ -356,15 +356,15 @@ for i=1:length(Hn)
                 indicies = find(triu(ones(m,m)-eye(m)));   % by Johan Loefberg
                 myprog = myprog + set(N{ctr}(indicies)>0); % by Johan Loefberg
             end
-            myprog = myprog + set('W>0');
+            myprog = myprog + set(W>0);
         end
     end
 end
 
 
-myprog = myprog + set('rho>epsilon');
-myprog = myprog + set('P>0');
-myprog = myprog + set('||P(:)||<100');
+myprog = myprog + set(rho>epsilon);
+myprog = myprog + set(P>0);
+myprog = myprog + set(P(:)<100);
 
 details.setup_time=cputime-start;
 start=cputime;
@@ -408,7 +408,9 @@ decay=-double(rho);
 
 if(infeasible==0 & decay<=0)
     feasible=1;
-    disp(['The decay rate is:  ' num2str(decay) ' (should be negative)'])
+    if Options.verbose > 0
+        disp(['The decay rate is:  ' num2str(decay) ' (should be negative)'])
+    end
 else 
     feasible=0;
 end

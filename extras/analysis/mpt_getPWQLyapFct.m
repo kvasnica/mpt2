@@ -373,7 +373,7 @@ mldivideOpt.simplecheck = 1;
 % Find PWQ Lyapunov function such that the Lyapunov values decrease for each transition
 
 transCtr=0; %counter for the number of feasible transitions
-myprog=lmi; %initialize LMI constraint to null
+myprog=set([]); %initialize LMI constraint to null
 if(pwasystem)
     unc_loop=1;
 else
@@ -665,10 +665,10 @@ for transCtr = 1:length(veriStore)
         m = size(HK,1);
         N{transCtr} = N{transCtr} - diag(diag(N{transCtr}));
         ix = find(triu(ones(m),1));    %get indices for the elements in the upper block diagonal
-        myprog = myprog + lmi('N{transCtr}(ix)>0');
+        myprog = myprog + set(N{transCtr}(ix)>0);
         W{transCtr} = -delta_P{transCtr} - HK' * N{transCtr} * HK;       %Polytope based decay rate constraint
     end   
-    myprog = myprog + lmi('W{transCtr}>0');
+    myprog = myprog + set(W{transCtr}>0);
 end
 
 
@@ -693,7 +693,7 @@ for start=1:length(Pn)
     %PWQ_P>=0 ,      P must be positive definite to be a Lyapunov function
     if(containsOrigin(start))
         lyap{start} = Q{start} - epsilon*eye(n);
-        myprog = myprog +  set('lyap{start}>0');        %eigenvalues must be greater equal zero
+        myprog = myprog +  set(lyap{start}>0);        %eigenvalues must be greater equal zero
         
     elseif(Options.enforcePositivity)
         
@@ -704,11 +704,11 @@ for start=1:length(Pn)
         M{start} = M{start} - diag(diag(M{start}));  
         ix = find(triu(ones(m),1));    %get indices for the elements in the upper block diagonal
         %myprog = addLmi(myprog,'M{start}(ix)>0');      %elements must be greater equal zero
-        myprog = myprog + set('M{start}(ix)>0');      %elements must be greater equal zero
+        myprog = myprog + set(M{start}(ix)>0);      %elements must be greater equal zero
         
         PWQ_P=[Q{start}-epsilon*eye(n)     0.5*L{start} ;  0.5*L{start}'   C{start}];
         lyap{start} = PWQ_P - HK' * M{start} * HK;            %Polytope based positivity constraint
-        myprog = myprog +  set('lyap{start}>0');        %eigenvalues must be greater equal zero
+        myprog = myprog +  set(lyap{start}>0);        %eigenvalues must be greater equal zero
     else
         %just for scaling
         lyap{start} = [Q{start}-epsilon*eye(n)     0.5*L{start} ;  0.5*L{start}'   C{start}];
@@ -716,21 +716,21 @@ for start=1:length(Pn)
     
     %bound the PWQ P to get "nicely" scaled functions (not too big)  
     nn = size(lyap{start},1);
-    myprog = myprog + set('lyap{start}<10*eye(nn)');
-    myprog = myprog + set('lyap{start}>-10*eye(nn)');
+    myprog = myprog + set(lyap{start}<10*eye(nn));
+    myprog = myprog + set(lyap{start}>-10*eye(nn));
     
     
     if(Options.nicescale)
         %add bunch of additional constraints to get nice plots
         maxVal=1e1;
-        myprog = myprog + lmi('trace(Q{start})>1');
+        myprog = myprog + set(trace(Q{start})>1);
         for i=1:n
-            myprog = myprog + lmi('||Q{start}(:,i)||<maxVal');
+            myprog = myprog + set(norm(Q{start}(:,i))<maxVal);
         end
         if(~containsOrigin(start))
-            myprog = myprog + lmi('||L{start}||<maxVal');
-            myprog = myprog + lmi('C{start}<maxVal');
-            myprog = myprog + lmi('C{start}>-maxVal');
+            myprog = myprog + set(norm(L{start})<maxVal);
+            myprog = myprog + set(C{start}<maxVal);
+            myprog = myprog + set(C{start}>-maxVal);
         end
     end
 end
@@ -853,11 +853,11 @@ if(~Options.enforcePositivity)
             M{start} = sdpvar(m,m); %free variable with nonnegative elements
             M{start} = M{start} - diag(diag(M{start}));  
             ix = find(triu(ones(m),1));    %get indices for the elements in the upper block diagonal
-            myprog = myprog + set('M{start}(ix)>0');      %elements must be greater equal zero
+            myprog = myprog + set(M{start}(ix)>0);      %elements must be greater equal zero
             
             PWQ_P=[dQ{start}-epsilon*eye(n)     0.5*dL{start} ;  0.5*dL{start}'   dC{start}];
             lyap{start} = PWQ_P - HK' * M{start} * HK;            %Polytope based positivity constraint
-            myprog = myprog +  set('lyap{start}>0');        %eigenvalues must be greater equal zero
+            myprog = myprog +  set(lyap{start}>0);        %eigenvalues must be greater equal zero
         end
     end
     

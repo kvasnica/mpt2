@@ -418,7 +418,7 @@ else
     % set of constraints
     %
     %constrSet = constrSet + set('10 > ALPHA > 0') + set('10 > RHO > 0');
-    constrSet = constrSet + set(' ALPHA > 0') + set('10> RHO > 0');
+    constrSet = constrSet + set(ALPHA > 0) + set(10> RHO > 0);
     %                             
     for region = 1:length(decayPn),
         [HH,KK] = double(decayPn(region));
@@ -472,7 +472,7 @@ else
         end
         deltaX = clean(vecMonoX - vecMonoXpp,localOptions.abs_tol);
         deltaV = deltaX' * QQ - theSTerm - RHO*vecX'*vecX;
-        constrSet = constrSet + set('sos(deltaV)');
+        constrSet = constrSet + set(sos(deltaV));
     end
     
     % set the positivity of the Lyapunov function over the feasible
@@ -491,9 +491,9 @@ else
             Gpos = Kfin - ( Hfin * vecX );
             Vpos = Vpos - Gpos' * auxS * Gpos;
             parametricVars = [parametricVars; auxS(:)];
-            constrSet = constrSet + set('norm(Kfin) > recover(depends(auxS)) > 0'); 
+            constrSet = constrSet + set(norm(Kfin) > recover(depends(auxS)) > 0); 
         end
-        constrSet = constrSet + set('sos(Vpos)');
+        constrSet = constrSet + set(sos(Vpos));
     end
     setupTime = cputime - setupStartTime;
     
@@ -615,8 +615,8 @@ else
                     auxPoly = auxPoly + (dALPHA-MAX_ZERO_TOLERANCE) * vecX'*vecX;
                 end
                 
-                auxSOS = set('');
-                auxSOS = set('sos(auxPoly)');              
+                auxSOS = set([]);
+                auxSOS = set(sos(auxPoly));              
                 [auxsol,auxmono,auxgramm] = solvesos(auxSOS,[], ...
                     sosOptions,[]);
                 lenMonomials = length(auxmono{1});
@@ -781,7 +781,7 @@ else
             % we'll do SOS decomposition of the diagonal polynomials
             % of the Hessian
             %
-            sosProb = set('');
+            sosProb = set([]);
             sosProb = set(sos(thePoly));
             [auxsol,auxmonos,auxGramm] = solvesos(sosProb,[], ...
                 auxSOSOpts,[]);
