@@ -82,6 +82,6 @@ ctrlStruct.Gi = C;
 ctrlStruct.Ai = S;
 ctrlStruct.Bi = F;
 ctrlStruct.Ci = C;
-ctrlStruct.dynamics = repmat(1,np,1);
+ctrlStruct.dynamics = repmat(0,np,1);
 ctrlStruct.details = dummyStruct;
 ctrlStruct.overlaps = 1;
