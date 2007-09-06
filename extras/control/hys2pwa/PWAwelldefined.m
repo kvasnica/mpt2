@@ -7,6 +7,10 @@ function ok = PWAwelldefined(pwa, Hdom, Kdom, lpsolver, plot)
 
 ok = 1;
 
+if ~iscell(Hdom)
+    Hdom = {Hdom};
+    Kdom = {Kdom};
+end
 Pdom = polytope;
 for ii=1:length(Hdom)
     Pdom = [Pdom polytope(Hdom{ii}, Kdom{ii})];
