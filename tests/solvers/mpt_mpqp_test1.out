@@ -1,0 +1,14 @@
+this should give 13 regions
+mpt_mpqp: 13 regions
+this should give a bunch of "degeneracy" warnings:
+mpt_mpqp: Degeneracy
+mpt_mpqp: Degeneracy
+mpt_mpqp: Degeneracy
+mpt_mpqp: Degeneracy
+mpt_mpqp: Degeneracy
+mpt_mpqp: Degeneracy
+mpt_mpqp: 13 regions
+this should give 13 regions
+mpt_mpqp: 13 regions
+this should give 13 regions
+mpt_mpqp: 13 regions

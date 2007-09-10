@@ -1,0 +1,7 @@
+Using an LTI model...
+WARNING: no state constraints defined, problem can be badly scaled...
+
+The controller will return deltaU=u(k)-u(k-1) instead of u(k) when evaluated!
+mpt_getInput should nicely complain about wrong dimension of x0:
+WARNING: deltaU constraints can only be satisfied if Options.Uprev is given.
+WARNING: Options.reference not specified, assuming zero.

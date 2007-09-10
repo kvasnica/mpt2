@@ -1,0 +1,19 @@
+WARNING: older version of mpLP solver specified, switching to different algorithm...
+--- Step 1 (Horizon 2) ---
+exploring dynamics 1         
+exploring dynamics 2         
+4 regions in 2 feasible transitions
+Regions: 4
+--- Step 2 (Horizon 1) ---
+exploring dynamics 1         
+exploring dynamics 2         
+12 regions in 6 feasible transitions
+Removed 1 duplicate regions
+Removing overlaps...
+hull 1/2	hull 2/2	
+Removed 1 duplicate regions
+Removing overlaps...
+hull 1/2	hull 2/2	
+Regions: 6
+
+Solution consists of 6 regions

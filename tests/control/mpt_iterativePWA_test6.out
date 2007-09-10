@@ -1,0 +1,26 @@
+WARNING: Terminal set provided, you should set "probStruct.Tconstraint=2" to enforce it...
+
+
+Using User-Defined Target Set...
+Warning: this may not guarantee stability
+Warning: setting probStruct.P_N to stage cost.
+
+dynamics 1 overlaps with dynamics 2 in the X space
+dynamics 2 overlaps with dynamics 1 in the X space
+mpt_iterativePWA: union of terminal sets is convex, merging...
+Generating feasible set
+new horizon: 1        
+Maximum number of iterations reached without convergence...
+Please increase the value of Options.maxiterations and run the procedure again.
+Maximum number of iterations reached without convergence...
+Please increase the value of Options.maxiterations and run the procedure again.
+1 hulls to be explored
+Generating regions
+dynamics 2, hull 1/1        
+
+1 regions generated
+Removing unused regions (backwards)...
+dynamics 2, hull 1/1           
+
+
+Solution consists of 1 regions

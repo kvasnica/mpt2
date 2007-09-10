@@ -1,0 +1,13 @@
+
+ctrl=
+
+Explicit MPC controller defined over 9 regions in 2D            
+                                                                
+   Controlled system: LTI system, 2 states, 1 input, 2 outputs  
+   Control objective: horizon 1 optimal control problem (2-norm)
+          Regulation: towards origin                            
+          Invariance: the closed-loop system is invariant       
+           Stability: the closed-loop system is stable          
+
+ Type 'struct(ctrl)' to see all fields.
+ Fields can be accessed directly, e.g. type 'ctrl.Pn' to get the controller partition.

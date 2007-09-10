@@ -1,0 +1,52 @@
+SYSTEM clutch {
+    INTERFACE {
+        PARAMETER {
+            REAL Je=0.2, Jv=0.8, mu=1, b=0.67, ts=1e-2, reltol=1;
+            REAL invJe = 1/Je;
+            REAL invJv = 1/Jv;
+            REAL invJeplusJv = 1/(Je+Jv);
+            REAL wemin=80, wemax=200, gammamin=-50, gammamax=200;
+            REAL Temin=0, Temax=150, Teincmin=-500*ts, Teincmax=500*ts;
+            REAL Fnmin=0, Fnmax=180, Fnincmin=-800*ts, Fnincmax=800*ts;
+        }
+        STATE {
+            REAL Te [Temin,Temax]; 
+            REAL Fn [Fnmin,Fnmax]; 
+            REAL we [wemin,wemax];
+            REAL gamma [gammamin,gammamax];
+        }
+        INPUT {
+            REAL Teinc [Teincmin,Teincmax];
+            REAL Fninc [Fnincmin,Fnincmax];
+        }
+        OUTPUT {
+            REAL y1, y2;
+        }
+    }
+    IMPLEMENTATION {
+        AUX {
+            BOOL stick, karnopp, neg_slip; 
+            REAL Tcl, Tcl_slip, FN;
+        }
+        AD {
+            neg_slip = gamma <= 0;
+            stick = gamma <= reltol;
+            karnopp = (Te*Jv + b*(we-gamma)*Je)*invJeplusJv <= mu*Fn;
+        }
+        DA {
+            Tcl_slip = {IF neg_slip THEN -mu*Fn ELSE mu*Fn};
+            Tcl = {IF stick & karnopp THEN (Te*Jv + b*(we-gamma)*Je)*invJeplusJv ELSE Tcl_slip};
+            FN = {IF stick & karnopp THEN Tcl ELSE Fn + Fninc}; 
+        }
+        CONTINUOUS {
+            Te = Te + Teinc;
+            Fn = FN;
+            we = we + ts*(Te - Tcl)*invJe;
+            gamma = gamma + ts*((Te - Tcl)*invJe - (Tcl - b*(we-gamma))*invJv);
+        }
+        OUTPUT {
+            y1 = we;
+            y2 = gamma;
+        }
+     }
+}

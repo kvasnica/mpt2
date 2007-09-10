@@ -1,0 +1,33 @@
+LTI system, 2 states, 1 input, 2 outputs
+
+
+PWA system (4 dynamics), 2 states, 2 inputs, 1 output
+
+Guards of dynamics 1:
+x(1) - x(2) >= 0
+x(1) >= 0.3
+u(2) >= 0.5
+
+Guards of dynamics 2:
+x(1) - x(2) >= 0
+x(1) <= 0.3
+u(2) >= 0.5
+
+Guards of dynamics 3:
+x(1) - x(2) >= 0
+x(1) >= 0.3
+u(2) <= 0.5
+
+Guards of dynamics 4:
+x(1) - x(2) >= 0
+x(1) <= 0.3
+u(2) <= 0.5
+
+
+PWA system (2 dynamics), 3 states, 1 input, 3 outputs
+
+Guards of dynamics 1:
+x(2) <= 1
+
+Guards of dynamics 2:
+x(2) >= 1

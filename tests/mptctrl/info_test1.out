@@ -1,0 +1,50 @@
+Controller with a search tree:
+
+ctrl_st=
+
+Explicit MPC controller defined over 5 regions in 1D            
+                                                                
+   Controlled system: LTI system, 1 state, 1 input, 1 output    
+   Control objective: horizon 2 optimal control problem (2-norm)
+          Regulation: towards origin                            
+          Invariance: the closed-loop system is invariant       
+           Stability: the closed-loop system is stable          
+
+    Computation time: 2 secs
+ Simplification done: none (run "ctrl_st=mpt_simplify(ctrl_st)" to perform simplification)
+
+         Control law: 80 B (10 floats)
+      Memory storage: 48 B (4 floats, 4 integers) (if implemented using a search tree)
+         Search tree: 2 separating hyperplanes (depth 3)
+Number of operations: 4 mutliplications, 8 additions, 3 comparisons
+
+Controller without a search tree:
+
+ctrl=
+
+Explicit MPC controller defined over 9 regions in 2D            
+                                                                
+   Controlled system: LTI system, 2 states, 1 input, 2 outputs  
+   Control objective: horizon 1 optimal control problem (2-norm)
+          Regulation: towards origin                            
+          Invariance: the closed-loop system is invariant       
+           Stability: the closed-loop system is stable          
+
+    Computation time: 1 secs
+ Simplification done: none (run "ctrl=mpt_simplify(ctrl)" to perform simplification)
+
+         Control law: 216 B (27 floats)
+      Memory storage: 948 B (114 floats, 9 integers) (if implemented in a brute-force way)
+         Search tree: none (run "ctrl=mpt_searchTree(ctrl)" to compute it)
+
+An on-line controller:
+Using an LTI model...
+WARNING: no state constraints defined, problem can be badly scaled...
+
+ctrl=
+
+On-line MPC controller                                          
+                                                                
+   Controlled system: LTI system, 2 states, 1 input, 2 outputs  
+   Control objective: horizon 1 optimal control problem (2-norm)
+          Regulation: towards origin   

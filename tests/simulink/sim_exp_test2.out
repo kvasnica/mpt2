@@ -1,0 +1,58 @@
+mpt_mpqp: 7 regions
+-> Generated 1 partition.
+
+Solution consists of 7 regions
+
+================================================================================
+WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !
+================================================================================
+
+mpt_mpqp: 7 regions
+-> Generated 1 partition.
+
+Solution consists of 7 regions
+
+State vector will have the format x = [x0; u(k-1); reference].
+Solving an mpQP problem with 5 parametric, 2 optimization and 0 binary variables
+
+mpt_mpqp: 7 regions
+-> Generated 1 partition.
+================================================================================
+WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !
+================================================================================
+
+State vector will have the format x = [x0; reference].
+Solving an mpQP problem with 4 parametric, 2 optimization and 0 binary variables
+
+mpt_mpqp: 7 regions
+-> Generated 1 partition.
+WARNING: Closed-loop stability not guaranteed for penalties on outputs.
+mpt_mpqp: 5 regions
+-> Generated 1 partition.
+
+Solution consists of 5 regions
+
+WARNING: Closed-loop stability not guaranteed for penalties on outputs.
+================================================================================
+WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !
+================================================================================
+
+mpt_mpqp: 5 regions
+-> Generated 1 partition.
+
+Solution consists of 5 regions
+
+State vector will have the format x = [x0; u(k-1); reference].
+Solving an mpQP problem with 4 parametric, 2 optimization and 0 binary variables
+
+mpt_mpqp: 5 regions
+-> Generated 1 partition.
+================================================================================
+WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !
+================================================================================
+
+State vector will have the format x = [x0; reference].
+Solving an mpQP problem with 3 parametric, 2 optimization and 0 binary variables
+
+mpt_mpqp: 5 regions
+-> Generated 1 partition.

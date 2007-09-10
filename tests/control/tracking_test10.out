@@ -1,0 +1,20 @@
+Value of "probStruct.subopt_lev" not specified, assuming 0...
+tracking=1 cannot be used for MLD systems, switching to tracking=2
+Using an MLD model...
+
+For tracking to work, you will need to provide
+"Options.reference" when calling "u=ctrl(x0, Options)".
+tracking=1 cannot be used for MLD systems, switching to tracking=2
+Using an MLD model...
+
+For tracking to work, you will need to provide
+"Options.reference" when calling "u=ctrl(x0, Options)".
+Value of "probStruct.subopt_lev" not specified, assuming 0...
+Using an MLD model...
+
+For tracking to work, you will need to provide
+"Options.reference" when calling "u=ctrl(x0, Options)".
+Using an MLD model...
+
+For tracking to work, you will need to provide
+"Options.reference" when calling "u=ctrl(x0, Options)".

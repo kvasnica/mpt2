@@ -1,0 +1,2 @@
+This is not a valid HYSDEL-generated MLD model, cannot convert it to PWA form.
+Use "mpt_sys(S, 'nopwa')" to disable the automatic PWA conversion.

@@ -1,0 +1,26 @@
+No terminal weight "probStruct.P_N" specified... closed-loop stability will not be guaranteed
+mpt_mpqp: 3 regions
+-> Generated 1 partition.
+
+Solution consists of 3 regions
+
+First argument has to be a controller...
+
+
+Reject on-line controllers...
+No terminal weight "probStruct.P_N" specified... closed-loop stability will not be guaranteed
+Using an LTI model...
+WARNING: no state constraints defined, problem can be badly scaled...
+
+
+
+Accept explicit controllers, gridpoints=30 by default...
+
+
+Accept explicit controllers, custom gridpoints...
+
+
+Accept controller structures, custom gridpoints...
+
+
+Reject invalid controller structures...

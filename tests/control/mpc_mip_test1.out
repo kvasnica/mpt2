@@ -1,0 +1,11 @@
+WARNING: Closed-loop stability not guaranteed for penalties on outputs.
+Using an MLD model...
+
+ctrlStruct=
+
+On-line MPC controller                                                         
+                                                                               
+   Controlled system: PWA system with 6 dynamics, 4 states, 2 inputs, 2 outputs
+   Control objective: horizon 10 optimal control problem (Inf-norm)            
+          Regulation: towards given output reference                           
+

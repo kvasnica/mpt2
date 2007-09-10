@@ -1,0 +1,25 @@
+Adding stabilizing target set constraint...
+mpt_mpqp: 19 regions
+-> Generated 1 partition.
+
+Solution consists of 19 regions
+
+Adding stabilizing target set constraint...
+Region: 20/35          
+mpt_mpqp: 35 regions
+-> Generated 1 partition.
+
+Solution consists of 35 regions
+
+Adding stabilizing target set constraint...
+Solving an mpQP problem with 2 parametric, 3 optimization and 0 binary variables
+
+mpt_mpqp: 19 regions
+-> Generated 1 partition.
+State vector will have the format x = [x0; u(k-1)].
+Adding stabilizing target set constraint...
+Solving an mpQP problem with 3 parametric, 2 optimization and 0 binary variables
+
+Region: 20/35          
+mpt_mpqp: 35 regions
+-> Generated 1 partition.

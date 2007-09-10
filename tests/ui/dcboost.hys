@@ -1,0 +1,91 @@
+SYSTEM dcbooster{
+    INTERFACE {
+        STATE {            
+            REAL i [-10,10];
+            REAL q [-10,10];
+            REAL iaux[-10,10], qaux [-10,10];       /* auxiliary current state to check for di/dt = 0; dq/dt = 0 respectively */
+            }
+        OUTPUT {
+            REAL il;                /* Load current is assumed to be current passing through inductor */
+            }
+        PARAMETER {
+            REAL L = 1, e = 1e-6;   /* The Inductor, The Capacitor, Resistor are assumed to have normalised value of 1pu*/
+            }        
+        INPUT {
+            REAL E [1-e, 1+e];      /* Battery input */
+            BOOL s;                 /* Switch input  */     
+            }
+        }
+    IMPLEMENTATION {
+        AUX {
+            BOOL neg_i, neg_q, nochange_q1, nochange_i1, capvoltage_lessE, nochange_q2, nochange_i2, nochange_q, nochange_i;    /* The boolean variables corresponding to zero crossing of i, q, di/dt & dq/dt */
+            /*BOOL aux2, aux1;*/
+            BOOL mode1, mode2, mode3, mode4;                                                                                    /* the four states in the hybrid automaton*/
+            REAL qq_z1, qq_z2, qq_z3, qq_z4, qq;                                                                                /* Charge computations auxilary variables corresponding to the 4 modes */
+            REAL ii_z1, ii_z2, ii_z3, ii_z4, ii;                                                                                /* Current computations auxiliary variables corresponding to the 4 modes */                
+            }
+        LOGIC {            
+            mode1 = (mode2 & ~s & ~neg_i) | (mode3 & capvoltage_lessE) | (mode4 & ~s & ~neg_i);                                     /* criteria for mode 1*/
+            mode2 = (mode1 & s & ~neg_q) | (mode3 & s & ~neg_q);                                                                    /* criteria for mode 2 */        
+            mode3 = (mode1 & neg_i & ~capvoltage_lessE & nochange_i) | (mode2 & neg_i & nochange_i) | (mode4 & neg_i & nochange_i); /* criteria for mode 3 */
+            mode4 = (mode1 & s & neg_q) | (mode2 & neg_q & nochange_q);                                                             /* criteria for mode 4 */
+            }
+        MUST {
+            (REAL mode1) + (REAL mode2) + (REAL mode3) + (REAL mode4) >= 0.999999;             /* XOR condition for the 4 modes */
+            (REAL mode1) + (REAL mode2) + (REAL mode3) + (REAL mode4) <= 1.000001;            
+            /*(s -> aux2);
+            (~s -> aux1);
+            (mode2 -> s);         
+            (mode2 -> ~neg_q);
+            (mode1 -> capvoltage_lessE);
+            (mode3 -> ~capvoltage_lessE); 
+            (mode1 -> ~neg_i);
+            (mode3 -> neg_i);
+            (mode4 -> neg_q);
+            (mode3 -> nochange_i);*/
+            }
+        AD {
+            neg_q = q - e <= 0;                     /* Boolean variable triggered if q < 0 */
+            neg_i = i - e <= 0;                     /* Boolean variable triggered if i < 0 */
+            capvoltage_lessE = q - E - e <= 0;      /* Boolean variable triggered if q < E */
+            nochange_q1 = q - qaux <= e;            /* Boolean variable triggered if dq = 0 */     
+            nochange_i1 = i - qaux <= e;            /* Boolean variable triggered if di = 0 */
+            nochange_i2 = i - qaux >= -e;           /* Boolean variable triggered if di = 0 */
+            nochange_q2 = i - qaux >= -e;           /* Boolean variable triggered if di = 0 */
+            }
+        LOGIC {
+            nochange_q = (nochange_q2 & nochange_q1);
+            nochange_i = (nochange_i1 & nochange_i2);            
+            /*aux2 = mode1 | mode3;
+            aux1 = mode2 | mode4;*/
+            }
+        DA {
+            /* Calculation of i over the 4 modes */
+            ii_z1 = {IF mode1 THEN i*0.6597 - 0.5335*q + 0.8738*E/L};   /* Mode 1 */
+            ii_z2 = {IF mode2 THEN i + E/L};                            /* Mode 2 */
+            ii_z3 = {IF mode3 THEN i};                                  /* Mode 3 */
+            ii_z4 = {IF mode4 THEN i + E/L};                            /* Mode 4*/
+            }
+        DA {
+            /* Calculation of q over the 4 modes */
+            qq_z1 = {IF mode1 THEN i*0.5335 + 0.1262*q + 0.3403*E/L};   /* Mode 1 */
+            qq_z2 = {IF mode2 THEN q* 0.3679};                          /* Mode 2 */
+            qq_z3 = {IF mode3 THEN 0.3679*q};                           /* Mode 3 */
+            qq_z4 = {IF mode4 THEN q};                                  /* Mode 4 */
+            }
+        LINEAR {
+            /* Calculation of the net q, i, dq, di */
+            qq = qq_z1 + qq_z2 + qq_z3 + qq_z4;
+            ii = ii_z1 + ii_z2 + ii_z3 + ii_z4;
+            }
+        CONTINUOUS {
+            q = qq;
+            i = ii;
+            qaux = qaux + q;
+            iaux = iaux + i;
+            }
+        OUTPUT {
+            il = i;
+            }
+        }
+}

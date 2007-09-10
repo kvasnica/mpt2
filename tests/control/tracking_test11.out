@@ -1,0 +1,20 @@
+Value of "probStruct.subopt_lev" not specified, assuming 0...
+Using a PWA model...
+
+The controller will return deltaU=u(k)-u(k-1) instead of u(k) when evaluated!
+State vector will have the format x = [x0; u(k-1); reference].
+Using a PWA model...
+
+Value of "probStruct.subopt_lev" not specified, assuming 0...
+================================================================================
+WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !
+================================================================================
+
+Using a PWA model...
+
+================================================================================
+WARNING: offset-free tracking cannot be guaranteed with probStruct.tracking=2 !
+================================================================================
+
+State vector will have the format x = [x0; reference].
+Using a PWA model...

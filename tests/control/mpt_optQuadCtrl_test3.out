@@ -1,0 +1,23 @@
+	
+No terminal weight "probStruct.P_N" specified... closed-loop stability will not be guaranteed
+mpt_mpqp: 1 regions
+mpt_mpqp: 1 regions
+mpt_mpqp: Infeasible optimization problem from the begining
+mpt_mpqp: 2 regions
+mpt_mpqp: 1 regions
+mpt_mpqp: 1 regions
+mpt_mpqp: Infeasible optimization problem from the begining
+mpt_mpqp: 2 regions
+mpt_mpqp: 2 regions
+mpt_mpqp: 1 regions
+mpt_mpqp: 2 regions
+mpt_mpqp: 3 regions
+mpt_mpqp: 2 regions
+mpt_mpqp: 1 regions
+mpt_mpqp: 2 regions
+mpt_mpqp: 3 regions
+-> Generated 9 partitions.
+Solution consists of 19 regions
+No terminal weight "probStruct.P_N" specified... closed-loop stability will not be guaranteed
+-> Generated 4 partitions.
+Solution consists of 4 regions

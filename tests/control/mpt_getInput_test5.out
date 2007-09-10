@@ -1,0 +1,6 @@
+Adding stabilizing target set constraint...
+mpt_mpqp: 3 regions
+-> Generated 1 partition.
+Solution consists of 3 regions
+State x = [2;2] violates state constraints!
+MPT_GETINPUT: NO REGION FOUND FOR STATE x = [2;2]

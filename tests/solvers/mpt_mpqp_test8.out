@@ -1,0 +1,15 @@
+Expect warning that the mpQP is not positive definite:
+
+WARNING: Problem is not positive semidefinite! Your mpQP solution may be completely wrong.
+mpt_mpqp: 1 regions
+
+
+Expect warning that the mpQP close to being negative definite:
+
+WARNING: QP is close to being (negative) semidefinite, may lead to troubles in mpQP solver.
+mpt_mpqp:  Infeasible optimization problem from the begining
+
+
+Expect warning that the mpQP lacks strict convexity:
+
+WARNING: Lack of strict convexity may lead to troubles in mpQP solver.

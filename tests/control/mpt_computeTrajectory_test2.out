@@ -1,0 +1,5 @@
+No recovery mode, no feasible control law should be found.
+MPT_GETINPUT: NO REGION FOUND FOR STATE x = [4;-1.7]
+COMPUTETRAJECTORY: no feasible control law found for state x0=[4 -1.7] !
+Recovery mode enable, feasible control law should be found.
+MPT_GETINPUT: State x = [4 -1.7] lies in a hole, taking the nearest neighbour
