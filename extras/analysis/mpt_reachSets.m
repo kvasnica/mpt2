@@ -447,9 +447,12 @@ elseif isfield(structure, 'Pn')
     [nx,nu,ny,ndyn] = mpt_sysStructInfo(sysStruct);
     Pn = ctrlStruct.Pn;
     for ireg = 1:length(Pn),
+        dyn = 0;
         if isfield(ctrlStruct, 'dynamics'),
-            % "dynamics" field exists, use it
             dyn = ctrlStruct.dynamics(ireg);
+        end
+        if dyn ~= 0
+            % we know a-priori which dynamics corresponds to region "ireg"
             if iscell(sysStruct.A),
                 A = sysStruct.A{dyn};
                 B = sysStruct.B{dyn};
@@ -497,10 +500,11 @@ elseif isfield(structure, 'Pn')
             Acell = [];
             Fcell = [];
             for jj=1:length(sysStruct.A)          % go through all dynamics description
-                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi{ireg}(1:nu,:)+FBgain(1:nu,:))*x+Gi{ireg}(1:nu,:))-sysStruct.guardC{jj})<abs_tol, 
+                if max(sysStruct.guardX{jj}*x+sysStruct.guardU{jj}*((Fi(1:nu,:)+FBgain(1:nu,:))*x+Gi(1:nu,:))-sysStruct.guardC{jj})<abs_tol, 
                     % check which dynamics is active in the region
-                    ACL{ireg}=sysStruct.A{jj} + sysStruct.B{jj}*(Fi{ireg}(1:nu,:) + FBgain(1:nu,:));
-                    FCL{ireg}=sysStruct.f{jj} + sysStruct.B{jj}*Gi{ireg}(1:nu,:);
+                    ACL{ireg}=sysStruct.A{jj} + sysStruct.B{jj}*(Fi(1:nu,:) + FBgain(1:nu,:));
+                    FCL{ireg}=sysStruct.f{jj} + sysStruct.B{jj}*Gi(1:nu,:);
+                    break
                 end
             end
             if isempty(ACL{ireg}) | isempty(FCL{ireg}),
