@@ -1,10 +1,12 @@
-function mpt_plotPartition_test2
+function mpt_plotPartition_test1
 
 clear sysStruct probStruct
 lti1d; probStruct.N = 1; probStruct.Tconstraint = 0;
 ctrl = mpt_control(sysStruct, probStruct);
 plot(ctrl); 
 close
+plot(ctrl, struct('sameUcolors', 1));
+
 
 clear sysStruct probStruct
 lti1d; probStruct.N = 1; probStruct.Tconstraint = 0;
