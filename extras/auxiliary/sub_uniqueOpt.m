@@ -55,6 +55,8 @@ if length(Fi) ~= length(Gi)
 end
 if nargin < 3
     nu = size(Fi{1}, 1);
+elseif nu > size(Fi{1}, 1) | nu < 1
+    error('Index exceeds matrix dimension.');
 end
 
 nr = length(Fi);
@@ -63,8 +65,28 @@ table.Table = {};
 table.Fi = {};
 table.Gi = {};
 reg_set = 1:nr;
+nx = size(Fi{1}, 2);
+
+tolEq = 10e-10;
 d=0;
 
+% only keep first "nu" lines in Fi, Gi
+if any(cellfun('prodofsize', Fi) > nu*nx) & ...
+        nu < size(Fi{1}, 1)
+    for i = 1:nr
+        Fi{i} = Fi{i}(1:nu, :);
+        Gi{i} = Gi{i}(1:nu);
+    end
+end
+
+% create a hash of each Fi{r}, Gi{r} pair to speed up comparison
+hashes = zeros(1, nr);
+randv = randn(nx+1, 1);
+for i = 1:nr
+    hashes(i) = sum([Fi{i} Gi{i}]*randv);
+end
+
+% find identical elements
 while length(reg_set) > 0
     
     % add the first region in the set to the new entry in the table 
@@ -75,22 +97,27 @@ while length(reg_set) > 0
     table.Reg(r) = d;
     reg_set(1) = [];
     
-    % check all the regions in the set if they have the same PWA dynamics.
-    % if so, add them
-    tolEq = 10e-10;
+    % check which Fi,Gi pairs are identical
     for k = reg_set
         % fast implementation
-        if all(all(abs(Fi{r}(1:nu,:)-Fi{k}(1:nu,:))<=tolEq)) & ... 
-                all(all(abs(Gi{r}(1:nu,:)-Gi{k}(1:nu,:))<=tolEq))
-            table.Table{d}(end+1) = k;
-            table.Reg(k) = d;
-            reg_set(find(reg_set==k)) = [];
-        end;
-    end;
+        if abs(hashes(r) - hashes(k)) <= tolEq 
+            if all( abs(Gi{r}-Gi{k}) <= tolEq )
+                if all(all( abs(Fi{r}-Fi{k}) <= tolEq ))
+                    table.Table{d}(end+1) = k;
+                    table.Reg(k) = d;
+                    reg_set(find(reg_set==k)) = [];
+                end
+            end
+        end
+    end
     
-end; 
-
-for ii = 1:length(table.Table),
-    table.Fi{ii} = Fi{table.Table{ii}(1)}(1:nu,:);
-    table.Gi{ii} = Gi{table.Table{ii}(1)}(1:nu,:);
 end
+
+% extract unique Fi, Gi elements
+n_unique = length(table.Table);
+idx = zeros(1, n_unique);
+for i = 1:n_unique
+    idx(i) = table.Table{i}(1);
+end
+table.Fi = Fi(idx);
+table.Gi = Gi(idx);
