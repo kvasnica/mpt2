@@ -128,7 +128,7 @@ fprintf(fid, '#define MPT_TRACKING %d\n', tracking);
 fprintf(fid, '#define MPT_ABSTOL %e\n', mptOptions.abs_tol);
 
 ctr = 0;
-fprintf(fid, '\nstatic double MPT_H[] = {\n');
+fprintf(fid, '\nstatic float MPT_H[] = {\n');
 for ii = 1:nr,
     Hi = Hn{ii};
     nc = size(Hi, 1);
@@ -150,7 +150,7 @@ end
 fprintf(fid, '};\n\n');
 
 ctr = 0;
-fprintf(fid, 'static double MPT_K[] = {\n');
+fprintf(fid, 'static float MPT_K[] = {\n');
 for ii = 1:nr,
     Ki = Kn{ii};
     nc = size(Ki, 1);
@@ -184,7 +184,7 @@ fprintf(fid, '};\n\n');
 
 nctotal = nx*nu*nr;
 ctr = 0;
-fprintf(fid, 'static double MPT_F[] = {\n');
+fprintf(fid, 'static float MPT_F[] = {\n');
 for ii = 1:nr,
     F = Fi{ii};
     for jj = 1:nu,
@@ -205,7 +205,7 @@ end
 fprintf(fid, '};\n\n');
 
 ctr = 0;
-fprintf(fid, 'static double MPT_G[] = {\n');
+fprintf(fid, 'static float MPT_G[] = {\n');
 for ii = 1:nr,
     G = Gi{ii};
     for jj = 1:nu,
