@@ -103,6 +103,8 @@ function out=mpt_init(varargin)
 
 % Copyright is with the following author(s):
 %
+% (C) 2007 Michal Kvasnica, Slovak University of Technology in Bratislava
+%          michal.kvasnica@stuba.sk
 % (C) 2003--2006 Michal Kvasnica, Automatic Control Laboratory, ETH Zurich,
 %                kvasnica@control.ee.ethz.ch
 
@@ -127,7 +129,7 @@ function out=mpt_init(varargin)
 % ---------------------------------------------------------------------------
 global mptOptions;
 
-mpt_ver = '2.6.2';
+mpt_ver = '2.6.3';
 
 if mpt_matlabrelease < 12,
     error('MPT only works with Matlab R12 or newer.');
