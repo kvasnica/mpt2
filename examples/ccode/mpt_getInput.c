@@ -40,11 +40,11 @@
 #include "mpt_getInput.h"
 #endif
 
-static double mpt_getInput(double *X, double *U)
+static float mpt_getInput(float *X, float *U)
 {
     int ix, iu, ic, nc, isinside;
     unsigned long ireg, abspos;
-    double hx, region;
+    float hx, region;
     
     abspos = 0;
     region = 0;
@@ -85,7 +85,7 @@ static double mpt_getInput(double *X, double *U)
     return region;
 }
 
-static void mpt_augmentState(double *Xaug, double *X, double *Uprev, double *reference)
+static void mpt_augmentState(float *Xaug, float *X, float *Uprev, float *reference)
 {
     /* augments states vector for tracking / deltaU formulation */
     int i;
@@ -118,7 +118,7 @@ static void mpt_augmentState(double *Xaug, double *X, double *Uprev, double *ref
 }
 
 
-static void mpt_augmentInput(double *U, const double *Uprev)
+static void mpt_augmentInput(float *U, const float *Uprev)
 {
     int i;
     if ((MPT_TRACKING==1) || (MPT_DUMODE>0))

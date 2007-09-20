@@ -266,16 +266,14 @@ else
     for ii=1:length(Pn)
         indyn = [];
         for jj=1:nPWA,
-            if isfulldim(Pn(ii) & intInfo.Pdyn{jj}),
+            if isfulldim(Pn(ii) & intInfo.PdynX{jj}),
                 indyn = [indyn jj];
             end
         end
-        %dynamics(ii) = originindynamics(1);
         dynamics = [dynamics indyn];
         Fi{ii}=zeros(nu,nx);
         Gi{ii}=zeros(nu,1);
     end 
-    dynamics = unique(dynamics);
 end
 
 invTset = Pn;

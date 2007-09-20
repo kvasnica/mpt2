@@ -137,10 +137,10 @@ abstol = mptOptions.abs_tol;
 
 H = []; K = []; F = []; G = []; nc = [];
 for ii = 1:length(Hn),
-    h = Hn{ii}';
-    k = Kn{ii};
-    f = Fi{ii}';
-    g = Gi{ii};
+    h = full(Hn{ii}');
+    k = full(Kn{ii});
+    f = full(Fi{ii}');
+    g = full(Gi{ii});
     H = [H; h(:)];
     K = [K; k(:)];
     F = [F; f(:)];

@@ -150,7 +150,8 @@ if isfield(Options,'color'),
     [handle,titlehandle]=plot(PA,Options);
     
 elseif Options.sameUcolors,
-    ctable = sub_prepareColors(ctrlStruct);
+    [nx, nu] = mpt_sysStructInfo(ctrlStruct.sysStruct);
+    ctable = sub_uniqueOpt(ctrlStruct.Fi, ctrlStruct.Gi, nu);
     colors = hsv(length(ctable.Fi));
     C = colors(ctable.Reg, :);
     [handle, titlehandle] = plot(ctrlStruct.Pn, struct('color', C));
@@ -251,51 +252,4 @@ axis tight
 
 if nargout == 0;
     clear('handle');
-end
-
-
-%------------------------------------------------------------
-function color = sub_prepareColors(ctrlStruct)
-% identifies regions which have the same control law
-
-
-P = ctrlStruct.Pn;
-Fi = ctrlStruct.Fi;
-Gi = ctrlStruct.Gi;
-[nx, nu] = mpt_sysStructInfo(ctrlStruct.sysStruct);
-color.Reg = NaN*ones(1,length(P));
-color.Table = {}; 
-color.Fi = {};
-color.Gi = {};
-reg_set = 1:length(P);
-tolEq = 10e-10;
-    
-d=0;
-while length(reg_set) > 0
-    
-    % add the first region in the set to the new entry in the table 
-    % and remove it from the set
-    r = reg_set(1);
-    d = d+1;
-    color.Table{d} = r;
-    color.Reg(r) = d;
-    reg_set(1) = [];
-    
-    % check all the regions in the set if they have the same PWA dynamics.
-    % if so, add them
-    for k = reg_set
-        % fast implementation
-        if all(all(abs(Fi{r}(1:nu,:)-Fi{k}(1:nu,:))<=tolEq)) & ... 
-                all(all(abs(Gi{r}(1:nu,:)-Gi{k}(1:nu,:))<=tolEq))
-            color.Table{d}(end+1) = k;
-            color.Reg(k) = d;
-            reg_set(find(reg_set==k)) = [];
-        end
-    end
-    
-end
-
-for ii = 1:length(color.Table),
-    color.Fi{ii} = ctrlStruct.Fi{color.Table{ii}(1)}(1:nu,:);
-    color.Gi{ii} = ctrlStruct.Gi{color.Table{ii}(1)}(1:nu,:);
 end
