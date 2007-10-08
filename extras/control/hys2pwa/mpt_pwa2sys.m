@@ -141,17 +141,17 @@ else
             end
             
             if isempty(PWA{ip}.gx{idyn}),
-                sysStruct.C{end+1} = eye(nx);
+                sysStruct.C{end+1} = eye(ny, nx);
             else
                 sysStruct.C{end+1} = [PWA{ip}.gx{idyn} zeros(ny, nxb)];
             end
             if isempty(PWA{ip}.gu{idyn}),
-                sysStruct.D{end+1} = zeros(nx, nu);
+                sysStruct.D{end+1} = zeros(ny, nu);
             else
                 sysStruct.D{end+1} = [PWA{ip}.gu{idyn} zeros(ny, nub)];
             end
             if isempty(PWA{ip}.g0{idyn}),
-                sysStruct.g{end+1} = zeros(nx, 1);
+                sysStruct.g{end+1} = zeros(ny, 1);
             else
                 sysStruct.g{end+1} = PWA{ip}.g0{idyn};
             end
