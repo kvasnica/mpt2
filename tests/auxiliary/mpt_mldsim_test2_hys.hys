@@ -1,0 +1,27 @@
+SYSTEM turbo_car {
+  INTERFACE {
+    STATE {
+      REAL x1 [-1, 1];
+      REAL x2 [-1, 1];
+    }
+    INPUT {
+      BOOL u;
+    }
+    OUTPUT {
+      REAL y;
+    }
+  }
+  IMPLEMENTATION {
+    CONTINUOUS {
+      x1 = x1 + x2 + (REAL u);
+      x2 = x1 + x2;
+    }
+    OUTPUT {
+      y = x2;
+    }
+    MUST {
+      x1 <= 0;
+      x2 >= -0.5;
+    }
+  }
+}

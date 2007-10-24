@@ -95,6 +95,33 @@ if ne==0,
     end
     feasible = 1;
     
+elseif isempty(S.E2) & isempty(S.E3)
+    % constraints, but no "z" and "d" variables
+    B = S.E1*u + S.E4*x0 + S.E5;
+    A = zeros(size(B));
+    if any(B < A)
+        disp('Warning: Constraints lead to infeasible or unbounded solution.');
+        xn = zeros(nx, 1);
+        y = zeros(ny, 1);
+        d = zeros(nd, 1);
+        z = zeros(nz, 1);
+        feasible = 0;
+    else
+        xn = S.A*x0 + S.B1*u;
+        y = S.C*x0 + S.D1*u;
+        d = zeros(nd, 1);
+        z = zeros(nz, 1);
+        if isfield(S, 'B5')
+            % add affine term if available
+            xn = xn + S.B5;
+        end
+        if isfield(S, 'D5'),
+            % add affine term if available
+            y = y + S.D5;
+        end
+        feasible = 1;
+    end
+    
 else
     % general case, solve feasiblity MILP to get "d" and "z"
     
