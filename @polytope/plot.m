@@ -191,7 +191,7 @@ else
         if size(Options.color,1)>length(varargin{1}),
             Options.color=Options.color(1:lenQ,:);
         else
-            Options.color=repmat(Options.color(1),lenQ,1);
+            Options.color=repmat(Options.color(1, :),lenQ,1);
         end
     end
 end
