@@ -171,7 +171,7 @@ if ~isfield(Options, 'color')       % default color
     %    summer     - Shades of green and yellow color map.
     
     if isfield(Options, 'colormap'),
-        eval(['Options.color=',Options.colormap,'(lenQ);']);
+        Options.color = Options.colormap(1:lenQ, :);
     else
         auxcolors = hsv(lenQ);
         colors = auxcolors;
