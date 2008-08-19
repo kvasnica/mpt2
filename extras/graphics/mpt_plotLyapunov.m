@@ -1,4 +1,4 @@
-function mpt_plotLyapunov(ctrl)
+function mpt_plotLyapunov(ctrl, meshgridpoints)
 %MPT_PLOTLYAPUNOV Plots lyapunov function stored in a controlle
 %
 % mpt_plotLyapunov(ctrl)
@@ -13,6 +13,8 @@ function mpt_plotLyapunov(ctrl)
 % INPUT
 % ---------------------------------------------------------------------------
 % ctrl             - Explicit controller (MPTCTRL object)
+% meshgridpoints   - number of grid points in one axis,
+%                    (default: 30)
 %
 % ---------------------------------------------------------------------------
 % OUTPUT                                                                                                    
@@ -46,12 +48,16 @@ function mpt_plotLyapunov(ctrl)
 %
 % ---------------------------------------------------------------------------
 
-error(nargchk(1,1,nargin));
+error(nargchk(1,2,nargin));
 
 global mptOptions;
 
 if ~isstruct(mptOptions),
     mpt_error;
+end
+
+if nargin < 2
+    meshgridpoints = 30;
 end
 
 if ~isa(ctrl, 'mptctrl'),
@@ -91,14 +97,14 @@ switch lyap.type
             L{ii} = l;
             C{ii} = c;
         end
-        mpt_plotPWQ(Pn, Q, L, C);
+        mpt_plotPWQ(Pn, Q, L, C, meshgridpoints);
         title('Lyapunov function');
         
     case 'pwq',
         Q = lyap.Q;
         L = lyap.L;
         C = lyap.C;
-        mpt_plotPWQ(Pn, Q, L, C);
+        mpt_plotPWQ(Pn, Q, L, C, meshgridpoints);
         title('Lyapunov function');
         
     case 'pwa',
