@@ -101,7 +101,7 @@ bboxOpt.noPolyOutput = 1;  % tell bounding_box that we just need vertices
 bboxP = [Pl Pu];
 bboxO = [Ol Ou];
 
-if any(isnan(Ol)) | any(isnan(Ou)),
+if any(isnan(Ol)) | any(isnan(Ou)) | isempty(Ol) | isempty(Ou)
     % if envelope returns R^n, bounding_box returns NaNs
     status = 0;
     Pconv = mptOptions.emptypoly;
