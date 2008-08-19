@@ -138,12 +138,12 @@ else
     vartype(1:nd) = 'B';
     
     % lower and upper bounds of "d" and "z" variables
-    lb = [repmat(0, nd, 1); S.zl];
-    ub = [repmat(1, nd, 1); S.zu];
+    lb = [zeros(nd, 1); S.zl];
+    ub = [ones(nd, 1); S.zu];
     
     % solve the feasibility MILP
     [dzmin,fmin,how,feasible]=mpt_solveMILP(f,A,B,[],[],lb,ub,vartype);
-    
+
     if feasible==1,
         % problem is feasible
         d = dzmin(1:nd);
