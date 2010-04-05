@@ -406,6 +406,19 @@ while ~isempty(U)
     else
         optimal=minimum(1);
     end
+    if isempty(Fplus{optimal})
+        Fplus{optimal} = 0;
+    end
+    if isempty(Fminus{optimal})
+        Fminus{optimal} = 0;
+    end
+    if isempty(Iplus{optimal})
+        Iplus{optimal} = 0;
+    end
+    if isempty(Iminus{optimal})
+        Iminus{optimal} = 0;
+    end
+    
     
 % 7 complete the node
     N{Node,3}=Sorted(optimal);
