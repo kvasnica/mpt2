@@ -278,7 +278,7 @@ for reg = 1:length(PA.Array),
     end
 end
 
-if ~isfulldim(P),
+if ~isfulldim(polytope(P)),
     % projection couldn't be computed
     fprintf('\nLast error: %s\n',lasterr);
     if length(Options.psolvers)==1,
