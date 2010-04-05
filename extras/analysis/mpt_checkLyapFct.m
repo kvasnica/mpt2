@@ -266,7 +266,7 @@ for ii=1:npoints,
             elseif ispwa,
                 rLC = LC{region};
                 rLL = LL{region};
-                lv = lyapeval(X(ix,:)',1,{rLC},{LL});
+                lv = lyapeval(X(ix,:)',1,{rLC},{rLL});
             elseif ispwq
                 rLQ = LQ{region};
                 rLC = LC{region};
