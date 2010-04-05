@@ -22,7 +22,8 @@ function out=mpt_init(varargin)
 %                    'cdd'       - CDD Criss-Cross
 %                    'cplex'     - CPLEX 9 LP solver
 %                    'cplex8'    - CPLEX 8 LP solver
-%                    'glpk'      - GLPK solver
+%                    'glpk'      - GLPK solver (interfaced with glpkmex)
+%                    'glpkcc'    - GLPK solver (interfaced with glpkcc)
 %                    'linprog'   - Matlab's linprog
 %                    'sedumi'    - SeDuMi
 %                    'qsopt'     - QSopt
@@ -51,6 +52,7 @@ function out=mpt_init(varargin)
 %                    'cplex'     - CPLEX 9 (interfaced with cplexint)
 %                    'yalmip'    - YALMIP Branch & Bound algorithm
 %                    'glpk'      - GLPK solver (interfaced with glpkmex)
+%                    'glpkcc'    - GLPK solver (interfaced with glpkcc)
 %                    'xpress'    - XPRESS
 %                    'mosek'     - MOSEK
 %                    'bintprog'  - bintprog.m
@@ -441,7 +443,7 @@ bnb_upper_solver = 'fixer';
 
 yalmip_options = {'verbose', 0, ...
     'warning', 0, ...
-    'cachesolvers', 1, ...
+    'cachesolvers', 0, ...
     'bnb.branchrule', 'weight', ...
     'bnb.upper', bnb_upper_solver };
 
@@ -477,9 +479,9 @@ nrescue.extreme = 5;
 
 % set prefered solvers, list organized according to solver's speed on a given
 % problem
-prefered.lp = [0 9 3 15 2 8 4 14 7 1 13 5 10 11 12 16];
+prefered.lp = [0 9 3 15 2 8 17 4 14 7 1 13 5 10 11 12 16];
 prefered.qp = [0 1 9 2 8 4 5 6 7 10];
-prefered.milp = [0 7 6 3 2 4 5 1];
+prefered.milp = [0 7 6 3 8 2 4 5 1];
 prefered.miqp = [0 5 4 2 3 1];
 prefered.extreme = [3 4 0 2 1];
 
@@ -961,6 +963,7 @@ switch solver
     case 14, fname = 'bp';
     case 15, fname = 'cplexmex';
     case 16, fname = 'pdco';
+    case 17, fname = 'glpkcc';
     otherwise, fname = '';
 end
 
@@ -1050,6 +1053,7 @@ switch solver
     case 5, fname = 'bintprog';
     case 6, fname = 'milp_cplex';
     case 7, fname = 'cplexmex';
+    case 8, fname = 'glpkcc';
     otherwise, fname = '';
 end
 
