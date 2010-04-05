@@ -45,21 +45,20 @@ for ii = 1:length(X.subs),
     if ~ischar(key),
         error('Key must be a char.');
     end
-    for jj = 1:length(obj.keys),
-        if strcmp(obj.keys{jj}, key),
-            indfound = [indfound jj];
-        end
-    end
+    indfound = [indfound find(ismember(obj.keys, key))];
 end
 if isempty(indfound),
     for ii = 1:length(X.subs),
         obj.keys{end+1} = X.subs{ii};
         obj.values{end+1} = V;
     end
-elseif length(indfound)==1,
-    obj.values{indfound} = V;
 else
-    for ii = 1:length(indfound),
-        obj.values{indfound(ii)} = V;
+    obj.values(indfound) = V;
+    if length(indfound)==1,
+        obj.values{indfound} = V;
+    else
+        for ii = 1:length(indfound),
+            obj.values{indfound(ii)} = V;
+        end
     end
 end
