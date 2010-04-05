@@ -339,7 +339,7 @@ for i=1:length(Hn)
                 N{ctr} = 0;
                 %%W = P-(A+B*F)'*P*(A+B*F)-rho*eye(nx);
                 W = P-ABF'*P*ABF-rho*eye(nx);
-                if(any(G~=0))
+                if(any(abs(G)>mptOptions.abs_tol))
                     error('If the origin is an equilibrium, the input for the region containing the origin may not have an affine term')
                 end
             elseif(all(Hn{i}*zeros(nx,1)<=Kn{i}) & any(noise~=0))
