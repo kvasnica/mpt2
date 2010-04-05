@@ -188,7 +188,7 @@ elseif solver==1
     % YALMIP / BNB
     [xmin,fmin,how,exitflag]=yalmipMILP(f,A,B,Aeq,Beq,lb,ub,vartype,param,options,'bnb');
     
-elseif solver==2,
+elseif solver==2
     % use glpk
     [nc, nx] = size(A);
     indeq = [];
@@ -233,6 +233,69 @@ elseif solver==2,
             how = 'ok';
             exitflag = 1;
         otherwise
+            how = 'infeasible';
+            exitflag = -1;
+    end
+
+elseif solver==8
+    % use glpkcc
+    [nc, nx] = size(A);
+    indeq = [];
+    if ~isempty(Aeq),
+        A = [A; Aeq];
+        B = [B; Beq];
+        indeq = (nc+1:size(A,1))';
+        nc = size(A,1);
+    end
+    if isempty(lb),
+        lb = -1e9*ones(nx, 1);
+    end
+    if isempty(ub),
+        ub = 1e9*ones(nx, 1);
+    end
+    if length(lb)~=nx | length(ub)~=nx,
+        error('Wrong size of LB and/or UB.');
+    end
+    % change 'B' (boolean) vartype to 'I' (integer)
+    % glpkmex does not support 'B' type variables
+    bpos = find(vartype=='B');
+    vartype(bpos) = 'I';
+    lb(bpos) = 0;
+    ub(bpos) = 1;
+    
+    lb(isinf(lb)) = -1e9;
+    ub(isinf(ub)) = 1e9;
+    B(B==Inf) = 1e9;
+    B(B==-Inf) = -1e9;
+    
+    SENSE = 1; % minimize
+    CTYPE = repmat('U',nc,1); % all constraints <=
+    CTYPE(indeq) = 'S';       % change requested constraints to equality
+    param.msglev = 0;
+    param.itlim = -1;
+    if isfield(options,'glpk_solver'),
+        param.lpsolver = options.glpk_solver;
+    end
+    propagate_fields = {'save', 'savefilename', 'savefiletype', ...
+        'itlim', 'presolve', 'itcnt', 'tmlim', 'msglev', ...
+        'tolint', 'tolobj', 'msglev', 'tolbnd', 'branch', 'presol', ...
+        'scale', 'dual', 'round', 'btrack'};
+    for i = 1:length(propagate_fields)
+        vv = propagate_fields{i};
+        if isfield(options, vv)
+            param = setfield(param, vv, getfield(options, vv));
+        end
+    end
+
+    [xmin,fmin,status,details]=glpkcc(f, A, B, lb, ub, ...
+        CTYPE, vartype, SENSE, param);
+    
+    switch status
+        case {5, 2}
+            how = 'ok';
+            exitflag = 1;
+        otherwise
+%             xmin = zeros(length(f), 1);
             how = 'infeasible';
             exitflag = -1;
     end
