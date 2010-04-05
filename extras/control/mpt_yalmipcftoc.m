@@ -227,6 +227,7 @@ end
 
 % do we have at least one MLD/PWA/LTI system?
 haveMLD = ~isempty(findstr([dynamics_type{:}], 'mld'));
+haveMLD3 = ~isempty(findstr([dynamics_type{:}], 'ml3'));
 havePWA = ~isempty(findstr([dynamics_type{:}], 'pwa'));
 haveLTI = ~isempty(findstr([dynamics_type{:}], 'lti'));
 haveNONLIN = ~isempty(findstr([dynamics_type{:}], 'nonlin'));
@@ -375,7 +376,7 @@ probStruct = sub_timevarpenalties(probStruct);
 %===============================================================================
 % find out whether sysStruct.C, sysStruct.D and sysStruct.g all contain the same
 % elements for all dynamics. if so, we can simplify things a bit
-if multi_model | haveMLD,
+if multi_model | haveMLD | haveMLD3
     % always consider outputs as separate variables for the multi-model
     % approach, it makes things less messy coding-wise. do the same if we have
     % at least one MLD model.
@@ -451,6 +452,10 @@ if haveMLD,
     dref = mpt_defaultField(probStruct, 'dref', zeros(nd, 1));
     zref = mpt_defaultField(probStruct, 'zref', zeros(nz, 1));
 end
+if haveMLD3
+    nw = MLD{1}.nw;
+    wref = mpt_defaultField(probStruct, 'wref', zeros(nw, 1));
+end
 if isfield(probStruct, 'xref_augmented') | probStruct.tracking>0,
     % this flag is set in mpt_prepareTracking and indicates that the system was
     % already augmented such that xref/uref becomes the new origin. in this case
@@ -467,6 +472,8 @@ if Options.yalmip_online,
             fprintf('Using a time-varying model...\n');
         elseif haveMLD,
             fprintf('Using an MLD model...\n');
+        elseif haveMLD3,
+            fprintf('Using an MLD3 model...\n');            
         elseif havePWA,
             fprintf('Using a PWA model...\n');
         elseif haveNONLIN,
@@ -499,6 +506,10 @@ for im = 1:length(SST)-1,
         nd = MLD{im}.nd; nz = MLD{im}.nz;
         d{im} = binvar(nd, 1);
         z{im} = sdpvar(nz, 1);
+        
+    elseif isequal(dynamics_type{im}, 'ml3'),
+        % prepare auxiliary variables
+        w{im} = sdpvar(MLD{im}.nw, 1);
         
     else
         % we just need binary variables for PWA selection
@@ -737,7 +748,7 @@ for k = N-1:-1:1
             % LTI dynamics. note that we have converted LTI systems into PWA form
             % with one dynamics
             tag = sprintf('x_%d == A*x_%d + B*u_%d', iN+1, iN, iNu);
-            F = F + set(x{k+1} == SST{k}.A{1}*x{k} + SST{k}.B{1}*u{ku}, tag);
+            F = F + set(x{k+1} == SST{k}.A{1}*x{k} + SST{k}.B{1}*u{ku} + SST{k}.f{1}, tag);
             
             tag = sprintf('y_%d == C*x_%d + D*u_%d', iN, iN, iNu);
             F = F + set(y{k} == SST{k}.C{1}*x{k} + SST{k}.D{1}*u{ku}, tag);
@@ -875,6 +886,68 @@ for k = N-1:-1:1
             tag = sprintf('MLD.zl < z_%d < MLD.zu', iN);
             F = F + set(MLD{k}.zl <= z{k} <= MLD{k}.zu, tag);
 
+        case 'ml3',
+            % MLD model by HYSDEL3
+            %        x(k+1) = A x + Bu u + Baux w + Baff
+            %         y(k)  = C x + Du u + Daux w + Daff
+            %  Ex x + Eu u + Eaux w <= Eaff
+            tag = sprintf('x_%d == A*x_%d + Bu*u_%d + Baux*w_%d + Baff', ...
+                iN+1, iN, iNu, iN);
+            F = F + set(x{k+1} == MLD{k}.A*x{k} + MLD{k}.Bu*u{ku} + ...
+                MLD{k}.Baux*w{k} + MLD{k}.Baff, tag);
+            
+            tag = sprintf('y_%d == C*x_%d + Du*u_%d + Daux*w_%d + Daff', ...
+                iN, iN, iNu, iN);
+            F = F + set(  y{k} == MLD{k}.C*x{k} + MLD{k}.Du*u{ku} + ...
+                MLD{k}.Daux*w{k} + MLD{k}.Daff, tag);
+
+            ineq_idx = MLD{k}.j.ineq;
+            if ~isempty(ineq_idx)
+                tag = sprintf('Ex*x_%d + Eu*u_%d + Eaux*w_%d <= Eaff', ...
+                    iN, iNu, iN);
+                F = F + set(MLD{k}.Ex(ineq_idx, :)*x{k} + ...
+                    MLD{k}.Eu(ineq_idx, :)*u{ku} + ...
+                    MLD{k}.Eaux(ineq_idx, :)*w{k} <= ...
+                    MLD{k}.Eaff(ineq_idx, :), tag);
+            end
+
+            eq_idx = MLD{k}.j.eq;
+            if ~isempty(eq_idx)
+                tag = sprintf('Ex*x_%d + Eu*u_%d + Eaux*w_%d == Eaff', ...
+                    iN, iNu, iN);
+                F = F + set(MLD{k}.Ex(eq_idx, :)*x{k} + ...
+                    MLD{k}.Eu(eq_idx, :)*u{ku} + ...
+                    MLD{k}.Eaux(eq_idx, :)*w{k} == ...
+                    MLD{k}.Eaff(eq_idx, :), tag);
+            end
+
+            % some states, inputs and/or outputs can be boolean:
+            % states x(MLD.j.xb) are boolean,
+            % inputs u(MLD.j.ub) are boolean,
+            % outputs y(MLD.j.yb) are boolean
+            % auxiliaries w(MLD.j.d) are boolean
+            bidx = MLD{k}.j.xb;
+            if ~isempty(bidx)
+                tag = sprintf('x_%d(%s) binary', iN, mat2str(bidx));
+                F = F + set(binary(x{k}(bidx)), tag);
+            end
+            bidx = MLD{k}.j.ub;
+            if ~isempty(bidx)
+                tag = sprintf('u_%d(%s) binary', iNu, mat2str(bidx));
+                F = F + set(binary(u{ku}(bidx)), tag);
+            end
+            bidx = MLD{k}.j.d;
+            if ~isempty(bidx)
+                tag = sprintf('w_%d(%s) binary', iN, mat2str(bidx));
+                F = F + set(binary(w{k}(bidx)), tag);
+            end
+            ridx = MLD{k}.j.z;
+            if ~isempty(ridx)
+                % add bounds on auxiliary "z" variables
+                tag = sprintf('MLD.wl < w_%d(%s) < MLD.wu', iN, mat2str(ridx));
+                F = F + set(MLD{k}.wl(ridx) <= w{k}(ridx) <= MLD{k}.wu(ridx), tag);
+            end
+
         otherwise
             error('Unknown type of system dynamics.');
             
@@ -945,6 +1018,10 @@ for k = N-1:-1:1
         if isfield(probStruct, 'Qd'),
             obj = obj + sub_norm((d{k} - dref), probStruct.Qd{k}, probStruct.norm);
         end
+    elseif isequal(dynamics_type{k}, 'ml3'),
+        if isfield(probStruct, 'Qw')
+            obj = obj + sub_norm((w{k} - wref), probStruct.Qw{k}, probStruct.norm);
+        end
     end
 
     
@@ -1007,6 +1084,9 @@ variables.u = u(1:Nc);
 variables.y = y;
 if havePWA | haveMLD | havePNONLIN,
     variables.d = d;
+end
+if haveMLD3
+    variables.w = w;
 end
 if haveMLD,
     variables.z = z;
@@ -1267,11 +1347,21 @@ SST = cell(1, N);
 function type = sub_sysStruct_type(sysStruct)
 % this subfunction should be moved into mpt_sysStructInfo()
 
-type = struct('lti', 0, 'pwa', 0, 'mld', 0, 'nonlin', 0);
+type = struct('lti', 0, 'pwa', 0, 'mld', 0, 'ml3', 0, 'nonlin', 0);
 type.lti = ~iscell(sysStruct.A);
 type.pwa = iscell(sysStruct.A);
-type.mld = isfield(sysStruct, 'data');
-if type.mld,
+if isfield(sysStruct, 'data')
+    if isfield(sysStruct.data.MLD, 'nw')
+        % HYSDEL 3 model
+        type.ml3 = 1;
+    else
+        type.mld = 1;
+    end
+end
+if type.ml3 & type.mld
+    type.mld = 0;
+end
+if type.mld | type.ml3,
     if isfield(sysStruct.data, 'onlymld'),
         % the {A,B,C,D} touple is just fake, we in fact do have only MLD
         % representation available
@@ -1315,7 +1405,10 @@ for im = 1:length(SST),
         
     elseif sys_type.mld,
         dynamics_type{im} = 'mld';
-        
+
+    elseif sys_type.ml3,
+        dynamics_type{im} = 'ml3';
+
     elseif sys_type.lti,
         dynamics_type{im} = 'lti';
         
@@ -1327,14 +1420,16 @@ for im = 1:length(SST),
     end
     
     switch dynamics_type{im},
-        case 'mld',
+        case {'mld', 'ml3'},
             MLD{im} = SST{im}.data.MLD;
-            % initialize B5 and D5 matrices to zero if they are not given
-            if ~isfield(MLD{im}, 'B5'),
-                MLD{im}.B5 = zeros(size(MLD{im}.A, 1), 1);
-            end
-            if ~isfield(MLD{im}, 'D5'),
-                MLD{im}.D5 = zeros(size(MLD{im}.C, 1), 1);
+            if isequal(dynamics_type{im}, 'mld')
+                % initialize B5 and D5 matrices to zero if they are not given
+                if ~isfield(MLD{im}, 'B5'),
+                    MLD{im}.B5 = zeros(size(MLD{im}.A, 1), 1);
+                end
+                if ~isfield(MLD{im}, 'D5'),
+                    MLD{im}.D5 = zeros(size(MLD{im}.C, 1), 1);
+                end
             end
 
         case 'pwa',
