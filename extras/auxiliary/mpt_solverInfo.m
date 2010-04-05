@@ -105,6 +105,7 @@ switch solver,
     case 14, out = 'BPMPD';
     case 15, out = 'CPLEXMEX';
     case 16, out = 'PDCO';
+    case 17, out = 'GLPKCC';
     otherwise, out = 'unknown'; err=1;
 end
 
@@ -143,6 +144,7 @@ switch solver,
     case 5, out = 'bintprog';
     case 6, out = 'CPLEX8';
     case 7, out = 'CPLEXMEX';
+    case 8, out = 'GLPKCC';
     otherwise, out = 'unknown'; err=1;        
 end
 
@@ -215,6 +217,8 @@ elseif strcmpi(solver,'cplexmex'),
     out = 15;
 elseif strcmpi(solver,'pdco'),
     out = 16;
+elseif strcmpi(solver, 'glpkcc')
+    out = 17;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else
@@ -297,6 +301,8 @@ elseif strcmpi(solver,'cplex8'),
     out = 6;
 elseif strcmpi(solver,'cplexmex'),
     out = 7;
+elseif strcmpi(solver, 'glpkcc'),
+    out = 8;
 elseif strcmpi(solver, 'fastest available')
     out = [];
 else

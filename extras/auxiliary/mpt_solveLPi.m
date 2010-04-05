@@ -262,7 +262,7 @@ elseif (lpsolver==1)
         end
     end
 
-    options = optimset('Display','off','LargeScale','off');
+    options = optimset('Display','off');
     [xopt,fval,exitflag,output,lambdav]=linprog(f(:),A,B,Aeq,Beq,[],[],x0,options);
     lambda=lambdav.ineqlin;
     if exitflag>0 %then LINPROG converged with a solution X.
@@ -371,8 +371,8 @@ elseif (lpsolver==8)
     end
 
 elseif (lpsolver==4)
-    %case 4,
-    % GLPK solver interfaced by GLPKmex
+    %case 4
+    % 4 = GLPK solver interfaced by GLPKmex
 
     ctype= char('U'*ones(size(A,1)+size(Aeq,1),1));
     vartype=char('C'*ones(size(f(:),1),1));
@@ -397,6 +397,41 @@ elseif (lpsolver==4)
             how = 'unbounded';
             exitflag = 0;
         case {183}   % problem has no feasible solution
+            how = 'InfOrUnbd';
+            exitflag = -1;
+        otherwise
+            how = 'infeasible';
+            exitflag = -1;
+    end
+
+elseif (lpsolver==17)
+    %case 17
+    % GLPK solver interfaced by GLPKCC
+
+    ctype= char('U'*ones(size(A,1)+size(Aeq,1),1));
+    vartype=char('C'*ones(size(f(:),1),1));
+    ctype(size(A,1)+1:size(A,1)+size(Aeq,1))=char('S');
+    param.msglev=1;
+    param.itlim=500;
+    method=1; % 1 = solve problem with the revised simplex method
+    % 2 = solve problem with the interior point method
+
+    [xopt,fval,status,lambda_struct] = glpkcc(f(:),[A;Aeq],[B;Beq],...
+        -1e9*ones(size(A,2),1),1e9*ones(size(A,2),1),...
+        ctype, vartype, 1, param);
+
+    lambda = -lambda_struct.lambda;
+    switch status
+        case {5,2}   % optimal, feasible
+            how = 'ok';
+            exitflag = 1;
+        case {3,110,213}   % infeasible
+            how = 'infeasible';
+            exitflag = -1;
+        case {6,214}   % unbounded
+            how = 'unbounded';
+            exitflag = 0;
+        case {4}   % problem has no feasible solution
             how = 'InfOrUnbd';
             exitflag = -1;
         otherwise
