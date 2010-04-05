@@ -117,21 +117,13 @@ global mpt___sysStruct
 if isstruct(mpt___sysStruct)
     [nx,nu,ny,ndyn] = mpt_sysStructInfo(mpt___sysStruct);
     if ~iscell(mpt___sysStruct.C),
-        if all(mpt___sysStruct.C==eye(ny)),
-            res = 1;
-        else
-            res = 0;
-        end
+        res = isequal(mpt___sysStruct.C, eye(ny));
     else
         res = 1;
         for ii = 1:ndyn,
             % check if C matrix is square [issue128]
-            if any(size(mpt___sysStruct.C{ii}) ~= ny),
-                res = 0;
-                break
-            end
-            if any(mpt___sysStruct.C{ii} ~= eye(ny)),
-                res = 0;
+            res = isequal(mpt___sysStruct.C{ii}, eye(ny));
+            if res == 0
                 break
             end
         end
@@ -1259,7 +1251,7 @@ credits = {'List of contributors:', '', 'Baotic, Mato', ...
         'Kvasnica, Michal', ...
         'Lagerberg, Adam', ...
         'Linder, Arne', ...
-        'Löfberg, Johan', ...
+        'L?fberg, Johan', ...
         'Suard, Raphael', ...
         'Tetrev, Boris', ...
         'Torrisi, Fabio D.'};
