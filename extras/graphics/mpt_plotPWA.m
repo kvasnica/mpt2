@@ -110,6 +110,7 @@ Options = mpt_defaultOptions(Options, ...
     'newfigure', mptOptions.newfigure, ...
     'samecolors', 0, ...
     'rowindex', 1, ...
+    'clip_minmax', [], ...
     'drawnow', 1 );
 
 % users can decide which line of Fi,Gi they want to consider
@@ -163,7 +164,15 @@ if dimension(PA)==1,
         x1=V(1); x2=V(2);
         xv1 = x1*Fi{ii} + Gi{ii};
         xv2 = x2*Fi{ii} + Gi{ii};
-        h = line([x1;x2],[xv1;xv2],'LineWidth',3);
+        if ~isempty(Options.clip_minmax)
+            xv1 = max(min(xv1, Options.clip_minmax(:, 2)), ...
+                Options.clip_minmax(:, 1));
+            xv2 = max(min(xv2, Options.clip_minmax(:, 2)), ...
+                Options.clip_minmax(:, 1));
+            h = line([x1;x2],[xv1;xv2],'LineWidth',4, 'LineStyle', '--', 'color', 'r');
+        else
+            h = line([x1;x2],[xv1;xv2],'LineWidth',3);
+        end
         handle = [handle; h];
     end
     title(sprintf('PWA function over %d regions',length(PA)),'FontSize',18);
@@ -208,6 +217,10 @@ elseif dimension(PA)==2,
         x1=x1(ind);
         x2=x2(ind);
         x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);   % the third dimension will be value of the control action, i.e. u=Fx+G
+        if ~isempty(Options.clip_minmax)
+            x3 = max(min(x3, Options.clip_minmax(:, 2)), ...
+                Options.clip_minmax(:, 1));
+        end
         if min(x3)<minu,
             minu=min(x3);
         end

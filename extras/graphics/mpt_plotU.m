@@ -118,6 +118,10 @@ end
 if ~isfield(Options,'verbose')
     Options.verbose=mptOptions.verbose;
 end
+if ~isfield(Options,'clip_minmax')
+    Options.clip_minmax = [];
+end
+
 
 if ~mpt_isValidCS(ctrlStruct)
     error('mpt_plotU: First argument has to be a valid controller structure! See mpt_control for details.');
@@ -251,6 +255,10 @@ else
                     error('mpt_plotU: problem detected! Increase value of abs_tol in the file mpt_init!');
                 end
                 optU = ctrlStruct.Fi{inwhich}(num_u,:)*x + ctrlStruct.Gi{inwhich}(num_u,:); % Modified by Arne Linder
+                if ~isempty(Options.clip_minmax)
+                    optU = max(min(optU, Options.clip_minmax(:, 2)), ...
+                        Options.clip_minmax(:, 1));
+                end
                 x3 = [x3; optU]; % the third dimension will be value of the control action, i.e. u=Fx+G
             end
             % x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);   
@@ -297,9 +305,14 @@ else
                     if ~feasible,
                         error('mpt_plotU: problem detected! Increase value of abs_tol in mpt_init!');
                     end
+                    if ~isempty(Options.clip_minmax)
+                        optU = max(min(optU, Options.clip_minmax(:, 2)), ...
+                            Options.clip_minmax(:, 1));
+                    end
                     x3 = [x3; optU]; % the third dimension will be value of the control action, i.e. u=Fx+G
                 end
-                %x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);  % third dimension will be value of the control action, i.e. u=Fx+G
+                %x3=[x1 x2]*Fi{ii}(1,:)'+Gi{ii}(1,:);  % third dimension
+                %will be value of the control action, i.e. u=Fx+G
                 if x3<minu,
                     minu=x3;
                 end
