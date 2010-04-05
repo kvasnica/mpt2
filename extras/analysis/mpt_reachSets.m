@@ -807,6 +807,20 @@ if nargin<5,
     xbool = [];
 end
 
+% EXPERIMENTAL
+if false
+    nu = size(B, 2);
+    nx = size(A, 1);
+    [H, K] = double(XU);
+    Hx = H(:, 1:nx); z = sum(Hx.*Hx, 2); Hx = Hx(z>0, :); Kx = K(z>0, :);
+    Hu = H(:, nx+1:nx+nu); z = sum(Hu.*Hu, 2); Hu = Hu(z>0, :); Ku = K(z>0, :);
+    X = polytope(Hx, Kx);
+    U = polytope(Hu, Ku);
+    options.userange = 1;
+    [Pxn, V] = mpt_reachXU(X, U, A, B, f, options);
+    return
+end
+
 if isa(XU, 'polytope'),
     Exu = extreme(XU);
 else
