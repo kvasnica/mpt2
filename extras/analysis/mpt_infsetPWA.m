@@ -392,7 +392,8 @@ while(notConverged>0 & iter<maxIter)
             end
             if (possible_transition), 
                 % possible transition exists
-                [Px,dummy,feasible]=domain(targetPn(j),A{dynamics(i)},f{dynamics(i)},Pn(i)); %compute set of states Pn(i)->targetPn(j)
+                [Px,dummy,feasible]=domain(targetPn(j),...
+                    A{dynamics(i)},f{dynamics(i)},Pn(i), 1, Options); %compute set of states Pn(i)->targetPn(j)
                 if(feasible) 
                     %transition exists
                     %if Px~=Pn(i), %M.V. we don't use this any more, since
