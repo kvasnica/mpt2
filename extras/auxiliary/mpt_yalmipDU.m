@@ -116,7 +116,7 @@ end
 % The new input is now delta u, i.e., du(k)=u(k)-u(k-1).
 % Therefore the state update equation can now be written as:
 %        [A B]         [B] 
-%z(k+1)= [0 I] z(k) +  [0] du(k)
+%z(k+1)= [0 I] z(k) +  [I] du(k)
 %
 %[ y(k) ]   [C D]        [D]
 %[u(k-1)] = [0 I] z(k) + [0] du(k)
@@ -146,6 +146,9 @@ for dyn=1:length(sysStruct.A),
 
     guardX{dyn} = [sysStruct.guardX{dyn} sysStruct.guardU{dyn}];
     guardU{dyn} = sysStruct.guardU{dyn};
+    guardX{dyn} = [guardX{dyn}; zeros(nu, nx) eye(nu); zeros(nu, nx) -eye(nu)];
+    guardU{dyn} = [guardU{dyn}; zeros(2*nu, nu)];
+    guardC{dyn} = [sysStruct.guardC{dyn}; sysStruct.umax; -sysStruct.umin];
 end
 
 %===================================================================
@@ -241,6 +244,7 @@ if ispwa,
     sysStruct.g = gn;
     sysStruct.guardX = guardX;
     sysStruct.guardU = guardU;
+    sysStruct.guardC = guardC;
 end
 
 if all(isinf(sysStruct.dumax)) & all(isinf(sysStruct.dumin)),
