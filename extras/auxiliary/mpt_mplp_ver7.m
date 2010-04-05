@@ -909,7 +909,7 @@ if Options.statusbar,
 end
 
 if ( nRegions > MAXREGIONS ),
-    error('MPLP ERROR: Maximum number of regions reached!!!');
+    warning('MPLP: Maximum number of regions reached!!!');
 end
 
 activeConstraints = list_active;
