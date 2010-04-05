@@ -241,8 +241,18 @@ isinOpt.fastbreak = 1;   % to allow quick escape from isinside as soon as one ma
 ctr=0;
 containsOrigin = zeros(length(Pn),1);
 varindex = cell(length(Pn),1);
+if isfield(ctrlStruct.probStruct, 'xref')
+    x_origin = ctrlStruct.probStruct.xref;
+else
+    x_origin = zeros(n, 1);
+end
+if isfield(ctrlStruct.probStruct, 'uref')
+    uref = ctrlStruct.probStruct.uref;
+else
+    uref = zeros(nu, 1);
+end
 for i=1:length(Pn)
-    if(isinside(Pn(i),zeros(n,1),isinOpt))
+    if(isinside(Pn(i), x_origin ,isinOpt))
         containsOrigin(i)=1;    %The Lyapunov function is linear around the origin...             
         varindex{i}=ctr+1:(ctr+n);
         ctr=ctr+n;
@@ -464,8 +474,8 @@ for dyn_ctr=1:unc_loop
                     % delta_P <0
                     for vctr=1:size(vertices,1)
                         Atmp=zeros(1,totvar);
-                        %V(x(k+1))-V(x(k))-rho*¦¦x(k)¦¦_1<=0
-                        Atmp(totvar)=-norm(vertices(vctr,:),1);       %-rho*¦¦x(k)¦¦_1
+                        %V(x(k+1))-V(x(k))-rho*ï¿½ï¿½x(k)ï¿½ï¿½_1<=0
+                        Atmp(totvar)=-norm(vertices(vctr,:),1);       %-rho*ï¿½ï¿½x(k)ï¿½ï¿½_1
                         if(~containsOrigin(i))
                             Atmp(varindex{i})=[-vertices(vctr,:) -1];%-V(x(k))
                         else
@@ -473,7 +483,7 @@ for dyn_ctr=1:unc_loop
                         end
                         %%Atmp(((j-1)*(n+1)+1):(j*(n+1)))=[((A+B*Fi{i})*vertices(vctr,:)')'+Gi{i}'*B' +1];%V(x(k+1))
                         FF = Fi{i}; FF=FF(1:nu,:);
-                        GG = Gi{i}; GG=GG(1:nu);
+                        GG = Gi{i}; GG=GG(1:nu) + uref;
                         
                         Atmp2=zeros(1,totvar);
                         if(~containsOrigin(j))
@@ -483,10 +493,10 @@ for dyn_ctr=1:unc_loop
                             %Atmp2(varindex{j})=[((A+B*FF)*vertices(vctr,:)')'+GG'*B'];%+V(x(k+1))
                             Atmp2(varindex{j})=[(ABF*vertices(vctr,:)')'+BG'];%+V(x(k+1))
                         end
-                        if(~all(Atmp==0))
+                        if(~all(abs(Atmp)<mptOptions.abs_tol))
                             constr_origin{size(Aconstr,1)+1}=[i j];
                             Aconstr=[Aconstr;Atmp+Atmp2];
-                        elseif(~all(Atmp2==0))
+                        elseif(~all(abs(Atmp2)<mptOptions.abs_tol))
                             if closestatbar,
                                 mpt_statusbar;
                             end
@@ -525,7 +535,8 @@ for i=1:lenP
             Atmp(varindex{i})=[-vertices(vctr,:)];
         end
         
-        if(~all(Atmp==0) & ~all(vertices(vctr,:)==0))
+        if(~all(abs(Atmp) < mptOptions.abs_tol) & ...
+                ~all(abs(vertices(vctr,:)) < mptOptions.abs_tol))
             constr_origin{size(Aconstr,1)+1}=[i];
             Aconstr=[Aconstr;Atmp];
             Bconstr=[Bconstr;-norm(vertices(vctr,:),1)*epsilon];  %linear lower bound on Lyap fct.
@@ -563,7 +574,9 @@ if statusbar,
     end     
 end
 
-P=polytope([Aconstr;-f'],[Bconstr;100],0,1); %normalize polytope
+H = [Aconstr;-f']; K = [Bconstr;100];
+% P=polytope([Aconstr;-f'],[Bconstr;100],0,1); %normalize polytope
+P = unitbox(2);
 if(~isfulldim(P))
     disp('Positivity / Decay polytope is not full dimensional.')
     how='infeasible';
@@ -575,9 +588,10 @@ if(~isfulldim(P))
     return
 else
     disp('Solving LP...')
-    [H,K]=double(P);
+%     [H,K]=double(P);
     try,
-        [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',H,K,[],[],chebyball(P),lpsolver);
+        [xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',H,K,[],[],[],lpsolver);
+        %[xopt,fval,lambda,exitflag,how]=mpt_solveLPi(f(:)',H,K,[],[],chebyball(P),lpsolver);
     catch
         mpt_options('lpsolver', defaultLP);
     end
