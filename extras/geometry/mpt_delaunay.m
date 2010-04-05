@@ -133,7 +133,7 @@ Matrices.E=E;
 Matrices.W=W;
 Matrices.H=zeros(1,size(G,2));
 Matrices.H(end)=1;
-[Matrices.bndA, Matrices.bndb]=double(unitbox(nx,max(max(V))*1.5));
+[Matrices.bndA, Matrices.bndb]=double(unitbox(nx,max(max(abs(V)))*1.5));
 
 [Pn,Fi,Gi,activeConstraints,Phard,details]=mpt_mplp(Matrices,Options);
 
