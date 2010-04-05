@@ -153,7 +153,13 @@ for ii=1:size(inU,1),
         end
         if isempty(simcode) | Options.usemldsim,
             % simulator not available, use mpt_mldsim
-            [xnext, y, d, z, feasible] = mpt_mldsim(sysStruct.data.MLD, x0, U);
+            if isfield(sysStruct.data.MLD, 'nw')
+                % HYSDEL 3
+                [xnext, y, w, feasible] = h3_mldsim(sysStruct.data.MLD, x0, U);
+            else
+                % HYSDEL 2
+                [xnext, y, d, z, feasible] = mpt_mldsim(sysStruct.data.MLD, x0, U);
+            end
             if ~feasible,
                 xnext = [];
             end
